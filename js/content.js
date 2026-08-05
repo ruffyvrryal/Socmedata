@@ -319,15 +319,6 @@ const closeModal =
 document.getElementById("closeModal");
 
 
-// Open Modal
-
-addContent.onclick = function(){
-
-    contentModal.style.display = "flex";
-
-};
-
-
 // Close Button
 
 closeModal.onclick = function(){
@@ -349,90 +340,17 @@ window.onclick = function(event){
 
 };
 
-const contentTitle =
-document.getElementById("contentTitle");
-
 const contentPlatform =
 document.getElementById("contentPlatform");
-
-const contentType =
-document.getElementById("contentType");
-
-const contentStatus =
-document.getElementById("contentStatus");
 
 const saveContent =
 document.getElementById("saveContent");
 
+console.log("Save Button:", saveContent);
+
 const modalTitle =
 document.getElementById("modalTitle");
 
-
-
-saveContent.onclick = function(){
-
-    if(contentTitle.value.trim() === ""){
-
-        alert("Please enter a title.");
-
-        return;
-
-    }
-
-    if(editingIndex === -1){
-
-    profile.contents.push({
-
-        title: contentTitle.value,
-
-        platform: contentPlatform.value,
-
-        type: contentType.value,
-
-        status: contentStatus.value,
-
-        date: new Date().toLocaleDateString()
-
-    });
-
-}
-else{
-
-    profile.contents[editingIndex].title =
-    contentTitle.value;
-
-    profile.contents[editingIndex].platform =
-    contentPlatform.value;
-
-    profile.contents[editingIndex].type =
-    contentType.value;
-
-    profile.contents[editingIndex].status =
-    contentStatus.value;
-
-}
-
-    localStorage.setItem(
-        "profiles",
-        JSON.stringify(profiles)
-    );
-
-    showContents();
-
-    contentTitle.value = "";
-
-    contentPlatform.selectedIndex = 0;
-    contentType.selectedIndex = 0;
-    contentStatus.selectedIndex = 0;
-
-    contentModal.style.display = "none";
-
-    console.log(
-        "Content Added",
-        profile.contents
-    );
-
-};
 
 // =============================
 // SEARCH CONTENT

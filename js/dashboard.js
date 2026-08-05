@@ -529,6 +529,8 @@ if(accountIconUpload.files[0]){
 
 function showAccounts(){
 
+    console.log("showAccounts()");
+
     accountList.innerHTML="";
 
     if(profile.accounts.length===0){
@@ -567,9 +569,9 @@ if(searchAccount){
 
     accounts = accounts.filter(account=>{
 
-        return account.name
-        .toLowerCase()
-        .includes(keyword);
+        return (account.name || "")
+    .toLowerCase()
+    .includes(keyword);
 
     });
 

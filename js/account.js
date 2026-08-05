@@ -17,6 +17,12 @@ let activeAccountId =
 localStorage.getItem("activeAccountId");
 
 // =============================
+// EDIT CONTENT MODE
+// =============================
+
+let editingContentId = null;
+
+// =============================
 // CONTENT DATABASE
 // =============================
 
@@ -51,6 +57,7 @@ profile.accounts.find(
     a => a.id == activeAccountId
 );
 
+
 if(!account){
 
     alert("Account not found.");
@@ -58,6 +65,17 @@ if(!account){
     window.location.href="dashboard.html";
 
 }
+
+
+// Make sure account has content database
+
+if(!account.contents){
+
+    account.contents = [];
+
+}
+
+
 
 
 // =====================================
@@ -172,6 +190,8 @@ document.getElementById("connectPlatformBtn");
 const platformFilter =
 document.getElementById("platformFilter");
 
+let selectedPlatformValue = "all";
+
 
 // =====================================
 // LOAD ACCOUNT NAME
@@ -270,30 +290,40 @@ function saveDatabase(){
 
 function getPlatformIcon(platform){
 
-    switch(platform){
 
-        case "Instagram":
-            return "📸";
+    let logos = {
 
-        case "TikTok":
-            return "🎵";
 
-        case "Facebook":
-            return "📘";
+        Instagram:
+        "https://cdn.simpleicons.org/instagram",
 
-        case "YouTube":
-            return "▶️";
 
-        case "X":
-            return "𝕏";
+        TikTok:
+        "https://cdn.simpleicons.org/tiktok",
 
-        case "Threads":
-            return "🧵";
 
-        default:
-            return "🌐";
+        Facebook:
+        "https://cdn.simpleicons.org/facebook",
 
-    }
+
+        YouTube:
+        "https://cdn.simpleicons.org/youtube",
+
+
+        X:
+        "https://cdn.simpleicons.org/x",
+
+
+        Threads:
+        "https://cdn.simpleicons.org/threads"
+
+
+    };
+
+
+    return logos[platform]
+    ||
+    "https://cdn.simpleicons.org/internet";
 
 }
 
@@ -340,14 +370,8 @@ function renderPlatforms(){
 
     platformGrid.innerHTML="";
 
-    let selectedPlatform="all";
-
-    if(platformFilter){
-
-        selectedPlatform=
-        platformFilter.value;
-
-    }
+   let selectedPlatform =
+selectedPlatformValue;
 
     let list=
     account.platforms;
@@ -408,9 +432,10 @@ function renderPlatforms(){
 
             <div class="platform-icon">
 
-                ${getPlatformIcon(platform.platform)}
+    <img 
+    src="${getPlatformIcon(platform.platform)}">
 
-            </div>
+</div>
 
 
             <div>
@@ -839,9 +864,654 @@ tabs.forEach(tab=>{
 
 });
 
+// =====================================
+// CUSTOM PLATFORM FILTER
+// =====================================
+
+const customFilter =
+document.getElementById("platformFilter");
+
+const trigger =
+customFilter.querySelector(".custom-select-trigger");
+
+trigger.onclick = function(){
+
+    customFilter.classList.toggle("open");
+
+};
+
+const selectedText =
+document.getElementById("selectedPlatform");
+
+const options =
+customFilter.querySelectorAll(".custom-option");
+
+
+options.forEach(option=>{
+
+    option.onclick=function(){
+
+        // Remove previous active
+        options.forEach(item=>
+            item.classList.remove("active")
+        );
+
+        // Activate current
+        option.classList.add("active");
+
+        // Change displayed text
+        selectedText.textContent =
+        option.textContent;
+
+        // Save selected value
+        selectedPlatformValue =
+        option.dataset.value;
+
+        renderPlatforms();
+
+        // Close dropdown
+        customFilter.classList.remove("open");
+
+        console.log(selectedPlatformValue);
+
+    };
+
+});
+
+// =====================================
+// LOGO BUTTON SYSTEM
+// =====================================
+
+
+const logoButton =
+document.getElementById("logoButton");
+
+
+const logoModal =
+document.getElementById("logoModal");
+
+
+const closeLogoModal =
+document.getElementById("closeLogoModal");
+
+
+const cancelLogo =
+document.getElementById("cancelLogo");
+
+
+const saveLogo =
+document.getElementById("saveLogo");
+
+
+const logoUrl =
+document.getElementById("logoUrl");
+
+
+
+// LOAD SAVED LOGO
+
+// LOAD ACCOUNT SPECIFIC LOGO
+
+if(account.logoButtonImage){
+
+    logoButton.innerHTML =
+    `
+    <img src="${account.logoButtonImage}">
+    `;
+
+}
+
+
+
+// OPEN MODAL
+
+logoButton.onclick=function(){
+
+    logoModal.style.display="flex";
+
+};
+
+
+
+// CLOSE
+
+closeLogoModal.onclick=function(){
+
+    logoModal.style.display="none";
+
+};
+
+
+cancelLogo.onclick=function(){
+
+    logoModal.style.display="none";
+
+};
+
+
+
+// SAVE LOGO
+
+saveLogo.onclick=function(){
+
+
+    let url =
+    logoUrl.value.trim();
+
+
+
+    if(url===""){
+
+        alert("Please enter image URL");
+
+        return;
+
+    }
+
+
+
+    account.logoButtonImage = url;
+
+saveDatabase();
+
+
+    logoButton.innerHTML =
+    `
+    <img src="${url}">
+    `;
+
+
+    logoModal.style.display="none";
+
+
+};
+
+
+// =============================
+// CLOSE CONTENT MODAL
+// =============================
+
+
+const cancelContentBtn =
+document.getElementById("cancelContent");
+
+
+if(cancelContentBtn){
+
+
+cancelContentBtn.onclick=function(){
+
+
+    document
+    .getElementById("contentModal")
+    .style.display="none";
+
+
+};
+
+
+}
+
+const closeContentModal =
+document.getElementById("closeContentModal");
+
+
+if(closeContentModal){
+
+    // =====================================
+// SAVE CONTENT FROM ACCOUNT DASHBOARD
+// =====================================
+
+
+const saveContent =
+document.getElementById("saveContent");
+
+
+if(saveContent){
+
+
+
+saveContent.onclick=function(){
+
+
+console.log(
+"contentDate",
+document.getElementById("contentDate")
+);
+
+
+console.log(
+"contentCaption",
+document.getElementById("contentCaption")
+);
+
+
+console.log(
+"contentHashtag",
+document.getElementById("contentHashtag")
+);
+
+
+console.log(
+"contentPlatform",
+document.getElementById("contentPlatform")
+);
+
+
+
+let content={
+
+
+id:Date.now(),
+
+
+accountId:activeAccountId,
+
+
+thumbnail:"",
+
+
+date:
+document.getElementById("contentDate").value,
+
+
+caption:
+document.getElementById("contentCaption").value,
+
+
+hashtag:
+document.getElementById("contentHashtag").value,
+
+
+views:0,
+
+
+likes:0,
+
+
+comments:0,
+
+
+shares:0,
+
+
+saved:0,
+
+
+platform:
+document.getElementById("contentPlatform").value
+
+
+};
+
+
+
+// save into account
+
+// EDIT
+if(editingContentId !== null){
+
+    let index =
+    account.contents.findIndex(
+        item => item.id == editingContentId
+    );
+
+    if(index !== -1){
+
+        content.id = editingContentId;
+
+        account.contents[index] = content;
+
+    }
+
+    editingContentId = null;
+
+}
+
+// CREATE
+else{
+
+    account.contents.push(content);
+
+}
+
+saveDatabase();
+
+renderContents();
+
+console.log(
+"CONTENT SAVED",
+content
+);
+
+
+document
+.getElementById("contentModal")
+.style.display="none";
+
+
+if(editingContentId === null){
+
+    showToast(
+        "Content created successfully!",
+        "success"
+    );
+
+}else{
+
+    showToast(
+        "Content updated successfully!",
+        "success"
+    );
+
+}
+
+
+};
+
+}
+
+closeContentModal.onclick=function(){
+
+
+    document
+    .getElementById("contentModal")
+    .style.display="none";
+
+
+};
+
+
+}
+
+// =====================================
+// RENDER CONTENT TABLE
+// =====================================
+
+function renderContents(){
+
+    const table =
+    document.getElementById("contentTableBody");
+
+    if(!table) return;
+
+    table.innerHTML = "";
+
+    account.contents.forEach((content, index)=>{
+
+        table.innerHTML += `
+
+<tr>
+
+    <td>${index + 1}</td>
+
+    <td>
+        ${
+            content.thumbnail
+            ? `<img src="${content.thumbnail}" class="content-thumbnail">`
+            : "-"
+        }
+    </td>
+
+    <td>${content.date || "-"}</td>
+
+    <td>${content.caption || "-"}</td>
+
+    <td>${content.hashtag || "-"}</td>
+
+    <td>${content.views || 0}</td>
+
+    <td>${content.platform || "-"}</td>
+
+    <td>
+        <button class="edit-content" data-id="${content.id}">
+            Edit
+        </button>
+
+        <button class="delete-content" data-id="${content.id}">
+            Delete
+        </button>
+    </td>
+
+</tr>
+
+`;
+
+    });
+
+// =============================
+// EDIT BUTTON
+// =============================
+
+document.querySelectorAll(".edit-content").forEach(button => {
+
+    button.onclick = function(){
+
+        let id = Number(this.dataset.id);
+
+        let content = account.contents.find(
+            item => item.id == id
+        );
+
+        if(!content) return;
+
+        editingContentId = id;
+
+        document.getElementById("contentDate").value =
+        content.date || "";
+
+        document.getElementById("contentCaption").value =
+        content.caption || "";
+
+        document.getElementById("contentHashtag").value =
+        content.hashtag || "";
+
+        document.getElementById("contentPlatform").value =
+        content.platform || "";
+
+        document.getElementById("contentModal").style.display =
+        "flex";
+
+    };
+
+});
+
+// =============================
+// DELETE CONTENT SYSTEM
+// =============================
+
+let deleteContentId = null;
+
+
+const deleteModal =
+document.getElementById("deleteModal");
+
+console.log(
+    "Delete Modal:",
+    deleteModal
+);
+
+
+const cancelDelete =
+document.getElementById("cancelDelete");
+
+
+const confirmDelete =
+document.getElementById("confirmDelete");
+
+
+
+document.querySelectorAll(".delete-content")
+.forEach(button=>{
+
+    console.log(
+        "DELETE BUTTON CONNECTED",
+        button
+    );
+
+
+    button.onclick=function(){
+
+    console.log(
+        "Opening delete modal",
+        this.dataset.id
+    );
+
+
+    deleteContentId =
+    Number(this.dataset.id);
+
+
+    deleteModal.style.display =
+    "flex";
+
+
+    console.log(
+        "Modal style:",
+        deleteModal.style.display
+    );
+
+};
+
+
+});
+
+
+
+// CANCEL DELETE
+
+cancelDelete.onclick=function(){
+
+
+    deleteModal.style.display =
+    "none";
+
+
+    deleteContentId = null;
+
+
+};
+
+
+
+// CONFIRM DELETE
+
+confirmDelete.onclick=function(){
+
+
+    if(deleteContentId === null){
+
+        return;
+
+    }
+
+
+
+    account.contents =
+    account.contents.filter(
+
+        item =>
+        item.id != deleteContentId
+
+    );
+
+
+
+    saveDatabase();
+
+
+    renderContents();
+
+
+
+    deleteModal.style.display =
+    "none";
+
+
+    deleteContentId = null;
+
+
+
+    showToast(
+        "Content deleted successfully!",
+        "success"
+    );
+
+
+};
+
+}
+
+renderContents();
+
+function deleteContent(index){
+
+    account.contents.splice(index,1);
+
+    saveDatabase();
+
+    renderContents();
+
+}
+
+
+
+renderContents();
+
 // renderContents();
 
 // renderHashtags();
+
+// =====================================
+// TOAST NOTIFICATION
+// =====================================
+
+function showToast(message, type = "success"){
+
+    const toast =
+    document.getElementById("toast");
+
+    const icon =
+    toast.querySelector(".toast-icon");
+
+    const text =
+    toast.querySelector(".toast-message");
+
+    text.textContent = message;
+
+    if(type === "success"){
+
+        icon.innerHTML = "✓";
+        icon.style.background = "#22c55e";
+
+    }
+
+    else if(type === "error"){
+
+        icon.innerHTML = "✕";
+        icon.style.background = "#ef4444";
+
+    }
+
+    else if(type === "warning"){
+
+        icon.innerHTML = "!";
+        icon.style.background = "#f59e0b";
+
+    }
+
+    toast.classList.add("show");
+
+    clearTimeout(toast.timer);
+
+    toast.timer = setTimeout(function(){
+
+        toast.classList.remove("show");
+
+    },3000);
+
+}
+
 
 // =====================================
 // READY FOR FUTURE FEATURES

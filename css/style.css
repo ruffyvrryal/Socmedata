@@ -1753,27 +1753,6 @@ box-shadow:
 }
 
 #statusFilter,
-#platformFilter{
-
-min-width:180px;
-
-padding:14px 18px;
-
-font-size:15px;
-
-border:1px solid #ddd;
-
-border-radius:12px;
-
-outline:none;
-
-background:#fff;
-
-cursor:pointer;
-
-transition:.3s;
-
-}
 
 #statusFilter:focus,
 #platformFilter:focus{
@@ -5486,9 +5465,7 @@ box-shadow:0 0 20px var(--icon-glow);
 
 #platformSelect,
 #accountPlatform,
-select[name="platform"]{
-
-    appearance:none;
+select[name="platform"] {
 
     width:100%;
 
@@ -5496,34 +5473,25 @@ select[name="platform"]{
 
     border-radius:18px;
 
-    background:
+    background:white;
 
-    linear-gradient(
-        135deg,
-        rgba(255,255,255,.12),
-        rgba(255,255,255,.05)
-    );
+    color:#333;
 
-
-    border:
-
-    1px solid rgba(255,255,255,.15);
-
-
-    color:white;
+    border:1px solid #ddd;
 
     font-size:16px;
 
-    outline:none;
-
-
-    backdrop-filter:blur(25px);
-
-
     cursor:pointer;
 
+    appearance:auto;
 
-    transition:.3s ease;
+}
+
+#platformSelect option{
+
+    color:#ffffff;
+
+    background:#1a1d2e;
 
 }
 
@@ -5727,6 +5695,7 @@ select[name="platform"] option{
    ACCOUNT CENTER PLATFORM FILTER
 ===================================== */
 
+/*
 #platformFilter{
 
     appearance:none;
@@ -5737,141 +5706,43 @@ select[name="platform"] option{
 
     padding:0 22px;
 
-
     border-radius:18px;
 
+    background:rgba(255,255,255,.05);
 
-    background:
+    color:rgba(255,255,255,.88);
 
-    linear-gradient(
-        135deg,
-        rgba(255,255,255,.12),
-        rgba(255,255,255,.05)
-    );
+    border:1px solid rgba(255,255,255,.10);
 
+    backdrop-filter:blur(20px);
 
-    color:white;
+    font-size:15px;
 
-
-    border:
-
-    1px solid rgba(255,255,255,.15);
-
-
-    backdrop-filter:blur(25px);
-
-
-    font-size:16px;
-
-    font-weight:600;
-
+    font-weight:500;
 
     outline:none;
 
     cursor:pointer;
 
-
-    box-shadow:
-
-    inset 0 1px 0 rgba(255,255,255,.15);
+    transition:all .25s ease;
 
 }
+*/
 
 
 
 #platformFilter:hover{
 
-    border-color:
+    background:rgba(255,255,255,.08);
 
-    rgba(59,130,246,.5);
-
-
-    box-shadow:
-
-    0 0 25px rgba(59,130,246,.25);
+    border-color:rgba(255,255,255,.18);
 
 }
 
-
-
-#platformFilter:focus{
-
-
-    border-color:#3B82F6;
-
-
-    box-shadow:
-
-    0 0 30px rgba(59,130,246,.35);
-
-}
-
-
-
-#platformFilter option{
-
-    background:#111827;
-
-    color:white;
-
-}
 
 /* =====================================
    ACCOUNT CENTER DROPDOWN MATCH BUTTON
 ===================================== */
-
-
-#platformFilter{
-
-    height:60px;
-
-    min-width:220px;
-
-    padding:0 22px;
-
-
-    border-radius:18px;
-
-
-    background:
-
-    linear-gradient(
-        135deg,
-        rgba(59,130,246,.85),
-        rgba(139,92,246,.85)
-    );
-
-
-    color:white;
-
-
-    border:
-
-    1px solid rgba(255,255,255,.25);
-
-
-    font-size:16px;
-
-    font-weight:700;
-
-
-    cursor:pointer;
-
-
-    outline:none;
-
-
-    box-shadow:
-
-    0 10px 30px rgba(59,130,246,.35),
-
-    inset 0 1px 0 rgba(255,255,255,.25);
-
-
-    transition:.3s ease;
-
-}
-
 
 
 #platformFilter:hover{
@@ -5908,14 +5779,12 @@ select[name="platform"] option{
 
 #platformFilter option{
 
+    background:#11131d;
 
-    background:#111827;
-
-    color:white;
-
-    font-weight:600;
+    color:#ffffff;
 
 }
+
 
 /* =====================================
    PREMIUM ACCOUNT CARD COLOR THEME
@@ -6503,5 +6372,614 @@ cursor:pointer;
 .content-table tr:hover{
 
 background:rgba(255,255,255,.06);
+
+}
+
+/* =====================================
+   EMPTY STATE
+===================================== */
+
+.empty-state{
+
+    width:100%;
+
+    min-height:300px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+
+    padding:60px 40px;
+
+    border:1px dashed rgba(255,255,255,.12);
+
+    border-radius:24px;
+
+    background:rgba(255,255,255,.03);
+
+}
+
+/* =====================================
+   CUSTOM SELECT
+===================================== */
+
+.custom-select{
+
+    position:relative;
+
+    width:220px;
+
+    user-select:none;
+
+    z-index:100;
+
+}
+
+.custom-select-trigger{
+
+    height:60px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 22px;
+
+    border-radius:18px;
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.10);
+
+    backdrop-filter:blur(20px);
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.custom-select-trigger:hover{
+
+    background:rgba(255,255,255,.08);
+
+    border-color:rgba(255,255,255,.18);
+
+}
+
+.custom-select-trigger span{
+
+    color:white;
+
+    font-size:15px;
+
+    font-weight:500;
+
+}
+
+.custom-arrow{
+
+    transition:.25s;
+
+    font-size:12px;
+
+    opacity:.7;
+
+}
+
+.custom-options{
+
+    position:absolute;
+
+    top:70px;
+
+    left:0;
+
+    width:100%;
+
+    display:none;
+
+    flex-direction:column;
+
+    overflow:hidden;
+
+    border-radius:18px;
+
+    background:rgba(18,22,38,.92);
+
+    backdrop-filter:blur(25px);
+
+    border:1px solid rgba(255,255,255,.10);
+
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+
+    z-index:1000;
+
+}
+
+.custom-option{
+
+    padding:16px 20px;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+.custom-option:hover{
+
+    background:rgba(255,255,255,.08);
+
+}
+
+.custom-option.active{
+
+    background:rgba(59,130,246,.15);
+
+    color:#7cc4ff;
+
+}
+
+.custom-select.open .custom-options{
+
+    display:flex;
+
+}
+
+.custom-select.open .custom-arrow{
+
+    transform:rotate(180deg);
+
+}
+
+.dashboard-hero{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+
+
+.account-profile-info{
+
+    display:flex;
+
+    flex-direction:column;
+
+}
+
+
+
+.account-profile-logo{
+
+    width:110px;
+
+    height:110px;
+
+    border-radius:28px;
+
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+    background:
+
+    rgba(255,255,255,0.08);
+
+
+    border:
+
+    1px solid rgba(255,255,255,.15);
+
+
+    overflow:hidden;
+
+}
+
+
+
+.account-profile-logo img{
+
+    width:80px;
+
+    height:80px;
+
+    object-fit:contain;
+
+}
+
+.dashboard-logo-button img{
+
+    width:100%;
+    height:100%;
+
+    border-radius:18px;
+
+    object-fit:contain;
+
+    background:transparent;
+
+}
+
+.dashboard-logo-button{
+
+    width:70px;
+    height:70px;
+
+    padding:0;
+
+    border:none;
+
+    background:transparent;
+
+    overflow:hidden;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+.platform-icon img{
+
+    width:32px;
+
+    height:32px;
+
+    object-fit:contain;
+
+}
+
+.content-thumbnail{
+
+    width:60px;
+
+    height:60px;
+
+    border-radius:12px;
+
+    object-fit:cover;
+
+}
+
+/* ==========================
+CONTENT TABLE
+========================== */
+
+
+.content-table-container{
+
+    width:100%;
+
+    overflow-x:auto;
+
+    margin-top:30px;
+
+}
+
+
+
+.content-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    background:rgba(255,255,255,0.08);
+
+    backdrop-filter:blur(20px);
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+}
+
+
+
+.content-table th{
+
+    padding:18px;
+
+    text-align:left;
+
+    font-size:14px;
+
+    color:white;
+
+    background:rgba(255,255,255,0.12);
+
+}
+
+
+
+.content-table td{
+
+    padding:16px;
+
+    color:white;
+
+    border-bottom:1px solid rgba(255,255,255,0.1);
+
+}
+
+
+
+.content-table tr:hover{
+
+    background:rgba(255,255,255,0.08);
+
+}
+
+.content-header h2{
+
+    margin-bottom:12px;
+
+}
+
+
+.content-header p{
+
+    margin-top:0;
+
+    opacity:0.7;
+
+}
+
+/* ==========================
+CONTENT MODAL FIX
+========================== */
+
+
+.modal-content{
+
+    max-height:90vh;
+
+    overflow-y:auto;
+
+}
+
+
+.modal-body{
+
+    padding:25px;
+
+}
+
+#contentModal textarea{
+
+    height:120px;
+
+    resize:none;
+
+}
+
+/* =====================================
+   TOAST NOTIFICATION
+===================================== */
+
+.toast{
+
+    position:fixed;
+
+    top:30px;
+
+    right:30px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:16px 22px;
+
+    min-width:320px;
+
+    border-radius:18px;
+
+    background:rgba(25,25,35,.85);
+
+    backdrop-filter:blur(18px);
+
+    -webkit-backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+    0 15px 45px rgba(0,0,0,.35);
+
+    color:#fff;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    z-index:99999;
+
+    opacity:0;
+
+    transform:
+    translateX(120px);
+
+    pointer-events:none;
+
+    transition:
+    .35s;
+
+}
+
+
+.toast.show{
+
+    opacity:1;
+
+    transform:
+    translateX(0);
+
+}
+
+
+.toast-icon{
+
+    width:38px;
+
+    height:38px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:#22c55e;
+
+    color:white;
+
+    font-size:18px;
+
+    flex-shrink:0;
+
+}
+
+
+.toast-message{
+
+    flex:1;
+
+}
+
+/* =====================================
+   DELETE CONFIRM MODAL
+===================================== */
+
+.delete-modal{
+
+    width:420px;
+
+    max-width:90%;
+
+    padding:30px;
+
+    border-radius:24px;
+
+    background:rgba(25,25,35,.92);
+
+    backdrop-filter:blur(18px);
+
+    -webkit-backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    text-align:center;
+
+}
+
+.delete-modal h2{
+
+    margin-bottom:18px;
+
+    color:#fff;
+
+}
+
+.delete-modal p{
+
+    color:#d1d5db;
+
+    margin-bottom:10px;
+
+    line-height:1.6;
+
+}
+
+.delete-modal span{
+
+    color:#9ca3af;
+
+    font-size:14px;
+
+}
+
+.delete-actions{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:14px;
+
+    margin-top:28px;
+
+}
+
+.secondary-btn{
+
+    padding:12px 24px;
+
+    border:none;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    background:#374151;
+
+    color:#fff;
+
+    transition:.25s;
+
+}
+
+.secondary-btn:hover{
+
+    background:#4b5563;
+
+}
+
+.danger-btn{
+
+    padding:12px 24px;
+
+    border:none;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    background:#ef4444;
+
+    color:white;
+
+    transition:.25s;
+
+}
+
+.danger-btn:hover{
+
+    background:#dc2626;
 
 }

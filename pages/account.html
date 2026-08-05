@@ -34,15 +34,20 @@ href="../css/style.css">
 
     <!-- HERO -->
 
-    <section class="dashboard-hero">
+   <section class="dashboard-hero">
+
+
+    <div class="account-profile-info">
+
 
         <h1
         id="accountTitle"
         class="dashboard-title">
 
-            Instagram Account
+            Account Name
 
         </h1>
+
 
         <p class="dashboard-subtitle">
 
@@ -51,7 +56,25 @@ href="../css/style.css">
 
         </p>
 
-    </section>
+
+    </div>
+
+
+
+    <div class="account-profile-logo">
+
+    <button 
+id="logoButton"
+class="dashboard-logo-button">
+
+    ✦
+
+</button>
+
+</div>
+
+
+</section>
 
     <!-- CHROME TABS -->
 
@@ -235,45 +258,53 @@ data-tab="hashtag">
         <div class="platform-toolbar">
 
 
-            <select id="platformFilter">
+            <div class="custom-select" id="platformFilter">
 
+    <div class="custom-select-trigger">
 
-                <option value="all">
-                    All Platforms
-                </option>
+        <span id="selectedPlatform">
+            All Platforms
+        </span>
 
+        <span class="custom-arrow">
+            ▼
+        </span>
 
-                <option value="Instagram">
-                    Instagram
-                </option>
+    </div>
 
+    <div class="custom-options">
 
-                <option value="TikTok">
-                    TikTok
-                </option>
+        <div class="custom-option active" data-value="all">
+            All Platforms
+        </div>
 
+        <div class="custom-option" data-value="Instagram">
+            Instagram
+        </div>
 
-                <option value="Facebook">
-                    Facebook
-                </option>
+        <div class="custom-option" data-value="TikTok">
+            TikTok
+        </div>
 
+        <div class="custom-option" data-value="Facebook">
+            Facebook
+        </div>
 
-                <option value="YouTube">
-                    YouTube
-                </option>
+        <div class="custom-option" data-value="YouTube">
+            YouTube
+        </div>
 
+        <div class="custom-option" data-value="X">
+            X
+        </div>
 
-                <option value="X">
-                    X
-                </option>
+        <div class="custom-option" data-value="Threads">
+            Threads
+        </div>
 
+    </div>
 
-                <option value="Threads">
-                    Threads
-                </option>
-
-
-            </select>
+</div>
 
 
         </div>
@@ -300,94 +331,47 @@ data-tab="hashtag">
 
 <section class="tab-content" id="content">
 
-
     <div class="content-header">
 
-
         <div>
-
-            <h2>
-                Content Management
-            </h2>
-
-
-            <p>
-                Track every post performance.
-            </p>
-
-
+            <h2>Content Management</h2>
+            <p>Track every post performance.</p>
         </div>
 
-
-
         <button id="addContentBtn">
-
             + Add Content
-
         </button>
 
-
     </div>
-
-
-
 
     <div class="content-table-container">
 
-
         <table class="content-table">
-
 
             <thead>
 
-<tr>
+                <tr>
 
-<th>
-No
-</th>
+                    <th>No</th>
+                    <th>Thumbnail</th>
+                    <th>Upload Date</th>
+                    <th>Caption</th>
+                    <th>Hashtag</th>
+                    <th>Views</th>
+                    <th>Platform</th>
+                    <th>Action</th>
 
+                </tr>
 
-<th>
-Upload Date
-</th>
-
-
-<th>
-Caption
-</th>
-
-
-<th>
-Hashtag
-</th>
-
-
-<th>
-Views
-</th>
-
-
-<th>
-Platform
-</th>
-
-
-</tr>
-
-</thead>
-
+            </thead>
 
             <tbody id="contentTableBody">
 
-
             </tbody>
-
 
         </table>
 
-
     </div>
-
 
 </section>
 
@@ -604,7 +588,7 @@ class="modal">
 <div id="contentModal" class="modal">
 
 
-<div class="modal-content">
+<div class="modal-content glass-modal">
 
 
 <div class="modal-header">
@@ -619,7 +603,6 @@ id="closeContentModal"
 class="close">
 
 ×
-
 
 </span>
 
@@ -642,22 +625,42 @@ id="contentDate">
 
 
 <label>
+Thumbnail Image
+</label>
+
+<input
+type="file"
+id="contentThumbnail"
+accept="image/*">
+
+
+
+<img
+id="thumbnailPreview"
+class="thumbnail-preview"
+style="display:none;">
+
+
+
+<label>
 Caption
 </label>
 
 <textarea
-id="contentCaption">
-</textarea>
+id="contentCaption"
+placeholder="Write caption..."></textarea>
+
+
 
 <label>
 Hashtag
 </label>
 
-
 <input
 type="text"
 id="contentHashtag"
 placeholder="#example">
+
 
 
 <label>
@@ -708,6 +711,8 @@ Saved
 type="number"
 id="contentSaved">
 
+
+
 <label>
 Platform
 </label>
@@ -731,6 +736,7 @@ YouTube
 Facebook
 </option>
 
+
 </select>
 
 
@@ -751,292 +757,6 @@ Save Content
 
 </button>
 
-// =============================
-// SAVE CONTENT
-// =============================
-
-const saveContentBtn =
-document.getElementById("saveContent");
-
-
-if(saveContentBtn){
-
-
-saveContentBtn.onclick = function(){
-
-
-
-let content = {
-
-
-id: Date.now(),
-
-
-accountId: activeAccountId,
-
-
-date:
-document.getElementById("contentDate").value,
-
-
-caption:
-document.getElementById("contentCaption").value,
-
-
-hashtag:
-document.getElementById("contentHashtag").value,
-
-
-views:
-Number(
-document.getElementById("contentViews").value
-),
-
-
-likes:
-Number(
-document.getElementById("contentLikes").value
-),
-
-
-comments:
-Number(
-document.getElementById("contentComments").value
-),
-
-
-shares:
-Number(
-document.getElementById("contentShares").value
-),
-
-
-saved:
-Number(
-document.getElementById("contentSaved").value
-),
-
-
-platform:
-document.getElementById("contentPlatform").value
-
-
-};
-
-
-
-contents.push(content);
-
-
-
-localStorage.setItem(
-"contents",
-JSON.stringify(contents)
-);
-
-
-
-renderContents();
-
-
-
-renderHashtags();
-
-
-
-};
-
-}
-
-// =============================
-// RENDER CONTENT TABLE
-// =============================
-
-function renderContents(){
-
-
-let table =
-document.getElementById(
-"contentTableBody"
-);
-
-
-
-if(!table) return;
-
-
-
-table.innerHTML="";
-
-
-
-let accountContents =
-contents.filter(
-item =>
-item.accountId == activeAccountId
-);
-
-
-
-accountContents.forEach(
-(item,index)=>{
-
-
-table.innerHTML += `
-
-
-<tr>
-
-
-<td>
-${index + 1}
-</td>
-
-
-<td>
-${item.date}
-</td>
-
-
-<td>
-${item.caption}
-</td>
-
-
-<td>
-${item.hashtag}
-</td>
-
-
-<td>
-${item.views}
-</td>
-
-
-<td>
-${item.platform}
-</td>
-
-
-</tr>
-
-
-`;
-
-
-});
-
-
-}
-
-// =============================
-// HASHTAG ANALYTICS
-// =============================
-
-function renderHashtags(){
-
-
-let box =
-document.getElementById(
-"hashtagList"
-);
-
-
-
-if(!box) return;
-
-
-
-box.innerHTML="";
-
-
-
-let accountContents =
-contents.filter(
-item =>
-item.accountId == activeAccountId
-);
-
-
-
-let hashtagData = {};
-
-
-
-accountContents.forEach(item=>{
-
-
-let tag = item.hashtag;
-
-
-if(!hashtagData[tag]){
-
-
-hashtagData[tag]={
-
-posts:0,
-
-views:0
-
-};
-
-
-}
-
-
-
-hashtagData[tag].posts++;
-
-hashtagData[tag].views += item.views;
-
-
-
-});
-
-
-
-Object.keys(hashtagData)
-.forEach(tag=>{
-
-
-box.innerHTML += `
-
-
-<div class="hashtag-card">
-
-
-<h3>
-${tag}
-</h3>
-
-
-<p>
-Posts:
-${hashtagData[tag].posts}
-</p>
-
-
-<p>
-Views:
-${hashtagData[tag].views}
-</p>
-
-
-</div>
-
-
-`;
-
-
-});
-
-
-}
-
-
-</div>
-
-
 
 </div>
 
@@ -1046,6 +766,8 @@ ${hashtagData[tag].views}
 
 </div>
 
+
+</div>
 <div id="contentDetailModal" class="modal">
 
 
@@ -1116,6 +838,172 @@ class="close">
 
 
 </div>
+
+<!-- LOGO UPLOAD MODAL -->
+
+<div id="logoModal" class="modal">
+
+    <div class="modal-content glass-modal">
+
+        <div class="modal-header">
+
+            <h2>
+                Add Logo
+            </h2>
+
+            <span 
+            id="closeLogoModal"
+            class="close">
+
+                ×
+
+            </span>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <label>
+                Image URL
+            </label>
+
+
+            <input
+            id="logoUrl"
+            type="text"
+            placeholder="Paste image link here">
+
+
+            <div class="modal-buttons">
+
+
+                <button id="cancelLogo">
+
+                    Cancel
+
+                </button>
+
+
+                <button id="saveLogo">
+
+                    Save Logo
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+
+const addContentBtn =
+document.getElementById("addContentBtn");
+
+
+const contentModal =
+document.getElementById("contentModal");
+
+
+console.log(
+"Button:",
+addContentBtn
+);
+
+
+console.log(
+"Modal:",
+contentModal
+);
+
+
+
+if(addContentBtn && contentModal){
+
+
+addContentBtn.addEventListener(
+"click",
+function(){
+
+
+console.log(
+"Add Content clicked"
+);
+
+
+contentModal.style.display="flex";
+
+
+});
+
+
+}
+
+
+</script>
+
+<!-- TOAST NOTIFICATION -->
+
+<div id="toast" class="toast">
+
+    <div class="toast-icon">
+        ✓
+    </div>
+
+    <div class="toast-message">
+        Notification
+    </div>
+
+</div>
+
+
+<!-- DELETE CONFIRM MODAL -->
+
+<div id="deleteModal" class="modal">
+
+    <div class="modal-box delete-modal">
+
+        <h2>🗑 Delete Content</h2>
+
+        <p>
+            Are you sure you want to delete this content?
+        </p>
+
+        <span>
+            This action cannot be undone.
+        </span>
+
+        <div class="delete-actions">
+
+            <button
+            id="cancelDelete"
+            class="secondary-btn">
+
+                Cancel
+
+            </button>
+
+            <button
+            id="confirmDelete"
+            class="danger-btn">
+
+                Delete
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 
 <script src="../js/account.js"></script>
 
