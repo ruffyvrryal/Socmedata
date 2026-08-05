@@ -103,22 +103,46 @@ dayContents.slice(0, 2).forEach(function(post){
     .substring(0,25);
 
 
-    eventContainer.innerHTML += `
-
-        <div class="calendar-event">
-
-            <span class="event-platform">
-                ${getPlatformEmoji(post.platform)}
-            </span>
+    let statusClass = "scheduled";
 
 
-            <span class="event-title">
-                ${shortCaption}
-            </span>
+if(post.status === "Posted"){
 
-        </div>
+    statusClass = "posted";
 
-    `;
+}
+
+
+else if(post.status === "Draft"){
+
+    statusClass = "draft";
+
+}
+
+
+
+eventContainer.innerHTML += `
+
+<div class="calendar-event ${statusClass}">
+
+
+    <span class="event-platform">
+
+        ${getPlatformEmoji(post.platform)}
+
+    </span>
+
+
+    <span class="event-title">
+
+        ${shortCaption}
+
+    </span>
+
+
+</div>
+
+`;
 
 });
 
@@ -238,6 +262,11 @@ function openCalendarDay(date){
                         <strong>Caption:</strong><br>
                         ${post.caption || "-"}
                     </p>
+
+<p>
+    📌 Status:
+    ${post.status || "Scheduled"}
+</p>
 
                     <p>
                         👁 ${formatNumber(post.views || 0)} Views

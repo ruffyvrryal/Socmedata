@@ -1064,141 +1064,102 @@ const closeContentModal =
 document.getElementById("closeContentModal");
 
 
-if(closeContentModal){
-
-    // =====================================
-// SAVE CONTENT FROM ACCOUNT DASHBOARD
-// =====================================
+const contentStatus =
+document.getElementById("contentStatus");
 
 
 const saveContent =
 document.getElementById("saveContent");
 
 
-if(saveContent){
 
+if(saveContent){
 
 
 saveContent.onclick=function(){
 
 
-console.log(
-"contentDate",
-document.getElementById("contentDate")
-);
 
 
-console.log(
-"contentCaption",
-document.getElementById("contentCaption")
-);
+console.log("Saving content");
 
 
-console.log(
-"contentHashtag",
-document.getElementById("contentHashtag")
-);
+let content = {
 
 
-console.log(
-"contentPlatform",
-document.getElementById("contentPlatform")
-);
+    id: Date.now(),
 
 
-
-let content={
-
-
-id:Date.now(),
+    accountId: activeAccountId,
 
 
-accountId:activeAccountId,
+    thumbnail:"",
 
 
-thumbnail:"",
+    date:
+    document.getElementById("contentDate").value,
 
 
-date:
-document.getElementById("contentDate").value,
+    caption:
+    document.getElementById("contentCaption").value,
 
 
-caption:
-document.getElementById("contentCaption").value,
+    hashtag:
+    document.getElementById("contentHashtag").value,
 
 
-hashtag:
-document.getElementById("contentHashtag").value,
+    views:
+    Number(
+        document.getElementById("contentViews").value
+    ) || 0,
 
 
-views:Number(
-document.getElementById("contentViews").value
-) || 0,
-
-likes:Number(
-document.getElementById("contentLikes").value
-) || 0,
-
-comments:Number(
-document.getElementById("contentComments").value
-) || 0,
-
-shares:Number(
-document.getElementById("contentShares").value
-) || 0,
-
-saved:Number(
-document.getElementById("contentSaved").value
-) || 0,
+    likes:
+    Number(
+        document.getElementById("contentLikes").value
+    ) || 0,
 
 
-platform:
-document.getElementById("contentPlatform").value
+    comments:
+    Number(
+        document.getElementById("contentComments").value
+    ) || 0,
+
+
+    shares:
+    Number(
+        document.getElementById("contentShares").value
+    ) || 0,
+
+
+    saved:
+    Number(
+        document.getElementById("contentSaved").value
+    ) || 0,
+
+
+    platform:
+    document.getElementById("contentPlatform").value,
+
+
+    status:
+    "Published"
 
 
 };
 
 
 
-// save into account
+account.contents.push(content);
 
-// EDIT
-if(editingContentId !== null){
-
-    let index =
-    account.contents.findIndex(
-        item => item.id == editingContentId
-    );
-
-    if(index !== -1){
-
-        content.id = editingContentId;
-
-        account.contents[index] = content;
-
-    }
-
-    editingContentId = null;
-
-}
-
-// CREATE
-else{
-
-    account.contents.push(content);
-
-}
 
 saveDatabase();
 
+
 renderContents();
 
-loadAnalytics();
 
-console.log(
-"CONTENT SAVED",
-content
-);
+loadAnalytics();
 
 
 document
@@ -1206,26 +1167,20 @@ document
 .style.display="none";
 
 
-if(editingContentId === null){
+showToast(
+    "Content created successfully!",
+    "success"
+);
 
-    showToast(
-        "Content created successfully!",
-        "success"
-    );
 
-}else{
 
-    showToast(
-        "Content updated successfully!",
-        "success"
-    );
-
-}
+console.log(
+    "CONTENT SAVED",
+    content
+);
 
 
 };
-
-}
 
 closeContentModal.onclick=function(){
 
