@@ -78,9 +78,6 @@ cell.dataset.date = dateString;
             cell.classList.add("today");
         }
 
-        cell.dataset.date =
-            `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
         cell.innerHTML = `
     <div class="day-number">${day}</div>
     <div class="calendar-events"></div>
@@ -101,16 +98,26 @@ eventContainer.innerHTML = "";
 
 dayContents.slice(0, 2).forEach(function(post){
 
+    let shortCaption =
+    (post.caption || "Untitled")
+    .substring(0,25);
+
+
     eventContainer.innerHTML += `
+
         <div class="calendar-event">
 
-            <strong>
+            <span class="event-platform">
                 ${getPlatformEmoji(post.platform)}
-            </strong>
+            </span>
 
-            ${post.caption || "Untitled"}
+
+            <span class="event-title">
+                ${shortCaption}
+            </span>
 
         </div>
+
     `;
 
 });

@@ -7062,23 +7062,25 @@ gap:12px;
 
 .calendar-day{
 
-aspect-ratio:1;
+    aspect-ratio:1;
 
-border-radius:18px;
+    border-radius:18px;
 
-background:rgba(255,255,255,.05);
+    background:rgba(255,255,255,.05);
 
-border:1px solid rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.08);
 
-padding:12px;
+    padding:12px;
 
-display:flex;
+    display:flex;
 
-flex-direction:column;
+    flex-direction:column;
 
-cursor:pointer;
+    cursor:pointer;
 
-transition:.25s;
+    transition:.25s;
+
+    overflow:hidden;
 
 }
 
@@ -7467,5 +7469,103 @@ visibility:hidden;
 #calendarModal .modal-body{
 
     color:#dbeafe !important;
+
+}
+
+.calendar-event{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    font-size:12px;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+
+}
+
+
+.event-platform{
+
+    flex-shrink:0;
+
+}
+
+
+.event-title{
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+
+}
+
+.calendar-events{
+
+    margin-top:8px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+    max-height:45px;
+
+    overflow:hidden;
+
+}
+
+.calendar-events{
+
+    margin-top:8px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:5px;
+
+    overflow:hidden;
+
+}
+
+
+.calendar-event{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:5px;
+
+    font-size:11px;
+
+    height:22px;
+
+    padding:4px 6px;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+}
+
+
+.event-title{
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
 
 }

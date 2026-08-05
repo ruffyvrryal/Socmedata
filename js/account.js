@@ -822,29 +822,55 @@ tabs.forEach(tab=>{
         .getElementById(target)
         .classList.add("active");
 
+
     };
 
-    // RESET DEFAULT TAB ON LOAD
+
+});
+
+
+
+// =============================
+// DEFAULT TAB ON LOAD
+// =============================
+
 
 tabs.forEach(tab=>{
+
     tab.classList.remove("active");
+
 });
+
 
 tabContents.forEach(content=>{
+
     content.classList.remove("active");
-});
-
-
-document
-.querySelector('[data-tab="dashboard"]')
-.classList.add("active");
-
-
-document
-.getElementById("dashboard")
-.classList.add("active");
 
 });
+
+
+const defaultTab =
+document.querySelector(
+'[data-tab="dashboard"]'
+);
+
+
+if(defaultTab){
+
+    defaultTab.classList.add("active");
+
+}
+
+
+const dashboardContent =
+document.getElementById("dashboard");
+
+
+if(dashboardContent){
+
+    dashboardContent.classList.add("active");
+
+}
 
 // =====================================
 // CUSTOM PLATFORM FILTER
@@ -1501,6 +1527,15 @@ function showToast(message, type = "success"){
     },3000);
 
 }
+
+window.account = account;
+window.profile = profile;
+
+window.goBack = function(){
+
+    window.history.back();
+
+};
 
 
 // =====================================
