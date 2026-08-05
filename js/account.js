@@ -207,63 +207,49 @@ account.name;
 
 function loadAnalytics(){
 
-
     let totalViewsValue = 0;
-
     let totalFollowersValue = 0;
-
     let totalContentsValue = 0;
-
     let totalGrowthValue = 0;
 
+    // Calculate total views from content table
+    account.contents.forEach(content=>{
 
+        totalViewsValue += Number(content.views) || 0;
 
+    });
+
+    // Calculate followers & growth from connected platforms
     account.platforms.forEach(platform=>{
 
-
         if(platform.analytics){
-
-
-            totalViewsValue +=
-            Number(platform.analytics.views) || 0;
-
 
             totalFollowersValue +=
             Number(platform.analytics.followers) || 0;
 
-
-            totalContentsValue +=
-            Number(platform.analytics.contents) || 0;
-
-
             totalGrowthValue +=
             Number(platform.analytics.growth) || 0;
 
-
         }
-
 
     });
 
+    // Total content
+    totalContentsValue = account.contents.length;
 
-
+    // Update dashboard cards
     totalViews.textContent =
-    formatNumber(totalViewsValue);
-
+formatNumber(totalViewsValue);
 
     followers.textContent =
     formatNumber(totalFollowersValue);
 
-
     contentCount.textContent =
     totalContentsValue;
 
-
     growth.textContent =
-    (totalGrowthValue >= 0 ? "+" : "")
-    + totalGrowthValue
-    + "%";
-
+        (totalGrowthValue >= 0 ? "+" : "")
+        + totalGrowthValue + "%";
 
 }
 
@@ -757,29 +743,7 @@ function updateAnalytics(){
 
 function formatNumber(number){
 
-    if(number >= 1000000){
-
-        return (
-            (number / 1000000)
-            .toFixed(1)
-            + "M"
-        );
-
-    }
-
-
-    if(number >= 1000){
-
-        return (
-            (number / 1000)
-            .toFixed(1)
-            + "K"
-        );
-
-    }
-
-
-    return number;
+    return Number(number).toLocaleString("id-ID");
 
 }
 
@@ -858,9 +822,50 @@ tabs.forEach(tab=>{
         .getElementById(target)
         .classList.add("active");
 
-
+        localStorage.setItem(
+    "activeAccountTab",
+    target
+);
     };
 
+    // =====================================
+// RESTORE ACTIVE TAB
+// =====================================
+
+const savedTab =
+localStorage.getItem("activeAccountTab");
+
+if(savedTab){
+
+    tabs.forEach(tab=>{
+
+        tab.classList.remove("active");
+
+    });
+
+    tabContents.forEach(content=>{
+
+        content.classList.remove("active");
+
+    });
+
+    const activeButton =
+    document.querySelector(
+        `[data-tab="${savedTab}"]`
+    );
+
+    const activeContent =
+    document.getElementById(savedTab);
+
+    if(activeButton && activeContent){
+
+        activeButton.classList.add("active");
+
+        activeContent.classList.add("active");
+
+    }
+
+}
 
 });
 
@@ -1123,19 +1128,25 @@ hashtag:
 document.getElementById("contentHashtag").value,
 
 
-views:0,
+views:Number(
+document.getElementById("contentViews").value
+) || 0,
 
+likes:Number(
+document.getElementById("contentLikes").value
+) || 0,
 
-likes:0,
+comments:Number(
+document.getElementById("contentComments").value
+) || 0,
 
+shares:Number(
+document.getElementById("contentShares").value
+) || 0,
 
-comments:0,
-
-
-shares:0,
-
-
-saved:0,
+saved:Number(
+document.getElementById("contentSaved").value
+) || 0,
 
 
 platform:
@@ -1178,6 +1189,8 @@ else{
 saveDatabase();
 
 renderContents();
+
+loadAnalytics();
 
 console.log(
 "CONTENT SAVED",

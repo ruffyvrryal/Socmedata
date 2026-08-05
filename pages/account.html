@@ -377,11 +377,37 @@ data-tab="hashtag">
 
 <section class="tab-content" id="calendar">
 
-    <h2>Content Calendar</h2>
+    <div class="calendar-header">
 
-    <p>
-        Plan your posting schedule.
-    </p>
+        <button id="prevMonth">
+            ◀
+        </button>
+
+        <h2 id="calendarMonth"></h2>
+
+        <button id="nextMonth">
+            ▶
+        </button>
+
+    </div>
+
+    <div class="calendar-weekdays">
+
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+
+    </div>
+
+    <div
+        id="calendarGrid"
+        class="calendar-grid">
+
+    </div>
 
 </section>
 
@@ -1004,8 +1030,43 @@ contentModal.style.display="flex";
 
 </div>
 
+<div id="calendarModal" class="modal">
+
+    <div class="modal-content glass-modal">
+
+        <div class="modal-header">
+
+            <h2 id="calendarModalTitle">
+                Calendar
+            </h2>
+
+            <span
+                id="closeCalendarModal"
+                class="close">
+
+                ×
+
+            </span>
+
+        </div>
+
+        <div class="modal-body">
+
+            <div id="calendarModalContent">
+
+                No content yet.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 <script src="../js/account.js"></script>
+
+<script src="../js/calendar.js"></script>
 
 </body>
 

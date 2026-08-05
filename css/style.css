@@ -6983,3 +6983,165 @@ CONTENT MODAL FIX
     background:#dc2626;
 
 }
+
+/* =====================================
+CALENDAR
+===================================== */
+
+.calendar-header{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:30px;
+
+}
+
+.calendar-header h2{
+
+font-size:28px;
+
+font-weight:700;
+
+}
+
+.calendar-header button{
+
+width:46px;
+
+height:46px;
+
+border:none;
+
+border-radius:14px;
+
+cursor:pointer;
+
+background:rgba(255,255,255,.08);
+
+color:white;
+
+font-size:18px;
+
+}
+
+.calendar-weekdays{
+
+display:grid;
+
+grid-template-columns:repeat(7,1fr);
+
+gap:12px;
+
+margin-bottom:12px;
+
+}
+
+.calendar-weekdays div{
+
+text-align:center;
+
+font-weight:600;
+
+opacity:.7;
+
+}
+
+.calendar-grid{
+
+display:grid;
+
+grid-template-columns:repeat(7,1fr);
+
+gap:12px;
+
+}
+
+.calendar-day{
+
+aspect-ratio:1;
+
+border-radius:18px;
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+padding:12px;
+
+display:flex;
+
+flex-direction:column;
+
+cursor:pointer;
+
+transition:.25s;
+
+}
+
+.calendar-day:hover{
+
+transform:translateY(-4px);
+
+background:rgba(255,255,255,.08);
+
+}
+
+.calendar-date{
+
+font-weight:700;
+
+font-size:18px;
+
+margin-bottom:10px;
+
+}
+
+.empty-day{
+
+visibility:hidden;
+
+}
+
+/* =====================================
+   CALENDAR EVENTS
+===================================== */
+
+.calendar-events{
+
+    margin-top:10px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+}
+
+.calendar-event{
+
+    background:#3b82f6;
+
+    color:white;
+
+    font-size:11px;
+
+    font-weight:600;
+
+    padding:5px 8px;
+
+    border-radius:8px;
+
+    text-align:center;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+
+}
