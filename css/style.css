@@ -7145,3 +7145,327 @@ visibility:hidden;
     text-overflow:ellipsis;
 
 }
+
+.calendar-more{
+
+    margin-top:4px;
+
+    font-size:11px;
+
+    color:#94a3b8;
+
+    text-align:center;
+
+    font-weight:600;
+
+}
+
+/* =====================================
+   CALENDAR POST CARD
+===================================== */
+
+.calendar-post-card{
+
+    position:relative;
+
+    overflow:hidden;
+
+    padding:22px;
+
+    margin-bottom:18px;
+
+    border-radius:22px;
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(59,130,246,.28),
+        rgba(30,64,175,.18)
+    );
+
+    border:
+    1px solid rgba(96,165,250,.35);
+
+    backdrop-filter:blur(22px);
+
+    -webkit-backdrop-filter:blur(22px);
+
+    box-shadow:
+        0 12px 35px rgba(37,99,235,.25),
+        inset 0 1px 0 rgba(255,255,255,.18);
+
+    transition:.3s;
+
+}
+
+.calendar-post-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:-60%;
+
+    left:-40%;
+
+    width:220%;
+
+    height:120%;
+
+    background:
+
+    linear-gradient(
+
+        120deg,
+
+        transparent,
+
+        rgba(255,255,255,.18),
+
+        transparent
+
+    );
+
+    transform:rotate(18deg);
+
+    pointer-events:none;
+
+}
+
+.calendar-post-card h3{
+
+    color:#ffffff;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    margin-bottom:18px;
+
+    letter-spacing:.4px;
+
+}
+
+.calendar-post-card p{
+
+    color:#dbeafe;
+
+    line-height:1.7;
+
+    margin:8px 0;
+
+    font-size:14px;
+
+}
+
+.calendar-post-card strong{
+
+    color:white;
+
+    font-weight:700;
+
+}
+
+.calendar-post-card:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:
+
+        0 18px 45px rgba(37,99,235,.35),
+
+        inset 0 1px 0 rgba(255,255,255,.22);
+
+}
+
+/* =====================================
+   CALENDAR MODAL
+===================================== */
+
+#calendarModalContent{
+
+    color:#e5e7eb;
+
+}
+
+
+.calendar-post-card h3{
+
+    color:#ffffff;
+
+    font-size:16px;
+
+    margin-bottom:12px;
+
+}
+
+.calendar-post-card p{
+
+    color:#cbd5e1;
+
+    margin:8px 0;
+
+    line-height:1.6;
+
+}
+
+.calendar-post-card strong{
+
+    color:#ffffff;
+
+}
+
+/* =====================================
+   CALENDAR MODAL FIX
+===================================== */
+
+
+/* =====================================
+   CALENDAR POPUP CARD FIX
+===================================== */
+
+#calendarModal .calendar-post-card{
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(59,130,246,.45),
+        rgba(30,64,175,.35)
+    ) !important;
+
+
+    border:
+    1px solid rgba(96,165,250,.55) !important;
+
+
+    color:#dbeafe !important;
+
+
+    box-shadow:
+
+    0 15px 40px rgba(37,99,235,.35),
+
+    inset 0 1px 0 rgba(255,255,255,.2) !important;
+
+
+    backdrop-filter:blur(20px);
+
+    -webkit-backdrop-filter:blur(20px);
+
+}
+
+
+#calendarModal .calendar-post-card h3{
+
+    color:#ffffff !important;
+
+}
+
+
+#calendarModal .calendar-post-card p{
+
+    color:#dbeafe !important;
+
+}
+
+
+#calendarModal .calendar-post-card strong{
+
+    color:#ffffff !important;
+
+}
+
+
+#calendarModal .calendar-post-card span{
+
+    color:#dbeafe !important;
+
+}
+
+/* =====================================
+   FORCE CALENDAR POPUP BLUE GLASS CARD
+===================================== */
+
+#calendarModal .calendar-post-card{
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(59,130,246,0.45),
+        rgba(30,64,175,0.35)
+    ) !important;
+
+
+    border:
+    1px solid rgba(147,197,253,0.45) !important;
+
+
+    box-shadow:
+
+        0 15px 40px rgba(37,99,235,0.35),
+
+        inset 0 1px 0 rgba(255,255,255,0.25) !important;
+
+
+    backdrop-filter:blur(20px);
+
+    -webkit-backdrop-filter:blur(20px);
+
+}
+
+/* =====================================
+   CALENDAR MODAL DARK GLASS FIX
+===================================== */
+
+
+#calendarModal .modal-content{
+
+    background:
+
+    linear-gradient(
+        145deg,
+        rgba(15,23,42,.95),
+        rgba(30,41,59,.90)
+    ) !important;
+
+
+    border:
+
+    1px solid rgba(96,165,250,.25) !important;
+
+
+    box-shadow:
+
+    0 25px 70px rgba(0,0,0,.55),
+
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+
+
+    backdrop-filter:blur(25px);
+
+    -webkit-backdrop-filter:blur(25px);
+
+}
+
+
+
+#calendarModal .modal-header h2{
+
+    color:white !important;
+
+}
+
+
+#calendarModal .close{
+
+    color:white !important;
+
+}
+
+
+
+#calendarModal .modal-body{
+
+    color:#dbeafe !important;
+
+}

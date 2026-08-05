@@ -822,50 +822,27 @@ tabs.forEach(tab=>{
         .getElementById(target)
         .classList.add("active");
 
-        localStorage.setItem(
-    "activeAccountTab",
-    target
-);
     };
 
-    // =====================================
-// RESTORE ACTIVE TAB
-// =====================================
+    // RESET DEFAULT TAB ON LOAD
 
-const savedTab =
-localStorage.getItem("activeAccountTab");
+tabs.forEach(tab=>{
+    tab.classList.remove("active");
+});
 
-if(savedTab){
+tabContents.forEach(content=>{
+    content.classList.remove("active");
+});
 
-    tabs.forEach(tab=>{
 
-        tab.classList.remove("active");
+document
+.querySelector('[data-tab="dashboard"]')
+.classList.add("active");
 
-    });
 
-    tabContents.forEach(content=>{
-
-        content.classList.remove("active");
-
-    });
-
-    const activeButton =
-    document.querySelector(
-        `[data-tab="${savedTab}"]`
-    );
-
-    const activeContent =
-    document.getElementById(savedTab);
-
-    if(activeButton && activeContent){
-
-        activeButton.classList.add("active");
-
-        activeContent.classList.add("active");
-
-    }
-
-}
+document
+.getElementById("dashboard")
+.classList.add("active");
 
 });
 

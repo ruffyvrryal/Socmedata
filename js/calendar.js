@@ -95,12 +95,35 @@ const dayContents = account.contents.filter(function(content){
 if(dayContents.length > 0){
 
     const eventContainer =
-        cell.querySelector(".calendar-events");
+    cell.querySelector(".calendar-events");
 
-    eventContainer.innerHTML =
-        `<div class="calendar-event">
-            ${dayContents.length} Post
-        </div>`;
+eventContainer.innerHTML = "";
+
+dayContents.slice(0, 2).forEach(function(post){
+
+    eventContainer.innerHTML += `
+        <div class="calendar-event">
+
+            <strong>
+                ${getPlatformEmoji(post.platform)}
+            </strong>
+
+            ${post.caption || "Untitled"}
+
+        </div>
+    `;
+
+});
+
+if(dayContents.length > 2){
+
+    eventContainer.innerHTML += `
+        <div class="calendar-more">
+            +${dayContents.length - 2} more
+        </div>
+    `;
+
+}
 
 }
 
@@ -177,9 +200,65 @@ function openCalendarDay(date){
 
     title.textContent = date;
 
-    content.innerHTML = `
-        <p>No content scheduled for this day.</p>
-    `;
+    const dayContents = account.contents.filter(function(post){
+
+        return post.date === date;
+
+    });
+
+    if(dayContents.length === 0){
+
+        content.innerHTML = `
+            <p>No content scheduled for this day.</p>
+        `;
+
+    }else{
+
+        content.innerHTML = "";
+
+        dayContents.forEach(function(post){
+
+            content.innerHTML += `
+
+                <div class="calendar-post-card">
+
+                    <h3>
+                        ${getPlatformEmoji(post.platform)}
+                        ${post.platform}
+                    </h3>
+
+                    <p>
+                        <strong>Caption:</strong><br>
+                        ${post.caption || "-"}
+                    </p>
+
+                    <p>
+                        👁 ${formatNumber(post.views || 0)} Views
+                    </p>
+
+                    <p>
+                        ❤️ ${formatNumber(post.likes || 0)} Likes
+                    </p>
+
+                    <p>
+                        💬 ${formatNumber(post.comments || 0)} Comments
+                    </p>
+
+                    <p>
+                        🔄 ${formatNumber(post.shares || 0)} Shares
+                    </p>
+
+                    <p>
+                        🔖 ${formatNumber(post.saved || 0)} Saved
+                    </p>
+
+                </div>
+
+            `;
+
+        });
+
+    }
 
     modal.style.display = "flex";
 
@@ -212,3 +291,32 @@ window.addEventListener("click", function(e){
 });
 
 console.log("Account Contents:", account.contents);
+
+function getPlatformEmoji(platform){
+
+    switch(platform){
+
+        case "Instagram":
+            return "📸";
+
+        case "TikTok":
+            return "🎵";
+
+        case "Facebook":
+            return "📘";
+
+        case "YouTube":
+            return "▶️";
+
+        case "X":
+            return "𝕏";
+
+        case "Threads":
+            return "🧵";
+
+        default:
+            return "📄";
+
+    }
+
+}
