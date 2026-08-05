@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Account Dashboard</title>
+
+<link rel="stylesheet"
+href="../css/style.css">
+
+</head>
+
+<body>
+
+<div class="account-dashboard-container">
+
+    <!-- TOP NAV -->
+
+    <div class="account-top-nav">
+
+        <button class="back-button" onclick="goBack()">
+            ← Back
+        </button>
+
+        <div class="nav-logo">
+            Socmedata
+        </div>
+
+    </div>
+
+    <!-- HERO -->
+
+    <section class="dashboard-hero">
+
+        <h1
+        id="accountTitle"
+        class="dashboard-title">
+
+            Instagram Account
+
+        </h1>
+
+        <p class="dashboard-subtitle">
+
+            Manage your social media performance
+            from one place.
+
+        </p>
+
+    </section>
+
+    <!-- CHROME TABS -->
+
+    <div class="account-tabs">
+
+    <button 
+    class="account-tab active"
+    data-tab="dashboard">
+
+        Dashboard
+
+    </button>
+
+
+    <button 
+    class="account-tab"
+    data-tab="content">
+
+        Content
+
+    </button>
+
+
+    <button 
+    class="account-tab"
+    data-tab="calendar">
+
+        Calendar
+
+    </button>
+
+
+    <button 
+    class="account-tab"
+    data-tab="engagement">
+
+        Engagement
+
+    </button>
+
+    <button 
+class="account-tab"
+data-tab="hashtag">
+
+    Hashtag
+
+</button>
+
+
+    <button 
+    class="account-tab"
+    data-tab="monthly">
+
+        Monthly
+
+    </button>
+
+
+    <button 
+    class="account-tab"
+    data-tab="weekly">
+
+        Weekly
+
+    </button>
+
+
+</div>
+
+<!-- TAB CONTENT AREA -->
+
+
+<section class="tab-content active" id="dashboard">
+
+
+    <div class="analytics-grid">
+
+
+        <div class="analytics-card card-blue">
+
+            <div class="analytics-icon">
+                👁
+            </div>
+
+            <p>Total Views</p>
+
+            <h3 id="totalViews">
+                0
+            </h3>
+
+        </div>
+
+
+
+        <div class="analytics-card card-purple">
+
+            <div class="analytics-icon">
+                👥
+            </div>
+
+            <p>Followers</p>
+
+            <h3 id="followers">
+                0
+            </h3>
+
+        </div>
+
+
+
+
+        <div class="analytics-card card-cyan">
+
+            <div class="analytics-icon">
+                📝
+            </div>
+
+            <p>Total Content</p>
+
+            <h3 id="contentCount">
+                0
+            </h3>
+
+        </div>
+
+
+
+
+        <div class="analytics-card card-orange">
+
+            <div class="analytics-icon">
+                📈
+            </div>
+
+            <p>Weekly Growth</p>
+
+            <h3 id="growth">
+                +0%
+            </h3>
+
+        </div>
+
+
+        </div>
+
+
+
+    <!-- ACCOUNT CENTER -->
+
+
+    <section class="account-center">
+
+
+        <div class="account-center-header">
+
+
+            <div>
+
+                <h2>
+                    Account Center
+                </h2>
+
+                <p>
+                    Manage every platform connected to this account.
+                </p>
+
+            </div>
+
+
+            <button id="connectPlatformBtn">
+
+                + Connect Platform
+
+            </button>
+
+
+        </div>
+
+
+
+        <div class="platform-toolbar">
+
+
+            <select id="platformFilter">
+
+
+                <option value="all">
+                    All Platforms
+                </option>
+
+
+                <option value="Instagram">
+                    Instagram
+                </option>
+
+
+                <option value="TikTok">
+                    TikTok
+                </option>
+
+
+                <option value="Facebook">
+                    Facebook
+                </option>
+
+
+                <option value="YouTube">
+                    YouTube
+                </option>
+
+
+                <option value="X">
+                    X
+                </option>
+
+
+                <option value="Threads">
+                    Threads
+                </option>
+
+
+            </select>
+
+
+        </div>
+
+
+
+        <div
+        class="platform-grid"
+        id="platformGrid">
+
+
+        </div>
+
+
+    </section>
+
+
+
+</section>
+
+
+
+
+
+<section class="tab-content" id="content">
+
+
+    <div class="content-header">
+
+
+        <div>
+
+            <h2>
+                Content Management
+            </h2>
+
+
+            <p>
+                Track every post performance.
+            </p>
+
+
+        </div>
+
+
+
+        <button id="addContentBtn">
+
+            + Add Content
+
+        </button>
+
+
+    </div>
+
+
+
+
+    <div class="content-table-container">
+
+
+        <table class="content-table">
+
+
+            <thead>
+
+<tr>
+
+<th>
+No
+</th>
+
+
+<th>
+Upload Date
+</th>
+
+
+<th>
+Caption
+</th>
+
+
+<th>
+Hashtag
+</th>
+
+
+<th>
+Views
+</th>
+
+
+<th>
+Platform
+</th>
+
+
+</tr>
+
+</thead>
+
+
+            <tbody id="contentTableBody">
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+</section>
+
+<section class="tab-content" id="calendar">
+
+    <h2>Content Calendar</h2>
+
+    <p>
+        Plan your posting schedule.
+    </p>
+
+</section>
+
+
+<section class="tab-content" id="engagement">
+
+    <h2>Engagement Tracker</h2>
+
+    <p>
+        Track comments, likes and audience interaction.
+    </p>
+
+</section>
+
+<section class="tab-content" id="hashtag">
+
+
+    <h2>
+        Hashtag Performance
+    </h2>
+
+
+    <p>
+        Track hashtag usage and performance.
+    </p>
+
+
+
+    <div 
+    id="hashtagList"
+    class="hashtag-list">
+
+
+    </div>
+
+
+</section>
+
+
+<section class="tab-content" id="monthly">
+
+    <h2>Monthly Report</h2>
+
+    <p>
+        Monthly performance summary.
+    </p>
+
+</section>
+
+
+<section class="tab-content" id="weekly">
+
+    <h2>Weekly Report</h2>
+
+    <p>
+        Weekly performance summary.
+    </p>
+
+</section>
+
+
+
+<!-- ===========================
+ADD PLATFORM MODAL
+=========================== -->
+
+
+
+<!-- =====================================
+CONNECT PLATFORM MODAL
+===================================== -->
+
+<div
+id="platformModal"
+class="modal">
+
+    <div class="modal-content glass-modal">
+
+        <div class="modal-header">
+
+            <h2>
+
+                Connect Platform
+
+            </h2>
+
+            <span
+            id="closePlatformModal"
+            class="close">
+
+                ×
+
+            </span>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <label>
+
+                Platform
+
+            </label>
+
+            <select id="platformSelect">
+
+                <option value="">
+
+                    Select Platform
+
+                </option>
+
+                <option>
+
+                    Instagram
+
+                </option>
+
+                <option>
+
+                    TikTok
+
+                </option>
+
+                <option>
+
+                    Facebook
+
+                </option>
+
+                <option>
+
+                    YouTube
+
+                </option>
+
+                <option>
+
+                    X
+
+                </option>
+
+                <option>
+
+                    Threads
+
+                </option>
+
+            </select>
+
+
+            <label>
+
+                Username
+
+            </label>
+
+            <input
+            id="platformUsername"
+            type="text"
+            placeholder="@username">
+
+
+            <label>
+
+                Followers
+
+            </label>
+
+            <input
+            id="platformFollowers"
+            type="number"
+            placeholder="0">
+
+
+            <div class="modal-buttons">
+
+                <button
+                id="cancelPlatform">
+
+                    Cancel
+
+                </button>
+
+                <button
+                id="savePlatform">
+
+                    Connect Platform
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    </div>
+
+
+</div>
+
+<div id="contentModal" class="modal">
+
+
+<div class="modal-content">
+
+
+<div class="modal-header">
+
+<h2>
+Add Content
+</h2>
+
+
+<span 
+id="closeContentModal"
+class="close">
+
+×
+
+
+</span>
+
+
+</div>
+
+
+
+<div class="modal-body">
+
+
+<label>
+Upload Date
+</label>
+
+<input 
+type="date"
+id="contentDate">
+
+
+
+<label>
+Caption
+</label>
+
+<textarea
+id="contentCaption">
+</textarea>
+
+<label>
+Hashtag
+</label>
+
+
+<input
+type="text"
+id="contentHashtag"
+placeholder="#example">
+
+
+<label>
+Views
+</label>
+
+<input
+type="number"
+id="contentViews">
+
+
+
+<label>
+Likes
+</label>
+
+<input
+type="number"
+id="contentLikes">
+
+
+
+<label>
+Comments
+</label>
+
+<input
+type="number"
+id="contentComments">
+
+
+
+<label>
+Shares
+</label>
+
+<input
+type="number"
+id="contentShares">
+
+
+
+<label>
+Saved
+</label>
+
+<input
+type="number"
+id="contentSaved">
+
+<label>
+Platform
+</label>
+
+
+<select id="contentPlatform">
+
+<option>
+Instagram
+</option>
+
+<option>
+TikTok
+</option>
+
+<option>
+YouTube
+</option>
+
+<option>
+Facebook
+</option>
+
+</select>
+
+
+
+<div class="modal-buttons">
+
+
+<button id="cancelContent">
+
+Cancel
+
+</button>
+
+
+<button id="saveContent">
+
+Save Content
+
+</button>
+
+// =============================
+// SAVE CONTENT
+// =============================
+
+const saveContentBtn =
+document.getElementById("saveContent");
+
+
+if(saveContentBtn){
+
+
+saveContentBtn.onclick = function(){
+
+
+
+let content = {
+
+
+id: Date.now(),
+
+
+accountId: activeAccountId,
+
+
+date:
+document.getElementById("contentDate").value,
+
+
+caption:
+document.getElementById("contentCaption").value,
+
+
+hashtag:
+document.getElementById("contentHashtag").value,
+
+
+views:
+Number(
+document.getElementById("contentViews").value
+),
+
+
+likes:
+Number(
+document.getElementById("contentLikes").value
+),
+
+
+comments:
+Number(
+document.getElementById("contentComments").value
+),
+
+
+shares:
+Number(
+document.getElementById("contentShares").value
+),
+
+
+saved:
+Number(
+document.getElementById("contentSaved").value
+),
+
+
+platform:
+document.getElementById("contentPlatform").value
+
+
+};
+
+
+
+contents.push(content);
+
+
+
+localStorage.setItem(
+"contents",
+JSON.stringify(contents)
+);
+
+
+
+renderContents();
+
+
+
+renderHashtags();
+
+
+
+};
+
+}
+
+// =============================
+// RENDER CONTENT TABLE
+// =============================
+
+function renderContents(){
+
+
+let table =
+document.getElementById(
+"contentTableBody"
+);
+
+
+
+if(!table) return;
+
+
+
+table.innerHTML="";
+
+
+
+let accountContents =
+contents.filter(
+item =>
+item.accountId == activeAccountId
+);
+
+
+
+accountContents.forEach(
+(item,index)=>{
+
+
+table.innerHTML += `
+
+
+<tr>
+
+
+<td>
+${index + 1}
+</td>
+
+
+<td>
+${item.date}
+</td>
+
+
+<td>
+${item.caption}
+</td>
+
+
+<td>
+${item.hashtag}
+</td>
+
+
+<td>
+${item.views}
+</td>
+
+
+<td>
+${item.platform}
+</td>
+
+
+</tr>
+
+
+`;
+
+
+});
+
+
+}
+
+// =============================
+// HASHTAG ANALYTICS
+// =============================
+
+function renderHashtags(){
+
+
+let box =
+document.getElementById(
+"hashtagList"
+);
+
+
+
+if(!box) return;
+
+
+
+box.innerHTML="";
+
+
+
+let accountContents =
+contents.filter(
+item =>
+item.accountId == activeAccountId
+);
+
+
+
+let hashtagData = {};
+
+
+
+accountContents.forEach(item=>{
+
+
+let tag = item.hashtag;
+
+
+if(!hashtagData[tag]){
+
+
+hashtagData[tag]={
+
+posts:0,
+
+views:0
+
+};
+
+
+}
+
+
+
+hashtagData[tag].posts++;
+
+hashtagData[tag].views += item.views;
+
+
+
+});
+
+
+
+Object.keys(hashtagData)
+.forEach(tag=>{
+
+
+box.innerHTML += `
+
+
+<div class="hashtag-card">
+
+
+<h3>
+${tag}
+</h3>
+
+
+<p>
+Posts:
+${hashtagData[tag].posts}
+</p>
+
+
+<p>
+Views:
+${hashtagData[tag].views}
+</p>
+
+
+</div>
+
+
+`;
+
+
+});
+
+
+}
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<div id="contentDetailModal" class="modal">
+
+
+<div class="modal-content">
+
+
+<div class="modal-header">
+
+<h2>
+Post Engagement
+</h2>
+
+
+<span 
+id="closeDetailModal"
+class="close">
+
+×
+
+</span>
+
+
+</div>
+
+
+
+<div class="modal-body">
+
+
+<h3 id="detailCaption"></h3>
+
+
+<p>
+👁 Views:
+<span id="detailViews"></span>
+</p>
+
+
+<p>
+❤️ Likes:
+<span id="detailLikes"></span>
+</p>
+
+
+<p>
+💬 Comments:
+<span id="detailComments"></span>
+</p>
+
+
+<p>
+🔄 Shares:
+<span id="detailShares"></span>
+</p>
+
+
+<p>
+🔖 Saved:
+<span id="detailSaved"></span>
+</p>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<script src="../js/account.js"></script>
+
+</body>
+
+</html>

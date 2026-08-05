@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard - Socmedata</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+
+<body>
+
+    <nav class="top-nav">
+
+    <button
+        id="backToVaults"
+        class="back-button">
+
+        ← Back to Vaults
+
+    </button>
+
+
+    <div class="nav-logo">
+
+        Socmedata
+
+    </div>
+
+
+    <div
+        id="currentVault"
+        class="current-vault">
+
+        Loading...
+
+    </div>
+
+</nav>
+
+<div class="dashboard-container">
+
+    <!-- HERO -->
+
+<section class="dashboard-hero">
+
+    <div class="hero-content">
+
+        <h1 id="vaultTitle" class="dashboard-title">
+            Loading Vault...
+        </h1>
+
+        <p class="dashboard-subtitle">
+
+            Organize every brand, creator, and business account
+            inside this vault.
+
+        </p>
+
+    </div>
+
+</section>
+
+
+    <!-- Toolbar -->
+
+    <section class="account-toolbar">
+
+        <input
+    type="text"
+    id="searchAccount"
+    placeholder="🔍 Search accounts..."
+>
+
+        <button
+    id="addAccount"
+    class="toolbar-button">
+
+    + New Account
+
+</button>
+
+    </section>
+
+
+    <!-- Account List -->
+
+    <section
+        id="accountList"
+        class="account-list">
+
+    </section>
+
+</div>
+
+<!-- Add Account Modal -->
+
+<div id="accountModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="accountModalTitle">
+    Add Account
+</h2>
+
+            <span
+                id="closeAccountModal"
+                class="close">
+
+                &times;
+
+            </span>
+
+        </div>
+
+        <div class="modal-body">
+
+            <label>
+                Account Name
+            </label>
+
+            <input
+                type="text"
+                id="accountName"
+                placeholder="Example: Ruffy"
+            >
+
+            <label>
+    Description
+</label>
+
+<textarea
+    id="accountDescription"
+    placeholder="Optional description"
+></textarea>
+
+
+<label>
+    Account Icon
+</label>
+
+<input
+    type="file"
+    id="accountIconUpload"
+    accept="image/*"
+>
+
+<div id="iconPreviewBox">
+
+    <img
+        id="iconPreview"
+        src=""
+        alt="Icon Preview"
+    >
+
+</div>
+
+<label>
+    Icon Link
+</label>
+
+<input
+    type="text"
+    id="accountIconURL"
+    placeholder="https://example.com/logo.png"
+>
+
+
+<div class="modal-buttons">
+
+                <button id="cancelAccount">
+
+                    Cancel
+
+                </button>
+
+                <button id="saveAccount">
+
+    Save Account
+
+</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- EDIT ACCOUNT MODAL -->
+
+<div id="editAccountModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Edit Account</h2>
+
+            <span 
+            id="closeEditAccountModal"
+            class="close">
+
+            &times;
+
+            </span>
+
+        </div>
+
+
+        <div class="modal-body">
+
+
+            <label>
+                Account Name
+            </label>
+
+            <input
+            type="text"
+            id="editAccountName">
+
+
+            <label>
+                Description
+            </label>
+
+
+            <textarea
+            id="editAccountDescription">
+            </textarea>
+
+
+
+            <label>
+                Change Icon Upload
+            </label>
+
+
+            <input
+            type="file"
+            id="editAccountIconUpload"
+            accept="image/*">
+
+
+            <label>
+                Or Icon Link
+            </label>
+
+
+            <input
+            type="text"
+            id="editAccountIconURL"
+            placeholder="https://example.com/logo.png">
+
+            <div id="editIconPreviewBox">
+
+    <img id="editIconPreview">
+
+</div>
+
+
+
+            <div class="modal-buttons">
+
+
+                <button 
+                id="cancelEditAccount">
+
+                    Cancel
+
+                </button>
+
+
+
+                <button
+                id="saveEditAccount">
+
+                    Save Changes
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+
+<div id="deleteAccountModal" class="modal">
+
+    <div class="modal-content delete-modal">
+
+        <div class="modal-header">
+
+            <h2>
+                Delete Account
+            </h2>
+
+            <span 
+            id="closeDeleteAccountModal"
+            class="close">
+
+            &times;
+
+            </span>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <div class="delete-warning-icon">
+
+    ⚠️
+
+</div>
+
+
+<p id="deleteAccountText">
+
+    Are you sure you want to delete this account?
+
+</p>
+
+
+            <div class="modal-buttons">
+
+                <button 
+                id="cancelDeleteAccount">
+
+                    Cancel
+
+                </button>
+
+
+                <button 
+                id="confirmDeleteAccount"
+                class="delete-confirm">
+
+                    Delete
+
+                </button>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+</div>
+
+<script src="../js/dashboard.js"></script>
+
+</body>
+
+</html>

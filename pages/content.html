@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Content Management - Socmedata</title>
+
+<link rel="stylesheet" href="../css/style.css">
+
+</head>
+
+
+<body>
+
+
+<div class="dashboard-container">
+
+
+<h1>
+Content Management
+</h1>
+
+
+<p id="profileName">
+Loading profile...
+</p>
+
+
+<button id="addContent">
+
++ Create Content
+
+</button>
+
+<div class="content-toolbar">
+
+    <input
+        type="text"
+        id="searchContent"
+        placeholder="🔍 Search content..."
+    >
+
+    <select id="statusFilter">
+
+        <option value="all">
+            All Status
+        </option>
+
+        <option value="draft">
+            Draft
+        </option>
+
+        <option value="scheduled">
+            Scheduled
+        </option>
+
+        <option value="published">
+            Published
+        </option>
+
+    </select>
+
+    <select id="platformFilter">
+
+    <option value="all">
+        All Platforms
+    </option>
+
+    <option value="Instagram">
+        Instagram
+    </option>
+
+    <option value="TikTok">
+        TikTok
+    </option>
+
+    <option value="YouTube">
+        YouTube
+    </option>
+
+    <option value="Facebook">
+        Facebook
+    </option>
+
+    <option value="X">
+        X
+    </option>
+
+    <option value="Threads">
+        Threads
+    </option>
+
+</select>
+
+</div>
+
+<div class="content-box">
+
+
+<h2>
+My Content
+</h2>
+
+
+
+<div id="contentList">
+
+<p>
+No content yet
+</p>
+
+</div>
+
+
+</div>
+
+
+
+<div id="contentModal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">
+Create Content
+</h2>
+
+            <span id="closeModal" class="close">
+                &times;
+            </span>
+
+        </div>
+
+        <div class="modal-body">
+
+<label>Title</label>
+
+<input
+type="text"
+id="contentTitle"
+placeholder="Enter content title"
+>
+
+<label>Platform</label>
+
+<select id="contentPlatform">
+
+<option>Instagram</option>
+<option>Facebook</option>
+<option>TikTok</option>
+<option>YouTube</option>
+<option>Threads</option>
+<option>X</option>
+<option>LinkedIn</option>
+<option>Pinterest</option>
+
+</select>
+
+
+<label>Content Type</label>
+
+<select id="contentType">
+
+<option>Post</option>
+<option>Reel</option>
+<option>Story</option>
+<option>Carousel</option>
+<option>Video</option>
+<option>Short</option>
+<option>Live</option>
+
+</select>
+
+
+<label>Status</label>
+
+<select id="contentStatus">
+
+<option>Draft</option>
+<option>Scheduled</option>
+<option>Published</option>
+<option>Archived</option>
+
+</select>
+
+
+<label>Publish Date</label>
+
+<input
+type="date"
+id="contentDate"
+>
+
+
+<label>Caption</label>
+
+<textarea
+id="contentCaption"
+rows="5"
+placeholder="Write your caption..."
+></textarea>
+
+
+<label>Hashtags</label>
+
+<input
+type="text"
+id="contentTags"
+placeholder="#marketing #instagram"
+>
+
+
+<label>Notes</label>
+
+<textarea
+id="contentNotes"
+rows="4"
+placeholder="Internal notes..."
+></textarea>
+
+
+<div class="modal-buttons">
+
+<button
+type="button"
+id="cancelContent">
+
+Cancel
+
+</button>
+
+<button
+type="button"
+id="saveContent">
+
+Create Content
+
+</button>
+
+</div>
+
+</div>
+
+    </div>
+
+</div>
+
+
+
+</div>
+
+
+
+
+<script src="../js/content.js"></script>
+
+
+</body>
+
+</html>
