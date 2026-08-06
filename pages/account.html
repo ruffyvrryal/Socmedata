@@ -694,11 +694,102 @@ class="platform-hashtag-analytics">
 
 <section class="tab-content" id="monthly">
 
-    <h2>Monthly Report</h2>
+    <div class="monthly-header">
 
-    <p>
-        Monthly performance summary.
-    </p>
+        <div>
+
+            <h2>
+                Monthly Report
+            </h2>
+
+            <p>
+                Analyze your monthly social media performance.
+            </p>
+
+        </div>
+
+        <select id="monthlyFilter">
+
+            <option value="0">January</option>
+            <option value="1">February</option>
+            <option value="2">March</option>
+            <option value="3">April</option>
+            <option value="4">May</option>
+            <option value="5">June</option>
+            <option value="6">July</option>
+            <option value="7">August</option>
+            <option value="8">September</option>
+            <option value="9">October</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+
+        </select>
+
+    </div>
+
+    <div class="monthly-summary" id="monthlySummary">
+
+    </div>
+
+    <h2 class="monthly-section-title">
+    Platform Performance
+</h2>
+
+<div
+    id="monthlyPlatforms"
+    class="monthly-platform-grid">
+
+</div>
+
+<h2 class="monthly-section-title">
+    Best Platform This Month
+</h2>
+
+<div
+    id="monthlyBestPlatform"
+    class="monthly-best-platform">
+
+</div>
+
+<h2 class="monthly-section-title">
+    Top Performing Content
+</h2>
+
+<div
+    class="monthly-top-content"
+    id="monthlyTopContent">
+
+</div>
+
+<h2 class="monthly-section-title">
+    Monthly Content Performance
+</h2>
+
+<div class="monthly-table-container">
+
+    <table class="monthly-table">
+
+        <thead>
+
+            <tr>
+
+                <th>Date</th>
+                <th>Platform</th>
+                <th>Caption</th>
+                <th>Views</th>
+                <th>Engagement</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody id="monthlyContentTable">
+
+        </tbody>
+
+    </table>
+
+</div>
 
 </section>
 

@@ -22,14 +22,6 @@ localStorage.getItem("activeAccountId");
 
 let editingContentId = null;
 
-// =============================
-// CONTENT DATABASE
-// =============================
-
-let contents =
-JSON.parse(localStorage.getItem("contents")) || [];
-
-
 // =====================================
 // FIND ACTIVE VAULT
 // =====================================
@@ -210,20 +202,24 @@ account.name;
 
 function loadAnalytics(){
 
-        const analytics = calculateAnalytics();
+    const analytics = calculateAnalytics();
 
-    totalViews.textContent =
-    formatNumber(analytics.totalViews);
+    if(totalViews)
+        totalViews.textContent =
+        formatNumber(analytics.totalViews);
 
-    followers.textContent =
-    formatNumber(analytics.totalFollowers);
+    if(followers)
+        followers.textContent =
+        formatNumber(analytics.totalFollowers);
 
-    contentCount.textContent =
-    analytics.totalContents;
+    if(contentCount)
+        contentCount.textContent =
+        analytics.totalContents;
 
-    growth.textContent =
-    (analytics.totalGrowth >= 0 ? "+" : "")
-    + analytics.totalGrowth + "%";
+    if(growth)
+        growth.textContent =
+        (analytics.totalGrowth >= 0 ? "+" : "")
+        + analytics.totalGrowth + "%";
 
 }
 
@@ -623,6 +619,8 @@ function updateAnalytics(){
 
     loadAnalytics();
 
+    renderPlatforms();
+
 }
 
 // =====================================
@@ -729,11 +727,6 @@ window.addEventListener(
 
 );
 
-function goBack(){
-
-    window.history.back();
-
-}
 
 // =============================
 // ACCOUNT TABS
@@ -853,52 +846,69 @@ if(activeContent){
 const customFilter =
 document.getElementById("platformFilter");
 
-const trigger =
-customFilter.querySelector(".custom-select-trigger");
 
-trigger.onclick = function(){
+if(customFilter){
 
-    customFilter.classList.toggle("open");
-
-};
-
-const selectedText =
-document.getElementById("selectedPlatform");
-
-const options =
-customFilter.querySelectorAll(".custom-option");
+    const trigger =
+    customFilter.querySelector(".custom-select-trigger");
 
 
-options.forEach(option=>{
+    const selectedText =
+    document.getElementById("selectedPlatform");
 
-    option.onclick=function(){
 
-        // Remove previous active
-        options.forEach(item=>
-            item.classList.remove("active")
-        );
+    const options =
+    customFilter.querySelectorAll(".custom-option");
 
-        // Activate current
-        option.classList.add("active");
 
-        // Change displayed text
-        selectedText.textContent =
-        option.textContent;
+    if(trigger){
 
-        // Save selected value
-        selectedPlatformValue =
-        option.dataset.value;
+        trigger.onclick = function(){
 
-        renderPlatforms();
+            customFilter.classList.toggle("open");
 
-        // Close dropdown
-        customFilter.classList.remove("open");
+        };
 
-        console.log(selectedPlatformValue);
+    }
 
-    };
 
-});
+    options.forEach(option=>{
+
+        option.onclick=function(){
+
+            options.forEach(item=>
+                item.classList.remove("active")
+            );
+
+
+            option.classList.add("active");
+
+
+            if(selectedText){
+
+                selectedText.textContent =
+                option.textContent;
+
+            }
+
+
+            selectedPlatformValue =
+            option.dataset.value;
+
+
+            renderPlatforms();
+
+
+            customFilter.classList.remove("open");
+
+
+            console.log(selectedPlatformValue);
+
+        };
+
+    });
+
+}
 
 // =====================================
 // LOGO BUTTON SYSTEM
@@ -1501,6 +1511,8 @@ renderPlatformComparison();
 
 renderHashtags();
 
+renderMonthlyReport();
+
     deleteModal.style.display =
     "none";
 
@@ -1536,6 +1548,8 @@ loadEngagement();
 renderPlatformComparison();
 
 renderHashtags();
+
+renderMonthlyReport();
 
 // renderContents();
 
@@ -2446,6 +2460,442 @@ No hashtags yet.
 }
 
 }
+
+// =====================================
+// MONTHLY REPORT
+// =====================================
+
+function renderMonthlyReport(){
+
+    const summary =
+    document.getElementById("monthlySummary");
+
+    if(!summary) return;
+
+    const monthlyFilter =
+document.getElementById("monthlyFilter");
+
+const now = new Date();
+
+const currentMonth = monthlyFilter
+? Number(monthlyFilter.value)
+: now.getMonth();
+
+const currentYear = now.getFullYear();
+
+    let totalViews = 0;
+    let totalPosts = 0;
+    let totalEngagement = 0;
+
+    account.contents.forEach(content=>{
+
+        if(!content.date) return;
+
+        const date = new Date(content.date);
+
+        if(
+            date.getMonth() === currentMonth &&
+            date.getFullYear() === currentYear
+        ){
+
+            totalPosts++;
+
+            totalViews +=
+            Number(content.views) || 0;
+
+            totalEngagement +=
+            (Number(content.likes)||0)
+            +
+            (Number(content.comments)||0)
+            +
+            (Number(content.shares)||0)
+            +
+            (Number(content.saved)||0);
+
+        }
+
+    });
+
+    let totalFollowers = 0;
+
+    account.platforms.forEach(platform=>{
+
+        totalFollowers +=
+        Number(platform.analytics?.followers) || 0;
+
+    });
+
+    summary.innerHTML = `
+
+    <div class="monthly-card">
+
+        <span>Total Views</span>
+
+        <h2>${formatNumber(totalViews)}</h2>
+
+    </div>
+
+    <div class="monthly-card">
+
+        <span>Total Posts</span>
+
+        <h2>${totalPosts}</h2>
+
+    </div>
+
+    <div class="monthly-card">
+
+        <span>Engagement</span>
+
+        <h2>${formatNumber(totalEngagement)}</h2>
+
+    </div>
+
+    <div class="monthly-card">
+
+        <span>Followers</span>
+
+        <h2>${formatNumber(totalFollowers)}</h2>
+
+    </div>
+
+    `;
+
+const monthlyPlatforms =
+document.getElementById("monthlyPlatforms");
+
+if(monthlyPlatforms){
+
+    let platformStats = {};
+
+    account.contents.forEach(content=>{
+
+        if(!content.date) return;
+
+        const date = new Date(content.date);
+
+        if(
+            date.getMonth() !== currentMonth ||
+            date.getFullYear() !== currentYear
+        ){
+            return;
+        }
+
+        if(!platformStats[content.platform]){
+
+            platformStats[content.platform] = {
+
+                posts:0,
+
+                views:0,
+
+                engagement:0
+
+            };
+
+        }
+
+        platformStats[content.platform].posts++;
+
+        platformStats[content.platform].views +=
+        Number(content.views)||0;
+
+        platformStats[content.platform].engagement +=
+
+            (Number(content.likes)||0)
+
+            +
+
+            (Number(content.comments)||0)
+
+            +
+
+            (Number(content.shares)||0)
+
+            +
+
+            (Number(content.saved)||0);
+
+    });
+
+    let html = "";
+
+    Object.keys(platformStats).forEach(platform=>{
+
+        const data = platformStats[platform];
+
+        html += `
+
+<div class="platform-performance-item">
+
+    <div class="platform-performance-header">
+
+        <span>${platform}</span>
+
+        <strong>${formatNumber(data.views)} Views</strong>
+
+    </div>
+
+    <p>
+        ${data.posts} Posts •
+        ${formatNumber(data.engagement)} Engagement
+    </p>
+
+</div>
+
+`;
+
+    });
+
+    if(html===""){
+
+        html="No platform data this month.";
+
+    }
+
+    monthlyPlatforms.innerHTML = html;
+
+    // =====================================
+// MONTHLY BEST PLATFORM
+// =====================================
+
+const monthlyBestPlatform =
+document.getElementById("monthlyBestPlatform");
+
+if(monthlyBestPlatform){
+
+    let bestPlatform = "-";
+    let bestViews = -1;
+
+    Object.keys(platformStats).forEach(platform=>{
+
+        if(platformStats[platform].views > bestViews){
+
+            bestViews = platformStats[platform].views;
+            bestPlatform = platform;
+
+        }
+
+    });
+
+    if(bestViews < 0){
+
+        monthlyBestPlatform.innerHTML =
+        "No platform data this month.";
+
+    }else{
+
+        const data = platformStats[bestPlatform];
+
+        monthlyBestPlatform.innerHTML = `
+
+<div class="monthly-best-card">
+
+    <h3>${bestPlatform}</h3>
+
+    <p>${data.posts} Posts</p>
+
+    <p>${formatNumber(data.views)} Views</p>
+
+    <p>${formatNumber(data.engagement)} Engagement</p>
+
+</div>
+
+`;
+
+    }
+
+}
+
+// =====================================
+// MONTHLY TOP CONTENT
+// =====================================
+
+const monthlyTopContent =
+document.getElementById("monthlyTopContent");
+
+if(monthlyTopContent){
+
+    let bestContent = null;
+
+    let bestEngagement = -1;
+
+    account.contents.forEach(content=>{
+
+        if(!content.date) return;
+
+        const date = new Date(content.date);
+
+        if(
+            date.getMonth() !== currentMonth ||
+            date.getFullYear() !== currentYear
+        ){
+            return;
+        }
+
+        const engagement =
+
+            (Number(content.likes)||0)
+
+            +
+
+            (Number(content.comments)||0)
+
+            +
+
+            (Number(content.shares)||0)
+
+            +
+
+            (Number(content.saved)||0);
+
+        if(engagement > bestEngagement){
+
+            bestEngagement = engagement;
+
+            bestContent = content;
+
+        }
+
+    });
+
+    if(bestContent){
+
+        monthlyTopContent.innerHTML = `
+
+        <div class="top-content-item">
+
+            <p class="top-content-caption">
+                ${bestContent.caption || "Untitled"}
+            </p>
+
+            <p>
+                Platform:
+                ${bestContent.platform}
+            </p>
+
+            <p>
+                👁 Views:
+                ${formatNumber(bestContent.views)}
+            </p>
+
+            <p>
+                🔥 Engagement:
+                ${formatNumber(bestEngagement)}
+            </p>
+
+        </div>
+
+        `;
+
+    }else{
+
+        monthlyTopContent.innerHTML =
+        "No content this month.";
+
+    }
+
+}
+
+// =====================================
+// MONTHLY CONTENT TABLE
+// =====================================
+
+const monthlyContentTable =
+document.getElementById("monthlyContentTable");
+
+if(monthlyContentTable){
+
+    let html = "";
+
+    account.contents.forEach(content=>{
+
+        if(!content.date) return;
+
+        const date = new Date(content.date);
+
+        if(
+            date.getMonth() !== currentMonth ||
+            date.getFullYear() !== currentYear
+        ){
+            return;
+        }
+
+        const engagement =
+
+            (Number(content.likes)||0)
+
+            +
+
+            (Number(content.comments)||0)
+
+            +
+
+            (Number(content.shares)||0)
+
+            +
+
+            (Number(content.saved)||0);
+
+        html += `
+
+<tr>
+
+    <td>${content.date}</td>
+
+    <td>${content.platform}</td>
+
+    <td>${content.caption || "-"}</td>
+
+    <td>${formatNumber(content.views || 0)}</td>
+
+    <td>${formatNumber(engagement)}</td>
+
+</tr>
+
+`;
+
+    });
+
+    if(html === ""){
+
+        html = `
+
+<tr>
+
+    <td colspan="5">
+
+        No content this month.
+
+    </td>
+
+</tr>
+
+`;
+
+    }
+
+    monthlyContentTable.innerHTML = html;
+
+}
+
+if(monthlyFilter){
+
+    monthlyFilter.addEventListener(
+        "change",
+        function(){
+
+            renderMonthlyReport();
+
+        }
+    );
+
+}
+
+}
+
+}
+
 
 // =====================================
 // READY FOR FUTURE FEATURES
