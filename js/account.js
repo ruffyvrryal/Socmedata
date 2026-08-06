@@ -1163,6 +1163,11 @@ loadAnalytics();
 
 renderPlatforms();
 
+loadEngagement();
+
+renderPlatformComparison();
+
+renderHashtags();
 
 document
 .getElementById("contentModal")
@@ -1466,16 +1471,13 @@ cancelDelete.onclick=function(){
 
 // CONFIRM DELETE
 
-confirmDelete.onclick=function(){
-
+confirmDelete.onclick = function(){
 
     if(deleteContentId === null){
 
         return;
 
     }
-
-
 
     account.contents =
     account.contents.filter(
@@ -1485,28 +1487,29 @@ confirmDelete.onclick=function(){
 
     );
 
-
-
     saveDatabase();
 
+renderContents();
 
-    renderContents();
+loadAnalytics();
 
+renderPlatforms();
 
+loadEngagement();
+
+renderPlatformComparison();
+
+renderHashtags();
 
     deleteModal.style.display =
     "none";
 
-
     deleteContentId = null;
-
-
 
     showToast(
         "Content deleted successfully!",
         "success"
     );
-
 
 };
 
@@ -1529,6 +1532,10 @@ function deleteContent(index){
 renderContents();
 
 loadEngagement();
+
+renderPlatformComparison();
+
+renderHashtags();
 
 // renderContents();
 
@@ -1953,6 +1960,488 @@ if(contentTypeResult){
 
     contentTypeResult.innerHTML = html;
 
+
+}
+
+}
+
+// =====================================
+// PLATFORM COMPARISON
+// =====================================
+
+function renderPlatformComparison(){
+
+    const platformComparisonResult =
+    document.getElementById("platformComparisonResult");
+
+    if(!platformComparisonResult) return;
+
+    let contents = account.contents || [];
+
+    let platforms = {};
+
+    contents.forEach(content=>{
+
+        let platform = content.platform || "Unknown";
+
+        if(!platforms[platform]){
+
+            platforms[platform] = {
+
+                views:0,
+                likes:0,
+                comments:0,
+                shares:0,
+                saves:0
+
+            };
+
+        }
+
+        platforms[platform].views +=
+        Number(content.views) || 0;
+
+        platforms[platform].likes +=
+        Number(content.likes) || 0;
+
+        platforms[platform].comments +=
+        Number(content.comments) || 0;
+
+        platforms[platform].shares +=
+        Number(content.shares) || 0;
+
+        platforms[platform].saves +=
+        Number(content.saved) || 0;
+
+    });
+
+    let html = "";
+
+    Object.keys(platforms).forEach(platform=>{
+
+        let data = platforms[platform];
+
+        let engagement =
+        data.likes +
+        data.comments +
+        data.shares +
+        data.saves;
+
+        let rate = 0;
+
+        if(data.views > 0){
+
+            rate = (
+                engagement /
+                data.views *
+                100
+            ).toFixed(1);
+
+        }
+
+        html += `
+
+        <div class="platform-performance-item">
+
+            <div class="platform-performance-header">
+
+                <span>${platform}</span>
+
+                <strong>${rate}%</strong>
+
+            </div>
+
+            <div class="performance-bar">
+
+                <span style="width:${rate}%"></span>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+    if(html === ""){
+
+        html = "No platform data yet.";
+
+    }
+
+    platformComparisonResult.innerHTML = html;
+
+}
+
+// =====================================
+// HASHTAG ANALYTICS
+// =====================================
+
+function renderHashtags(){
+
+    const hashtagList =
+    document.getElementById("hashtagList");
+
+    const hashtagSummary =
+    document.getElementById("hashtagSummary");
+
+    if(!hashtagList) return;
+
+    let hashtags = {};
+
+    account.contents.forEach(content=>{
+
+        if(!content.hashtag) return;
+
+        // Split hashtags by spaces
+        let tags =
+        content.hashtag.split(/\s+/);
+
+        tags.forEach(tag=>{
+
+            tag = tag.trim();
+
+            if(tag==="") return;
+
+            // Remove #
+            tag = tag.replace("#","");
+
+            // Ignore upper/lower case
+            let key =
+            tag.toLowerCase();
+
+            if(!hashtags[key]){
+
+                hashtags[key]={
+
+                    name:
+                    tag.charAt(0).toUpperCase()
+                    + tag.slice(1).toLowerCase(),
+
+                    used:0,
+
+                    views:0,
+
+                    likes:0,
+
+                    comments:0,
+
+                    shares:0,
+
+                    saved:0
+
+                };
+
+            }
+
+            hashtags[key].used++;
+
+            hashtags[key].views +=
+            Number(content.views)||0;
+
+            hashtags[key].likes +=
+            Number(content.likes)||0;
+
+            hashtags[key].comments +=
+            Number(content.comments)||0;
+
+            hashtags[key].shares +=
+            Number(content.shares)||0;
+
+            hashtags[key].saved +=
+            Number(content.saved)||0;
+
+        });
+
+    });
+
+    let html="";
+
+    let totalUsage=0;
+
+    let bestHashtag="-";
+
+    let highestViews=0;
+
+    Object.values(hashtags)
+
+    .sort((a,b)=>b.views-a.views)
+
+    .forEach(tag=>{
+
+        totalUsage += tag.used;
+
+        if(tag.views > highestViews){
+
+            highestViews = tag.views;
+
+            bestHashtag = "#" + tag.name;
+
+        }
+
+        let engagement =
+
+            tag.likes +
+            tag.comments +
+            tag.shares +
+            tag.saved;
+
+        let rate = 0;
+
+        if(tag.views>0){
+
+            rate =
+            (
+                engagement /
+                tag.views *
+                100
+            ).toFixed(1);
+
+        }
+
+        html += `
+
+<tr>
+
+<td class="hashtag-name">
+#${tag.name}
+</td>
+
+<td>
+${tag.used}
+</td>
+
+<td>
+${formatNumber(tag.views)}
+</td>
+
+<td>
+${formatNumber(tag.likes)}
+</td>
+
+<td>
+${formatNumber(tag.comments)}
+</td>
+
+<td>
+${formatNumber(tag.shares)}
+</td>
+
+<td>
+${formatNumber(tag.saved)}
+</td>
+
+<td class="hashtag-rate">
+${rate}%
+</td>
+
+</tr>
+
+`;
+
+    });
+
+    if(html===""){
+
+        html = `
+        <tr>
+            <td colspan="8">
+                No hashtag data yet.
+            </td>
+        </tr>
+        `;
+
+    }
+
+    hashtagList.innerHTML = html;
+
+    hashtagSummary.innerHTML = `
+
+<div class="hashtag-card">
+
+<span>
+Total Hashtags
+</span>
+
+<h2>
+${Object.keys(hashtags).length}
+</h2>
+
+</div>
+
+<div class="hashtag-card">
+
+<span>
+Total Usage
+</span>
+
+<h2>
+${totalUsage}
+</h2>
+
+</div>
+
+<div class="hashtag-card">
+
+<span>
+Best Hashtag
+</span>
+
+<h2>
+${bestHashtag}
+</h2>
+
+</div>
+
+<div class="hashtag-card">
+
+<span>
+Most Views
+</span>
+
+<h2>
+${formatNumber(highestViews)}
+</h2>
+
+</div>
+
+`;
+
+
+// =====================================
+// HASHTAGS BY PLATFORM
+// =====================================
+
+const platformAnalytics =
+document.getElementById("platformHashtagAnalytics");
+
+if(platformAnalytics){
+
+    let platformHTML = "";
+
+    account.platforms.forEach(platform=>{
+
+        let platformTags = {};
+
+        account.contents
+        .filter(content=>content.platform===platform.platform)
+        .forEach(content=>{
+
+            if(!content.hashtag) return;
+
+            content.hashtag
+            .split(/\s+/)
+            .forEach(tag=>{
+
+                tag = tag.replace("#","").trim();
+
+                if(tag==="") return;
+
+                tag = tag.toLowerCase();
+
+                if(!platformTags[tag]){
+
+                    platformTags[tag]={
+
+                        used:0,
+
+                        views:0
+
+                    };
+
+                }
+
+                platformTags[tag].used++;
+
+                platformTags[tag].views +=
+                Number(content.views)||0;
+
+            });
+
+        });
+
+        platformHTML += `
+
+<div class="platform-hashtag-card">
+
+<h3>${platform.platform}</h3>
+
+<table class="hashtag-table">
+
+<thead>
+
+<tr>
+
+<th>Hashtag</th>
+
+<th>Used</th>
+
+<th>Views</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+`;
+
+        let sortedTags =
+        Object.entries(platformTags)
+        .sort((a,b)=>b[1].views-a[1].views);
+
+        if(sortedTags.length===0){
+
+            platformHTML += `
+
+<tr>
+
+<td colspan="3">
+
+No hashtags yet.
+
+</td>
+
+</tr>
+
+`;
+
+        }else{
+
+            sortedTags.forEach(([tag,data])=>{
+
+                platformHTML += `
+
+<tr>
+
+<td>#${tag}</td>
+
+<td>${data.used}</td>
+
+<td>${formatNumber(data.views)}</td>
+
+</tr>
+
+`;
+
+            });
+
+        }
+
+        platformHTML += `
+
+</tbody>
+
+</table>
+
+</div>
+
+`;
+
+    });
+
+    platformAnalytics.innerHTML =
+    platformHTML;
 
 }
 
