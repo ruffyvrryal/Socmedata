@@ -19,6 +19,20 @@ const monthNames = [
 
 let currentDate = new Date();
 
+// =====================================
+// CALENDAR ENGINE
+// =====================================
+
+function getContentsByDate(date){
+
+    return account.contents.filter(function(content){
+
+        return content.date === date;
+
+    });
+
+}
+
 function renderCalendar() {
 
     const month = currentDate.getMonth();
@@ -83,11 +97,8 @@ cell.dataset.date = dateString;
     <div class="calendar-events"></div>
 `;
 
-const dayContents = account.contents.filter(function(content){
-
-    return content.date === dateString;
-
-});
+const dayContents =
+getContentsByDate(dateString);
 
 if(dayContents.length > 0){
 
@@ -103,22 +114,29 @@ dayContents.slice(0, 2).forEach(function(post){
     .substring(0,25);
 
 
-    let statusClass = "scheduled";
+    let statusClass = 
+post.status.toLowerCase();
 
 
-if(post.status === "Posted"){
+if(post.status === "Published"){
 
-    statusClass = "posted";
+    statusClass = "published";
+
+}
+
+
+else if(post.status === "Scheduled"){
+
+    statusClass = "scheduled";
 
 }
 
 
-else if(post.status === "Draft"){
+else if(post.status === "Private"){
 
-    statusClass = "draft";
+    statusClass = "private";
 
 }
-
 
 
 eventContainer.innerHTML += `
@@ -231,11 +249,8 @@ function openCalendarDay(date){
 
     title.textContent = date;
 
-    const dayContents = account.contents.filter(function(post){
-
-        return post.date === date;
-
-    });
+    const dayContents =
+getContentsByDate(date);
 
     if(dayContents.length === 0){
 

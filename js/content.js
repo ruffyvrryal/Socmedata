@@ -1,3 +1,5 @@
+console.log("CONTENT.JS LOADED VERSION 2");
+
 // =============================
 // SOCMEDATA CONTENT MANAGEMENT
 // =============================
@@ -183,6 +185,20 @@ ${content.status}
 <button class="delete-content">
 🗑 Delete
 </button>
+
+<div style="
+width:20px;
+height:20px;
+background:red;
+border-radius:50%;
+display:inline-block;
+">
+</div>
+
+<span 
+class="status-dot ${content.status.toLowerCase()}"
+title="${content.status}">
+</span>
 
 </div>
 

@@ -159,7 +159,10 @@ localStorage.setItem(
 
     JSON.stringify(profiles)
 
+
 );
+
+renderContents();
 
 
 // =====================================
@@ -207,49 +210,20 @@ account.name;
 
 function loadAnalytics(){
 
-    let totalViewsValue = 0;
-    let totalFollowersValue = 0;
-    let totalContentsValue = 0;
-    let totalGrowthValue = 0;
+        const analytics = calculateAnalytics();
 
-    // Calculate total views from content table
-    account.contents.forEach(content=>{
-
-        totalViewsValue += Number(content.views) || 0;
-
-    });
-
-    // Calculate followers & growth from connected platforms
-    account.platforms.forEach(platform=>{
-
-        if(platform.analytics){
-
-            totalFollowersValue +=
-            Number(platform.analytics.followers) || 0;
-
-            totalGrowthValue +=
-            Number(platform.analytics.growth) || 0;
-
-        }
-
-    });
-
-    // Total content
-    totalContentsValue = account.contents.length;
-
-    // Update dashboard cards
     totalViews.textContent =
-formatNumber(totalViewsValue);
+    formatNumber(analytics.totalViews);
 
     followers.textContent =
-    formatNumber(totalFollowersValue);
+    formatNumber(analytics.totalFollowers);
 
     contentCount.textContent =
-    totalContentsValue;
+    analytics.totalContents;
 
     growth.textContent =
-        (totalGrowthValue >= 0 ? "+" : "")
-        + totalGrowthValue + "%";
+    (analytics.totalGrowth >= 0 ? "+" : "")
+    + analytics.totalGrowth + "%";
 
 }
 
@@ -352,174 +326,110 @@ function getPlatformClass(platform){
 // RENDER PLATFORMS
 // =====================================
 
-function renderPlatforms(){
 
-    platformGrid.innerHTML="";
+   function renderPlatforms(){
 
-   let selectedPlatform =
-selectedPlatformValue;
+    platformGrid.innerHTML = "";
 
-    let list=
-    account.platforms;
+    let list = account.platforms;
 
-    if(selectedPlatform!="all"){
+    if(selectedPlatformValue !== "all"){
 
-        list=list.filter(
-
-            item=>
-
-            item.platform===selectedPlatform
-
+        list = list.filter(
+            item => item.platform === selectedPlatformValue
         );
 
     }
 
-    if(list.length===0){
+    if(list.length === 0){
 
-        platformGrid.innerHTML=`
-
+        platformGrid.innerHTML = `
         <div class="empty-state">
-
-            <h2>
-
-                No Platform Connected
-
-            </h2>
-
+            <h2>No Platform Connected</h2>
             <p>
-
-                Click <b>Connect Platform</b>
-                to add your first platform.
-
+                Click <b>Connect Platform</b> to add your first platform.
             </p>
-
         </div>
-
         `;
 
         return;
 
     }
 
-
-
     list.forEach(platform=>{
 
-        platformGrid.innerHTML+=`
+        // =============================
+        // Calculate analytics from Content Database
+        // =============================
+
+        const analytics = calculateAnalytics();
+
+const platformStats = analytics.platforms[platform.platform] || {
+
+    views: 0,
+
+    contents: 0
+
+};
+
+        platformGrid.innerHTML += `
 
 <div class="platform-card ${getPlatformClass(platform.platform)}">
 
-
     <div class="platform-header">
-
 
         <div class="platform-brand">
 
-
             <div class="platform-icon">
-
-    <img 
-    src="${getPlatformIcon(platform.platform)}">
-
-</div>
-
-
-            <div>
-
-                <h3>
-                    ${platform.platform}
-                </h3>
-
-                <p>
-                    ${platform.username}
-                </p>
-
+                <img src="${getPlatformIcon(platform.platform)}">
             </div>
 
+            <div>
+                <h3>${platform.platform}</h3>
+                <p>${platform.username}</p>
+            </div>
 
         </div>
 
-
-
         <button
-        class="delete-platform"
-        data-id="${platform.id}">
-
+            class="delete-platform"
+            data-id="${platform.id}">
             ✕
-
         </button>
 
-
     </div>
-
-
-
 
     <div class="platform-stats">
 
-
         <div class="stat-box">
-
-            <span>
-                Followers
-            </span>
-
+            <span>Followers</span>
             <strong>
-            ${formatNumber(
-                platform.analytics?.followers || 0
-            )}
+                ${formatNumber(platform.analytics?.followers || 0)}
             </strong>
-
         </div>
 
-
-
         <div class="stat-box">
-
-            <span>
-                Views
-            </span>
-
+            <span>Views</span>
             <strong>
-            ${formatNumber(
-                platform.analytics?.views || 0
-            )}
+                ${formatNumber(platformStats.views)}
             </strong>
-
         </div>
 
-
-
         <div class="stat-box">
-
-            <span>
-                Content
-            </span>
-
+            <span>Content</span>
             <strong>
-            ${platform.analytics?.contents || 0}
+                ${platformStats.contents}
             </strong>
-
         </div>
 
-
-
         <div class="stat-box">
-
-            <span>
-                Growth
-            </span>
-
+            <span>Growth</span>
             <strong class="positive-growth">
-            +${platform.analytics?.growth || 0}%
+                +${platform.analytics?.growth || 0}%
             </strong>
-
         </div>
-
 
     </div>
-
-
 
 </div>
 
@@ -527,33 +437,20 @@ selectedPlatformValue;
 
     });
 
-
-
-
-    // DELETE PLATFORM
+    // =============================
+    // Delete Platform
+    // =============================
 
     document
-
     .querySelectorAll(".delete-platform")
-
     .forEach(button=>{
 
-        button.onclick=function(){
+        button.onclick = function(){
 
-            let id=
+            const id = Number(this.dataset.id);
 
-            Number(
-
-                this.dataset.id
-
-            );
-
-            account.platforms=
-
-            account.platforms.filter(
-
-                p=>p.id!=id
-
+            account.platforms = account.platforms.filter(
+                p => p.id !== id
             );
 
             saveDatabase();
@@ -565,15 +462,6 @@ selectedPlatformValue;
     });
 
 }
-
-renderPlatforms();
-
-
-
-
-// =====================================
-// FILTER
-// =====================================
 
 if(platformFilter){
 
@@ -737,7 +625,78 @@ function updateAnalytics(){
 
 }
 
-    // =====================================
+// =====================================
+// ANALYTICS ENGINE
+// =====================================
+
+function calculateAnalytics(){
+
+    const analytics = {
+
+        totalViews:0,
+
+        totalContents:0,
+
+        totalFollowers:0,
+
+        totalGrowth:0,
+
+        platforms:{}
+
+    };
+
+
+    // ============================
+    // CONTENT DATABASE
+    // ============================
+
+    account.contents.forEach(content=>{
+
+        analytics.totalViews +=
+        Number(content.views) || 0;
+
+        analytics.totalContents++;
+
+        if(!analytics.platforms[content.platform]){
+
+            analytics.platforms[content.platform]={
+
+                views:0,
+
+                contents:0
+
+            };
+
+        }
+
+        analytics.platforms[content.platform].views +=
+        Number(content.views) || 0;
+
+        analytics.platforms[content.platform].contents++;
+
+    });
+
+
+    // ============================
+    // PLATFORM DATABASE
+    // ============================
+
+    account.platforms.forEach(platform=>{
+
+        analytics.totalFollowers +=
+        Number(platform.analytics?.followers) || 0;
+
+        analytics.totalGrowth +=
+        Number(platform.analytics?.growth) || 0;
+
+    });
+
+
+    return analytics;
+
+}
+
+// =====================================
 // NUMBER FORMATTER
 // =====================================
 
@@ -749,7 +708,9 @@ function formatNumber(number){
 
     loadAnalytics();
 
-updateAnalytics();
+    renderPlatforms();
+
+    updateAnalytics();
 
 
 // =====================================
@@ -797,7 +758,10 @@ tabs.forEach(tab=>{
         let target =
         tab.dataset.tab;
 
-
+localStorage.setItem(
+    "activeAccountTab",
+    target
+)
 
         tabs.forEach(btn=>{
 
@@ -831,8 +795,13 @@ tabs.forEach(tab=>{
 
 
 // =============================
-// DEFAULT TAB ON LOAD
+// RESTORE LAST ACTIVE TAB
 // =============================
+
+
+let savedTab =
+localStorage.getItem("activeAccountTab");
+
 
 
 tabs.forEach(tab=>{
@@ -849,26 +818,31 @@ tabContents.forEach(content=>{
 });
 
 
-const defaultTab =
+
+let activeTab =
 document.querySelector(
-'[data-tab="dashboard"]'
+`[data-tab="${savedTab || "dashboard"}"]`
 );
 
 
-if(defaultTab){
 
-    defaultTab.classList.add("active");
+let activeContent =
+document.getElementById(
+savedTab || "dashboard"
+);
+
+
+
+if(activeTab){
+
+    activeTab.classList.add("active");
 
 }
 
 
-const dashboardContent =
-document.getElementById("dashboard");
+if(activeContent){
 
-
-if(dashboardContent){
-
-    dashboardContent.classList.add("active");
+    activeContent.classList.add("active");
 
 }
 
@@ -1143,23 +1117,48 @@ let content = {
 
 
     status:
-    "Published"
+contentStatus.value
 
 
 };
 
 
 
-account.contents.push(content);
+if(editingContentId !== null){
 
+    const index = account.contents.findIndex(
+        item => item.id === editingContentId
+    );
+
+    if(index !== -1){
+
+        account.contents[index] = {
+
+            ...account.contents[index],
+
+            ...content,
+
+            id: editingContentId
+
+        };
+
+    }
+
+    editingContentId = null;
+
+}else{
+
+    account.contents.push(content);
+
+}
 
 saveDatabase();
 
-
 renderContents();
 
-
 loadAnalytics();
+
+renderPlatforms();
 
 
 document
@@ -1208,41 +1207,114 @@ function renderContents(){
 
     table.innerHTML = "";
 
-    account.contents.forEach((content, index)=>{
+    const sortedContents =
+[...account.contents].sort((a,b)=>{
+
+    return new Date(a.date) - new Date(b.date);
+
+});
+
+
+sortedContents.forEach((content,index)=>{
 
         table.innerHTML += `
 
 <tr>
 
-    <td>${index + 1}</td>
+<td>
+${index + 1}
+</td>
 
-    <td>
-        ${
-            content.thumbnail
-            ? `<img src="${content.thumbnail}" class="content-thumbnail">`
-            : "-"
-        }
-    </td>
 
-    <td>${content.date || "-"}</td>
+<td>
+${content.date || "-"}
+</td>
 
-    <td>${content.caption || "-"}</td>
 
-    <td>${content.hashtag || "-"}</td>
+<td>
+${content.caption || "-"}
+</td>
 
-    <td>${content.views || 0}</td>
 
-    <td>${content.platform || "-"}</td>
+<td>
+${content.hashtag || "-"}
+</td>
 
-    <td>
-        <button class="edit-content" data-id="${content.id}">
-            Edit
-        </button>
 
-        <button class="delete-content" data-id="${content.id}">
-            Delete
-        </button>
-    </td>
+<td>
+${content.platform || "-"}
+</td>
+
+
+<td>
+
+<span class="status-badge ${(content.status || "Published").toLowerCase()}">
+
+${
+content.status === "Published"
+? "🟢"
+: content.status === "Scheduled"
+? "🔵"
+: content.status === "Draft"
+? "🟠"
+: "🟣"
+}
+
+${content.status || "Published"}
+
+</span>
+
+</td>
+
+
+<td>
+
+${formatNumber(content.views || 0)}
+
+</td>
+
+
+<td>
+
+${formatNumber(
+(
+Number(content.likes)||0
+)
++
+(
+Number(content.comments)||0
+)
++
+(
+Number(content.shares)||0
+)
++
+(
+Number(content.saved)||0
+)
+)}
+
+</td>
+
+
+<td>
+
+<div class="content-actions">
+
+<button class="edit-content" data-id="${content.id}">
+Edit
+</button>
+
+
+<button class="delete-content" data-id="${content.id}">
+Delete
+</button>
+
+
+</div>
+
+</td>
+
 
 </tr>
 
@@ -1258,10 +1330,10 @@ document.querySelectorAll(".edit-content").forEach(button => {
 
     button.onclick = function(){
 
-        let id = Number(this.dataset.id);
+        const id = Number(this.dataset.id);
 
-        let content = account.contents.find(
-            item => item.id == id
+        const content = account.contents.find(
+            item => item.id === id
         );
 
         if(!content) return;
@@ -1269,19 +1341,40 @@ document.querySelectorAll(".edit-content").forEach(button => {
         editingContentId = id;
 
         document.getElementById("contentDate").value =
-        content.date || "";
+            content.date || "";
 
         document.getElementById("contentCaption").value =
-        content.caption || "";
+            content.caption || "";
 
         document.getElementById("contentHashtag").value =
-        content.hashtag || "";
+            content.hashtag || "";
+
+        document.getElementById("contentViews").value =
+            content.views || 0;
+
+        document.getElementById("contentLikes").value =
+            content.likes || 0;
+
+        document.getElementById("contentComments").value =
+            content.comments || 0;
+
+        document.getElementById("contentShares").value =
+            content.shares || 0;
+
+        document.getElementById("contentSaved").value =
+            content.saved || 0;
 
         document.getElementById("contentPlatform").value =
-        content.platform || "";
+            content.platform || "";
+
+        document.getElementById("contentStatus").value =
+            content.status || "Published";
+
+        document.getElementById("contentModalTitle").textContent =
+            "Edit Content";
 
         document.getElementById("contentModal").style.display =
-        "flex";
+            "flex";
 
     };
 
