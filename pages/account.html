@@ -22,9 +22,9 @@ href="../css/style.css">
 
     <div class="account-top-nav">
 
-        <button class="back-button" onclick="goBack()">
-            ← Back
-        </button>
+        <button id="backButton" class="back-button">
+    ← Back
+</button>
 
         <div class="nav-logo">
             Socmedata
@@ -425,11 +425,181 @@ data-tab="hashtag">
 
 <section class="tab-content" id="engagement">
 
-    <h2>Engagement Tracker</h2>
+
+<div class="engagement-grid">
+
+
+    <div class="engagement-card">
+
+        <div class="engagement-icon">
+            🔥
+        </div>
+
+        <p>
+            Total Engagement
+        </p>
+
+        <h3 id="totalEngagement">
+    0
+</h3>
+
+        <span>
+            Likes + Comments + Shares + Saves
+        </span>
+
+    </div>
+
+
+
+    <div class="engagement-card">
+
+    <div class="engagement-icon">
+        📈
+    </div>
 
     <p>
-        Track comments, likes and audience interaction.
+        Engagement Rate
     </p>
+
+    <h3 id="engagementRate">
+        0%
+    </h3>
+
+    <span>
+        Average interaction
+    </span>
+
+</div>
+
+
+
+    <div class="engagement-card">
+
+        <div class="engagement-icon">
+            🏆
+        </div>
+
+        <p>
+    Best Platform
+</p>
+
+<h3 id="bestPlatform">
+    -
+</h3>
+
+        <span>
+            Highest engagement
+        </span>
+
+    </div>
+
+
+</div>
+
+
+
+<div class="engagement-card interaction-card">
+
+
+<h2>
+Audience Interaction
+</h2>
+
+
+<div class="interaction-row">
+
+<span>
+❤️ Likes
+</span>
+
+<strong id="totalLikes">
+0
+</strong>
+
+</div>
+
+
+
+<div class="interaction-row">
+
+<span>
+💬 Comments
+</span>
+
+<strong id="totalComments">
+0
+</strong>
+
+</div>
+
+
+
+<div class="interaction-row">
+
+<span>
+🔄 Shares
+</span>
+
+<strong id="totalShares">
+0
+</strong>
+
+</div>
+
+
+
+<div class="interaction-row">
+
+<span>
+🔖 Saved
+</span>
+
+<strong id="totalSaved">
+0
+</strong>
+
+</div>
+
+
+
+</div>
+
+
+
+
+<div class="engagement-card top-content-card">
+
+
+<h2>
+Top Performing Content
+</h2>
+
+
+<div id="topContentResult">
+
+No content data yet.
+
+</div>
+
+
+</div>
+
+<div class="engagement-card content-type-card">
+
+
+<h2>
+Content Type Performance
+</h2>
+
+
+<div id="contentTypeResult">
+
+No content type data yet.
+
+</div>
+
+
+
 
 </section>
 
@@ -704,7 +874,14 @@ type="text"
 id="contentHashtag"
 placeholder="#example">
 
+<label>
+Content Type
+</label>
 
+<input
+type="text"
+id="contentType"
+placeholder="Example: Tutorial, Review, Meme, Promo">
 
 <label>
 Views

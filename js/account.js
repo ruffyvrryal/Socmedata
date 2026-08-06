@@ -1081,6 +1081,9 @@ let content = {
     hashtag:
     document.getElementById("contentHashtag").value,
 
+    contentType:
+    document.getElementById("contentType").value,
+
 
     views:
     Number(
@@ -1349,6 +1352,9 @@ document.querySelectorAll(".edit-content").forEach(button => {
         document.getElementById("contentHashtag").value =
             content.hashtag || "";
 
+        document.getElementById("contentType").value =
+            content.contentType || "";
+
         document.getElementById("contentViews").value =
             content.views || 0;
 
@@ -1522,6 +1528,8 @@ function deleteContent(index){
 
 renderContents();
 
+loadEngagement();
+
 // renderContents();
 
 // renderHashtags();
@@ -1585,6 +1593,370 @@ window.goBack = function(){
 
 };
 
+function goBack(){
+
+    window.location.href = "dashboard.html";
+
+}
+
+const backButton =
+document.getElementById("backButton");
+
+
+backButton.onclick=function(){
+
+    window.location.href="dashboard.html";
+
+};
+
+// ============================
+// ENGAGEMENT ANALYTICS
+// ============================
+
+function loadEngagement(){
+
+    console.log("ENGAGEMENT FUNCTION RUNNING");
+
+
+    let contents =
+    account.contents || [];
+
+
+    console.log("CONTENT DATA:", contents);
+
+
+
+    let totalLikes = 0;
+
+    let totalComments = 0;
+
+    let totalShares = 0;
+
+    let totalSaved = 0;
+
+    let totalViews = 0;
+
+    let contentTypeCount = {};
+
+    let platformEngagement = {};
+
+
+
+// =============================
+// TOP CONTENT VARIABLES
+// =============================
+
+let topContent = null;
+
+let topContentEngagement = 0;
+
+
+
+
+    contents.forEach(content=>{
+
+
+        totalLikes += Number(content.likes) || 0;
+
+        totalComments += Number(content.comments) || 0;
+
+        totalShares += Number(content.shares) || 0;
+
+        totalSaved += Number(content.saved) || 0;
+
+        totalViews += Number(content.views) || 0;
+
+// COUNT CONTENT TYPES
+
+let type = content.contentType || "Uncategorized";
+
+
+if(!contentTypeCount[type]){
+
+    contentTypeCount[type] = 0;
+
+}
+
+
+contentTypeCount[type]++;
+
+        let platform = content.platform;
+
+
+
+        if(!platformEngagement[platform]){
+
+            platformEngagement[platform] = 0;
+
+        }
+
+
+
+        let contentEngagement =
+
+(Number(content.likes) || 0)
+
++
+
+(Number(content.comments) || 0)
+
++
+
+(Number(content.shares) || 0)
+
++
+
+(Number(content.saved) || 0);
+
+
+
+platformEngagement[platform] += contentEngagement;
+
+if(contentEngagement > topContentEngagement){
+
+    topContentEngagement = contentEngagement;
+
+    topContent = content;
+
+}
+
+});
+
+
+    let totalEngagement =
+
+        totalLikes
+
+        +
+
+        totalComments
+
+        +
+
+        totalShares
+
+        +
+
+        totalSaved;
+
+
+
+    let engagementRate = 0;
+
+
+    if(totalViews > 0){
+
+        engagementRate =
+
+        ((totalEngagement / totalViews) * 100)
+
+        .toFixed(1);
+
+    }
+
+
+
+    let bestPlatform = "-";
+
+    let highestEngagement = 0;
+
+
+
+    Object.keys(platformEngagement)
+    .forEach(platform=>{
+
+
+        if(platformEngagement[platform] > highestEngagement){
+
+
+            highestEngagement =
+            platformEngagement[platform];
+
+
+            bestPlatform =
+            platform;
+
+
+        }
+
+
+    });
+
+
+
+    console.log(
+        "TOTAL ENGAGEMENT:",
+        totalEngagement
+    );
+
+
+    const totalEngagementEl =
+document.getElementById("totalEngagement");
+
+const engagementRateEl =
+document.getElementById("engagementRate");
+
+const bestPlatformEl =
+document.getElementById("bestPlatform");
+
+const totalLikesEl =
+document.getElementById("totalLikes");
+
+const totalCommentsEl =
+document.getElementById("totalComments");
+
+const totalSharesEl =
+document.getElementById("totalShares");
+
+const totalSavedEl =
+document.getElementById("totalSaved");
+
+
+if(totalEngagementEl)
+totalEngagementEl.textContent =
+totalEngagement.toLocaleString();
+
+
+if(engagementRateEl)
+engagementRateEl.textContent =
+engagementRate + "%";
+
+
+if(bestPlatformEl)
+bestPlatformEl.textContent =
+bestPlatform;
+
+
+if(totalLikesEl)
+totalLikesEl.textContent =
+totalLikes.toLocaleString();
+
+
+if(totalCommentsEl)
+totalCommentsEl.textContent =
+totalComments.toLocaleString();
+
+
+if(totalSharesEl)
+totalSharesEl.textContent =
+totalShares.toLocaleString();
+
+
+if(totalSavedEl)
+totalSavedEl.textContent =
+totalSaved.toLocaleString();
+
+// =============================
+// DISPLAY TOP CONTENT
+// =============================
+
+
+const topContentResult =
+document.getElementById("topContentResult");
+
+
+if(topContentResult){
+
+
+    if(topContent){
+
+
+        topContentResult.innerHTML = `
+
+        <div class="top-content-item">
+
+
+            <p class="top-content-caption">
+${topContent.caption || "Untitled"}
+</p>
+
+
+            <p>
+            Platform:
+            ${topContent.platform}
+            </p>
+
+
+            <p>
+            👁 Views:
+            ${formatNumber(topContent.views)}
+            </p>
+
+
+            <p>
+            🔥 Engagement:
+            ${formatNumber(topContentEngagement)}
+            </p>
+
+
+        </div>
+
+        `;
+
+
+    }else{
+
+
+        topContentResult.innerHTML =
+        "No content data yet.";
+
+
+    }
+
+
+}
+
+// =============================
+// DISPLAY CONTENT TYPES
+// =============================
+
+const contentTypeResult =
+document.getElementById("contentTypeResult");
+
+
+if(contentTypeResult){
+
+
+    let html = "";
+
+
+    Object.keys(contentTypeCount)
+    .forEach(type=>{
+
+
+        html += `
+
+        <div class="content-type-item">
+
+            <span>
+            ${type}
+            </span>
+
+            <strong>
+            ${contentTypeCount[type]} posts
+            </strong>
+
+        </div>
+
+        `;
+
+
+    });
+
+
+    if(html === ""){
+
+        html = "No content type data yet.";
+
+    }
+
+
+    contentTypeResult.innerHTML = html;
+
+
+}
+
+}
 
 // =====================================
 // READY FOR FUTURE FEATURES

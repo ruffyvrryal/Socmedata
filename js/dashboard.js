@@ -1054,3 +1054,5 @@ confirmDeleteAccount.onclick=function(){
 
 
 };
+
+console.log("Back Button:", backToVaults);
