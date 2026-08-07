@@ -1,5 +1,7 @@
 // =====================================
 // SOCMEDATA ACCOUNT DASHBOARD
+// PART 1
+// DATABASE + ANALYTICS CORE
 // =====================================
 
 
@@ -10,26 +12,31 @@
 let profiles =
 JSON.parse(localStorage.getItem("profiles")) || [];
 
+
 let activeProfileId =
 localStorage.getItem("activeProfileId");
+
 
 let activeAccountId =
 localStorage.getItem("activeAccountId");
 
-// =============================
-// EDIT CONTENT MODE
-// =============================
+
+// =====================================
+// EDIT MODE
+// =====================================
 
 let editingContentId = null;
 
+
 // =====================================
-// FIND ACTIVE VAULT
+// FIND ACTIVE PROFILE
 // =====================================
 
 let profile =
 profiles.find(
     p => p.id == activeProfileId
 );
+
 
 if(!profile){
 
@@ -59,7 +66,9 @@ if(!account){
 }
 
 
-// Make sure account has content database
+// =====================================
+// DATABASE CHECK
+// =====================================
 
 if(!account.contents){
 
@@ -68,28 +77,20 @@ if(!account.contents){
 }
 
 
-
-
-// =====================================
-// DATABASE MIGRATION
-// =====================================
-
-
-// Make sure platforms exist
-
 if(!account.platforms){
 
-    account.platforms=[];
+    account.platforms = [];
 
 }
 
 
-// Upgrade old platform structure
+
+// =====================================
+// PLATFORM MIGRATION
+// =====================================
 
 account.platforms.forEach(platform=>{
 
-
-    // Create analytics if missing
 
     if(!platform.analytics){
 
@@ -110,8 +111,6 @@ account.platforms.forEach(platform=>{
 
 
 
-    // Create contents array if missing
-
     if(!platform.contents){
 
         platform.contents=[];
@@ -123,8 +122,9 @@ account.platforms.forEach(platform=>{
 
 
 
-// Keep account analytics for compatibility
-// Later this will be replaced by calculation
+// =====================================
+// ACCOUNT ANALYTICS
+// =====================================
 
 if(!account.analytics){
 
@@ -143,7 +143,8 @@ if(!account.analytics){
 }
 
 
-// Save migrated data
+
+// SAVE MIGRATION
 
 localStorage.setItem(
 
@@ -151,77 +152,52 @@ localStorage.setItem(
 
     JSON.stringify(profiles)
 
-
 );
 
-renderContents();
+
 
 
 // =====================================
-// HTML ELEMENTS
+// ELEMENTS
 // =====================================
 
 const accountTitle =
 document.getElementById("accountTitle");
 
+
 const totalViews =
 document.getElementById("totalViews");
 
-const followers =
-document.getElementById("followers");
 
 const contentCount =
 document.getElementById("contentCount");
 
+
 const growth =
 document.getElementById("growth");
+
 
 const platformGrid =
 document.getElementById("platformGrid");
 
-const connectPlatformBtn =
-document.getElementById("connectPlatformBtn");
 
-const platformFilter =
-document.getElementById("platformFilter");
 
 let selectedPlatformValue = "all";
 
 
-// =====================================
-// LOAD ACCOUNT NAME
-// =====================================
-
-accountTitle.textContent =
-account.name;
 
 
 // =====================================
-// LOAD ANALYTICS FROM PLATFORMS
+// ACCOUNT NAME
 // =====================================
 
-function loadAnalytics(){
+if(accountTitle){
 
-    const analytics = calculateAnalytics();
-
-    if(totalViews)
-        totalViews.textContent =
-        formatNumber(analytics.totalViews);
-
-    if(followers)
-        followers.textContent =
-        formatNumber(analytics.totalFollowers);
-
-    if(contentCount)
-        contentCount.textContent =
-        analytics.totalContents;
-
-    if(growth)
-        growth.textContent =
-        (analytics.totalGrowth >= 0 ? "+" : "")
-        + analytics.totalGrowth + "%";
+    accountTitle.textContent =
+    account.name;
 
 }
+
 
 
 // =====================================
@@ -240,6 +216,181 @@ function saveDatabase(){
 
 }
 
+
+
+// =====================================
+// NUMBER FORMAT
+// =====================================
+
+function formatNumber(number){
+
+    return Number(number)
+    .toLocaleString("id-ID");
+
+}
+
+
+
+// =====================================
+// CALCULATE ANALYTICS
+// =====================================
+
+function calculateAnalytics(){
+
+
+    let analytics = {
+
+
+        totalViews:0,
+
+
+        totalContents:0,
+
+
+        totalGrowth:0,
+
+
+        platforms:{}
+
+
+    };
+
+
+
+    account.contents.forEach(content=>{
+
+
+        let views =
+        Number(content.views)||0;
+
+
+
+        analytics.totalViews += views;
+
+
+
+        analytics.totalContents++;
+
+
+
+        let platform =
+        content.platform || "Unknown";
+
+
+
+        if(!analytics.platforms[platform]){
+
+
+            analytics.platforms[platform]={
+
+                views:0,
+
+                contents:0
+
+            };
+
+
+        }
+
+
+
+        analytics.platforms[platform].views += views;
+
+
+
+        analytics.platforms[platform].contents++;
+
+
+    });
+
+
+
+
+    account.platforms.forEach(platform=>{
+
+
+        analytics.totalGrowth +=
+
+        Number(
+            platform.analytics?.growth
+        ) || 0;
+
+
+
+    });
+
+
+
+    return analytics;
+
+
+}
+
+
+
+
+
+// =====================================
+// LOAD ANALYTICS
+// =====================================
+
+function loadAnalytics(){
+
+
+    let analytics =
+    calculateAnalytics();
+
+
+
+    if(totalViews){
+
+        totalViews.textContent =
+        formatNumber(
+            analytics.totalViews
+        );
+
+    }
+
+
+
+    if(contentCount){
+
+        contentCount.textContent =
+        analytics.totalContents;
+
+    }
+
+
+
+    if(growth){
+
+        growth.textContent =
+
+        (
+            analytics.totalGrowth >=0
+            ?
+            "+"
+            :
+            ""
+        )
+
+        +
+
+        analytics.totalGrowth
+
+        +
+
+        "%";
+
+
+    }
+
+
+}
+
+
+
+
 // =====================================
 // PLATFORM ICON
 // =====================================
@@ -247,7 +398,7 @@ function saveDatabase(){
 function getPlatformIcon(platform){
 
 
-    let logos = {
+    const logos={
 
 
         Instagram:
@@ -278,277 +429,452 @@ function getPlatformIcon(platform){
 
 
     return logos[platform]
+
     ||
+
     "https://cdn.simpleicons.org/internet";
+
 
 }
 
+
+
+
 // =====================================
-// PLATFORM STYLE CLASS
+// PLATFORM CLASS
 // =====================================
 
 function getPlatformClass(platform){
 
+
     switch(platform){
+
 
         case "Instagram":
             return "instagram-card";
 
+
         case "TikTok":
             return "tiktok-card";
+
 
         case "Facebook":
             return "facebook-card";
 
+
         case "YouTube":
             return "youtube-card";
+
 
         case "X":
             return "x-card";
 
+
         case "Threads":
             return "threads-card";
+
 
         default:
             return "";
 
+
     }
+
 
 }
 
+
+// =====================================
+// PART 2
+// PLATFORM SYSTEM + CONTENT MODAL
+// =====================================
 
 
 // =====================================
 // RENDER PLATFORMS
 // =====================================
 
+function renderPlatforms(){
 
-   function renderPlatforms(){
+
+    if(!platformGrid)
+        return;
+
 
     platformGrid.innerHTML = "";
 
-    let list = account.platforms;
+
+    let platforms =
+    account.platforms;
+
+
 
     if(selectedPlatformValue !== "all"){
 
-        list = list.filter(
-            item => item.platform === selectedPlatformValue
+
+        platforms =
+        platforms.filter(platform=>
+            platform.platform === selectedPlatformValue
         );
+
 
     }
 
-    if(list.length === 0){
+
+
+    if(platforms.length === 0){
+
 
         platformGrid.innerHTML = `
+
         <div class="empty-state">
+
             <h2>No Platform Connected</h2>
+
             <p>
-                Click <b>Connect Platform</b> to add your first platform.
+                Click Connect Platform to add your first platform.
             </p>
+
         </div>
+
         `;
+
 
         return;
 
+
     }
 
-    list.forEach(platform=>{
 
-        // =============================
-        // Calculate analytics from Content Database
-        // =============================
 
-        const analytics = calculateAnalytics();
 
-const platformStats = analytics.platforms[platform.platform] || {
+    let analytics =
+    calculateAnalytics();
 
-    views: 0,
 
-    contents: 0
 
-};
+    platforms.forEach(platform=>{
+
+
+        let stats =
+        analytics.platforms[platform.platform]
+        ||
+        {
+            views:0,
+            contents:0
+        };
+
+
 
         platformGrid.innerHTML += `
 
+
 <div class="platform-card ${getPlatformClass(platform.platform)}">
+
 
     <div class="platform-header">
 
+
         <div class="platform-brand">
 
+
             <div class="platform-icon">
+
                 <img src="${getPlatformIcon(platform.platform)}">
+
             </div>
 
+
             <div>
-                <h3>${platform.platform}</h3>
-                <p>${platform.username}</p>
+
+                <h3>
+                    ${platform.platform}
+                </h3>
+
+
+                <p>
+                    ${platform.username}
+                </p>
+
+
             </div>
+
 
         </div>
 
+
+
         <button
-            class="delete-platform"
-            data-id="${platform.id}">
+        class="delete-platform"
+        data-id="${platform.id}">
+
             ✕
+
         </button>
 
+
+
     </div>
+
+
+
 
     <div class="platform-stats">
 
-        <div class="stat-box">
-            <span>Followers</span>
-            <strong>
-                ${formatNumber(platform.analytics?.followers || 0)}
-            </strong>
-        </div>
 
         <div class="stat-box">
-            <span>Views</span>
+
+            <span>
+                Followers
+            </span>
+
             <strong>
-                ${formatNumber(platformStats.views)}
+
+            ${formatNumber(
+                platform.analytics?.followers || 0
+            )}
+
             </strong>
+
+
         </div>
 
-        <div class="stat-box">
-            <span>Content</span>
-            <strong>
-                ${platformStats.contents}
-            </strong>
-        </div>
+
+
 
         <div class="stat-box">
-            <span>Growth</span>
+
+
+            <span>
+                Views
+            </span>
+
+
+            <strong>
+
+            ${formatNumber(stats.views)}
+
+            </strong>
+
+
+        </div>
+
+
+
+
+
+        <div class="stat-box">
+
+
+            <span>
+                Content
+            </span>
+
+
+            <strong>
+
+            ${stats.contents}
+
+            </strong>
+
+
+        </div>
+
+
+
+
+
+        <div class="stat-box">
+
+
+            <span>
+                Growth
+            </span>
+
+
             <strong class="positive-growth">
-                +${platform.analytics?.growth || 0}%
+
+            +
+            ${platform.analytics?.growth || 0}%
+
             </strong>
+
+
         </div>
+
 
     </div>
 
+
 </div>
+
 
 `;
 
+
+
     });
 
-    // =============================
-    // Delete Platform
-    // =============================
+
+
+
 
     document
     .querySelectorAll(".delete-platform")
     .forEach(button=>{
 
-        button.onclick = function(){
 
-            const id = Number(this.dataset.id);
+        button.onclick=function(){
 
-            account.platforms = account.platforms.filter(
-                p => p.id !== id
+
+            let id =
+            Number(this.dataset.id);
+
+
+
+            account.platforms =
+            account.platforms.filter(
+                platform =>
+                platform.id !== id
             );
+
+
 
             saveDatabase();
 
+
             renderPlatforms();
+
 
         };
 
+
     });
 
-}
 
-if(platformFilter){
-
-    platformFilter.onchange=function(){
-
-        renderPlatforms();
-
-    };
 
 }
 
-// =====================================
-// CONNECT PLATFORM
-// =====================================
+
+
+
 
 // =====================================
 // PLATFORM MODAL
 // =====================================
 
+
 const platformModal =
 document.getElementById("platformModal");
+
 
 const closePlatformModal =
 document.getElementById("closePlatformModal");
 
+
 const cancelPlatform =
 document.getElementById("cancelPlatform");
+
 
 const savePlatform =
 document.getElementById("savePlatform");
 
+
 const platformSelect =
 document.getElementById("platformSelect");
 
+
 const platformUsername =
 document.getElementById("platformUsername");
+
 
 const platformFollowers =
 document.getElementById("platformFollowers");
 
 
-// Open Modal
+
+
+
+if(connectPlatformBtn){
+
 
 connectPlatformBtn.onclick=function(){
 
+
     platformModal.style.display="flex";
+
 
 };
 
 
-// Close Modal
+}
+
+
+
+
+
+if(closePlatformModal){
+
 
 closePlatformModal.onclick=function(){
 
+
     platformModal.style.display="none";
 
+
 };
+
+
+}
+
+
+
+
+
+if(cancelPlatform){
+
 
 cancelPlatform.onclick=function(){
 
+
     platformModal.style.display="none";
 
-};
-
-
-// Close when clicking outside
-
-window.onclick=function(event){
-
-    if(event.target===platformModal){
-
-        platformModal.style.display="none";
-
-    }
 
 };
 
 
-// Save Platform
+}
+
+
+
+
+
+
+// =====================================
+// SAVE PLATFORM
+// =====================================
+
+
+if(savePlatform){
+
 
 savePlatform.onclick=function(){
 
+
+
     if(platformSelect.value===""){
 
-        alert("Select a platform.");
+
+        alert("Select platform.");
 
         return;
 
     }
 
+
+
     if(platformUsername.value===""){
+
 
         alert("Enter username.");
 
@@ -556,46 +882,76 @@ savePlatform.onclick=function(){
 
     }
 
+
+
+
+
     account.platforms.push({
 
-    id:Date.now(),
-
-    platform:platformSelect.value,
-
-    username:platformUsername.value,
-
-    followers:Number(
-        platformFollowers.value
-    ) || 0,
 
 
-    analytics:{
+        id:Date.now(),
 
-        views:0,
+
+
+        platform:
+        platformSelect.value,
+
+
+
+        username:
+        platformUsername.value,
+
+
 
         followers:
-        Number(platformFollowers.value)
-        || 0,
-
-        contents:0,
-
-        growth:0
-
-    },
+        Number(platformFollowers.value)||0,
 
 
-    contents:[]
 
-});
+        analytics:{
+
+
+            views:0,
+
+
+            followers:
+            Number(platformFollowers.value)||0,
+
+
+            contents:0,
+
+
+            growth:0
+
+
+        },
+
+
+
+        contents:[]
+
+
+
+    });
+
+
+
+
 
     saveDatabase();
 
+
+
     renderPlatforms();
 
-    updateAnalytics();
 
 
-    // Reset form
+    loadAnalytics();
+
+
+
+
 
     platformSelect.value="";
 
@@ -604,141 +960,854 @@ savePlatform.onclick=function(){
     platformFollowers.value="";
 
 
+
     platformModal.style.display="none";
+
+
 
 };
 
 
-// =====================================
-// UPDATE ANALYTICS
-// =====================================
-
-function updateAnalytics(){
-
-    saveDatabase();
-
-    loadAnalytics();
-
-    renderPlatforms();
 
 }
 
+
+
+
 // =====================================
-// ANALYTICS ENGINE
+// CONTENT MODAL ELEMENTS
 // =====================================
 
-function calculateAnalytics(){
 
-    const analytics = {
+const contentModal =
+document.getElementById("contentModal");
 
-        totalViews:0,
 
-        totalContents:0,
+const closeContentModal =
+document.getElementById("closeContentModal");
 
-        totalFollowers:0,
 
-        totalGrowth:0,
+const cancelContentBtn =
+document.getElementById("cancelContent");
 
-        platforms:{}
+
+const saveContent =
+document.getElementById("saveContent");
+
+
+
+const contentStatus =
+document.getElementById("contentStatus");
+
+
+
+
+
+// =====================================
+// CLOSE CONTENT MODAL
+// =====================================
+
+
+if(cancelContentBtn){
+
+
+cancelContentBtn.onclick=function(){
+
+
+    contentModal.style.display="none";
+
+
+};
+
+
+}
+
+
+
+if(closeContentModal){
+
+
+closeContentModal.onclick=function(){
+
+
+    contentModal.style.display="none";
+
+
+};
+
+
+}
+
+
+
+
+
+// =====================================
+// SAVE CONTENT
+// =====================================
+
+
+if(saveContent){
+
+
+saveContent.onclick=function(){
+
+
+    let content = {
+
+
+        id:
+        Date.now(),
+
+
+
+        accountId:
+        activeAccountId,
+
+
+
+        date:
+        document.getElementById("contentDate").value,
+
+
+
+        caption:
+        document.getElementById("contentCaption").value,
+
+
+
+        hashtag:
+        document.getElementById("contentHashtag").value,
+
+
+
+        contentType:
+        document.getElementById("contentType").value,
+
+
+
+        views:
+        Number(
+            document.getElementById("contentViews").value
+        ) || 0,
+
+
+
+        likes:
+        Number(
+            document.getElementById("contentLikes").value
+        ) || 0,
+
+
+
+        comments:
+        Number(
+            document.getElementById("contentComments").value
+        ) || 0,
+
+
+
+        shares:
+        Number(
+            document.getElementById("contentShares").value
+        ) || 0,
+
+
+
+        saved:
+        Number(
+            document.getElementById("contentSaved").value
+        ) || 0,
+
+
+
+        platform:
+        document.getElementById("contentPlatform").value,
+
+
+
+        status:
+        contentStatus.value
+
+
 
     };
 
 
-    // ============================
-    // CONTENT DATABASE
-    // ============================
 
-    account.contents.forEach(content=>{
 
-        analytics.totalViews +=
-        Number(content.views) || 0;
 
-        analytics.totalContents++;
+    if(editingContentId !== null){
 
-        if(!analytics.platforms[content.platform]){
 
-            analytics.platforms[content.platform]={
+        let index =
+        account.contents.findIndex(
+            item =>
+            item.id === editingContentId
+        );
 
-                views:0,
 
-                contents:0
+
+        if(index !== -1){
+
+
+            account.contents[index] = {
+
+                ...account.contents[index],
+
+                ...content,
+
+                id:editingContentId
 
             };
 
+
         }
 
-        analytics.platforms[content.platform].views +=
-        Number(content.views) || 0;
-
-        analytics.platforms[content.platform].contents++;
-
-    });
 
 
-    // ============================
-    // PLATFORM DATABASE
-    // ============================
-
-    account.platforms.forEach(platform=>{
-
-        analytics.totalFollowers +=
-        Number(platform.analytics?.followers) || 0;
-
-        analytics.totalGrowth +=
-        Number(platform.analytics?.growth) || 0;
-
-    });
+        editingContentId=null;
 
 
-    return analytics;
-
-}
-
-// =====================================
-// NUMBER FORMATTER
-// =====================================
-
-function formatNumber(number){
-
-    return Number(number).toLocaleString("id-ID");
-
-}
-
-    loadAnalytics();
-
-    renderPlatforms();
-
-    updateAnalytics();
-
-
-// =====================================
-// AUTO SAVE
-// =====================================
-
-window.addEventListener(
-
-    "beforeunload",
-
-    function(){
-
-        saveDatabase();
 
     }
 
-);
+    else{
 
 
-// =============================
+        account.contents.push(content);
+
+
+    }
+
+
+
+
+
+    saveDatabase();
+
+
+
+    renderContents();
+
+
+
+    loadAnalytics();
+
+
+
+    renderPlatforms();
+
+
+
+    contentModal.style.display="none";
+
+
+
+    showToast(
+        "Content saved successfully!",
+        "success"
+    );
+
+
+};
+
+
+
+}
+
+// =====================================
+// PART 3
+// CONTENT TABLE + DELETE SYSTEM
+// + TABS + TOAST
+// =====================================
+
+
+// =====================================
+// RENDER CONTENT TABLE
+// =====================================
+
+function renderContents(){
+
+
+    const table =
+    document.getElementById("contentTableBody");
+
+
+
+    if(!table)
+        return;
+
+
+
+    table.innerHTML = "";
+
+
+
+    let sortedContents =
+    [...account.contents].sort(
+        (a,b)=>
+        new Date(a.date)-new Date(b.date)
+    );
+
+
+
+
+    sortedContents.forEach((content,index)=>{
+
+
+        let engagement =
+
+        (Number(content.likes)||0)
+
+        +
+
+        (Number(content.comments)||0)
+
+        +
+
+        (Number(content.shares)||0)
+
+        +
+
+        (Number(content.saved)||0);
+
+
+
+
+        table.innerHTML += `
+
+
+<tr>
+
+
+<td>
+${index + 1}
+</td>
+
+
+
+<td>
+${content.date || "-"}
+</td>
+
+
+
+
+<td>
+${content.caption || "-"}
+</td>
+
+
+
+
+<td>
+${content.hashtag || "-"}
+</td>
+
+
+
+
+<td>
+${content.platform || "-"}
+</td>
+
+
+
+
+<td>
+
+<span class="status-badge ${
+(content.status || "Published")
+.toLowerCase()
+}">
+
+
+${
+content.status === "Published"
+?
+"🟢"
+:
+content.status === "Scheduled"
+?
+"🔵"
+:
+content.status === "Draft"
+?
+"🟠"
+:
+"🟣"
+}
+
+
+${content.status || "Published"}
+
+
+</span>
+
+
+</td>
+
+
+
+
+
+<td>
+
+${formatNumber(content.views || 0)}
+
+</td>
+
+
+
+
+
+<td>
+
+${formatNumber(engagement)}
+
+</td>
+
+
+
+
+
+<td>
+
+
+<div class="content-actions">
+
+
+<button
+class="edit-content"
+data-id="${content.id}">
+
+Edit
+
+</button>
+
+
+
+<button
+class="delete-content"
+data-id="${content.id}">
+
+Delete
+
+</button>
+
+
+</div>
+
+
+</td>
+
+
+
+</tr>
+
+
+`;
+
+
+
+    });
+
+
+
+
+
+    // =================================
+    // EDIT BUTTON
+    // =================================
+
+
+    document
+    .querySelectorAll(".edit-content")
+    .forEach(button=>{
+
+
+        button.onclick=function(){
+
+
+            let id =
+            Number(this.dataset.id);
+
+
+
+            let content =
+            account.contents.find(
+                item =>
+                item.id === id
+            );
+
+
+
+            if(!content)
+                return;
+
+
+
+
+            editingContentId=id;
+
+
+
+
+            document.getElementById("contentDate").value =
+            content.date || "";
+
+
+
+            document.getElementById("contentCaption").value =
+            content.caption || "";
+
+
+
+            document.getElementById("contentHashtag").value =
+            content.hashtag || "";
+
+
+
+            document.getElementById("contentType").value =
+            content.contentType || "";
+
+
+
+            document.getElementById("contentViews").value =
+            content.views || 0;
+
+
+
+            document.getElementById("contentLikes").value =
+            content.likes || 0;
+
+
+
+            document.getElementById("contentComments").value =
+            content.comments || 0;
+
+
+
+            document.getElementById("contentShares").value =
+            content.shares || 0;
+
+
+
+            document.getElementById("contentSaved").value =
+            content.saved || 0;
+
+
+
+            document.getElementById("contentPlatform").value =
+            content.platform || "";
+
+
+
+            document.getElementById("contentStatus").value =
+            content.status || "Published";
+
+
+
+            let title =
+            document.getElementById("contentModalTitle");
+
+
+
+            if(title){
+
+                title.textContent =
+                "Edit Content";
+
+            }
+
+
+
+            contentModal.style.display="flex";
+
+
+
+        };
+
+
+    });
+
+
+
+
+
+    // =================================
+    // DELETE BUTTON
+    // =================================
+
+
+    let deleteContentId=null;
+
+
+
+    const deleteModal =
+    document.getElementById("deleteModal");
+
+
+
+    const cancelDelete =
+    document.getElementById("cancelDelete");
+
+
+
+    const confirmDelete =
+    document.getElementById("confirmDelete");
+
+
+
+
+
+    document
+    .querySelectorAll(".delete-content")
+    .forEach(button=>{
+
+
+        button.onclick=function(){
+
+
+            deleteContentId =
+            Number(this.dataset.id);
+
+
+
+            if(deleteModal){
+
+                deleteModal.style.display="flex";
+
+            }
+
+
+        };
+
+
+    });
+
+
+
+
+
+
+    if(cancelDelete){
+
+
+        cancelDelete.onclick=function(){
+
+
+            deleteContentId=null;
+
+
+            deleteModal.style.display="none";
+
+
+        };
+
+
+    }
+
+
+
+
+
+
+    if(confirmDelete){
+
+
+        confirmDelete.onclick=function(){
+
+
+
+            if(deleteContentId===null)
+                return;
+
+
+
+            account.contents =
+            account.contents.filter(
+
+                item =>
+                item.id !== deleteContentId
+
+            );
+
+
+
+            saveDatabase();
+
+
+
+            renderContents();
+
+
+            loadAnalytics();
+
+
+            renderPlatforms();
+
+
+
+
+            if(typeof loadEngagement==="function")
+                loadEngagement();
+
+
+
+            if(typeof renderHashtags==="function")
+                renderHashtags();
+
+
+
+            if(deleteModal){
+
+                deleteModal.style.display="none";
+
+            }
+
+
+
+            deleteContentId=null;
+
+
+
+            showToast(
+                "Content deleted successfully!",
+                "success"
+            );
+
+
+        };
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+// =====================================
+// TOAST SYSTEM
+// =====================================
+
+
+function showToast(
+message,
+type="success"
+){
+
+
+
+    const toast =
+    document.getElementById("toast");
+
+
+
+    if(!toast)
+        return;
+
+
+
+    const icon =
+    toast.querySelector(".toast-icon");
+
+
+
+    const text =
+    toast.querySelector(".toast-message");
+
+
+
+    if(text){
+
+        text.textContent =
+        message;
+
+    }
+
+
+
+
+
+    if(icon){
+
+
+        if(type==="success"){
+
+            icon.innerHTML="✓";
+
+        }
+
+
+        else if(type==="error"){
+
+            icon.innerHTML="✕";
+
+        }
+
+
+        else{
+
+            icon.innerHTML="!";
+
+        }
+
+
+    }
+
+
+
+
+
+    toast.classList.add("show");
+
+
+
+    clearTimeout(toast.timer);
+
+
+
+    toast.timer =
+    setTimeout(()=>{
+
+
+        toast.classList.remove("show");
+
+
+    },3000);
+
+
+
+}
+
+
+
+
+
+
+
+// =====================================
 // ACCOUNT TABS
-// =============================
+// =====================================
 
 
 const tabs =
 document.querySelectorAll(".account-tab");
 
 
+
 const tabContents =
 document.querySelectorAll(".tab-content");
+
 
 
 
@@ -748,13 +1817,18 @@ tabs.forEach(tab=>{
     tab.onclick=function(){
 
 
+
         let target =
         tab.dataset.tab;
 
-localStorage.setItem(
-    "activeAccountTab",
-    target
-)
+
+
+        localStorage.setItem(
+            "activeAccountTab",
+            target
+        );
+
+
 
         tabs.forEach(btn=>{
 
@@ -772,12 +1846,21 @@ localStorage.setItem(
 
 
 
+
         tab.classList.add("active");
 
 
-        document
-        .getElementById(target)
-        .classList.add("active");
+
+        let section =
+        document.getElementById(target);
+
+
+
+        if(section){
+
+            section.classList.add("active");
+
+        }
 
 
     };
@@ -787,13 +1870,18 @@ localStorage.setItem(
 
 
 
-// =============================
-// RESTORE LAST ACTIVE TAB
-// =============================
+
+
+
+// =====================================
+// RESTORE LAST TAB
+// =====================================
 
 
 let savedTab =
-localStorage.getItem("activeAccountTab");
+localStorage.getItem(
+"activeAccountTab"
+);
 
 
 
@@ -804,11 +1892,13 @@ tabs.forEach(tab=>{
 });
 
 
+
 tabContents.forEach(content=>{
 
     content.classList.remove("active");
 
 });
+
 
 
 
@@ -826,11 +1916,13 @@ savedTab || "dashboard"
 
 
 
+
 if(activeTab){
 
     activeTab.classList.add("active");
 
 }
+
 
 
 if(activeContent){
@@ -840,1144 +1932,10 @@ if(activeContent){
 }
 
 // =====================================
-// CUSTOM PLATFORM FILTER
+// PART 4
+// ENGAGEMENT + HASHTAG + PLATFORM ANALYTICS
 // =====================================
 
-const customFilter =
-document.getElementById("platformFilter");
-
-
-if(customFilter){
-
-    const trigger =
-    customFilter.querySelector(".custom-select-trigger");
-
-
-    const selectedText =
-    document.getElementById("selectedPlatform");
-
-
-    const options =
-    customFilter.querySelectorAll(".custom-option");
-
-
-    if(trigger){
-
-        trigger.onclick = function(){
-
-            customFilter.classList.toggle("open");
-
-        };
-
-    }
-
-
-    options.forEach(option=>{
-
-        option.onclick=function(){
-
-            options.forEach(item=>
-                item.classList.remove("active")
-            );
-
-
-            option.classList.add("active");
-
-
-            if(selectedText){
-
-                selectedText.textContent =
-                option.textContent;
-
-            }
-
-
-            selectedPlatformValue =
-            option.dataset.value;
-
-
-            renderPlatforms();
-
-
-            customFilter.classList.remove("open");
-
-
-            console.log(selectedPlatformValue);
-
-        };
-
-    });
-
-}
-
-// =====================================
-// LOGO BUTTON SYSTEM
-// =====================================
-
-
-const logoButton =
-document.getElementById("logoButton");
-
-
-const logoModal =
-document.getElementById("logoModal");
-
-
-const closeLogoModal =
-document.getElementById("closeLogoModal");
-
-
-const cancelLogo =
-document.getElementById("cancelLogo");
-
-
-const saveLogo =
-document.getElementById("saveLogo");
-
-
-const logoUrl =
-document.getElementById("logoUrl");
-
-
-
-// LOAD SAVED LOGO
-
-// LOAD ACCOUNT SPECIFIC LOGO
-
-if(account.logoButtonImage){
-
-    logoButton.innerHTML =
-    `
-    <img src="${account.logoButtonImage}">
-    `;
-
-}
-
-
-
-// OPEN MODAL
-
-logoButton.onclick=function(){
-
-    logoModal.style.display="flex";
-
-};
-
-
-
-// CLOSE
-
-closeLogoModal.onclick=function(){
-
-    logoModal.style.display="none";
-
-};
-
-
-cancelLogo.onclick=function(){
-
-    logoModal.style.display="none";
-
-};
-
-
-
-// SAVE LOGO
-
-saveLogo.onclick=function(){
-
-
-    let url =
-    logoUrl.value.trim();
-
-
-
-    if(url===""){
-
-        alert("Please enter image URL");
-
-        return;
-
-    }
-
-
-
-    account.logoButtonImage = url;
-
-saveDatabase();
-
-
-    logoButton.innerHTML =
-    `
-    <img src="${url}">
-    `;
-
-
-    logoModal.style.display="none";
-
-
-};
-
-
-// =============================
-// CLOSE CONTENT MODAL
-// =============================
-
-
-const cancelContentBtn =
-document.getElementById("cancelContent");
-
-
-if(cancelContentBtn){
-
-
-cancelContentBtn.onclick=function(){
-
-
-    document
-    .getElementById("contentModal")
-    .style.display="none";
-
-
-};
-
-
-}
-
-const closeContentModal =
-document.getElementById("closeContentModal");
-
-
-const contentStatus =
-document.getElementById("contentStatus");
-
-
-const saveContent =
-document.getElementById("saveContent");
-
-
-
-if(saveContent){
-
-
-saveContent.onclick=function(){
-
-
-
-
-console.log("Saving content");
-
-
-let content = {
-
-
-    id: Date.now(),
-
-
-    accountId: activeAccountId,
-
-
-    thumbnail:"",
-
-
-    date:
-    document.getElementById("contentDate").value,
-
-
-    caption:
-    document.getElementById("contentCaption").value,
-
-
-    hashtag:
-    document.getElementById("contentHashtag").value,
-
-    contentType:
-    document.getElementById("contentType").value,
-
-
-    views:
-    Number(
-        document.getElementById("contentViews").value
-    ) || 0,
-
-
-    likes:
-    Number(
-        document.getElementById("contentLikes").value
-    ) || 0,
-
-
-    comments:
-    Number(
-        document.getElementById("contentComments").value
-    ) || 0,
-
-
-    shares:
-    Number(
-        document.getElementById("contentShares").value
-    ) || 0,
-
-
-    saved:
-    Number(
-        document.getElementById("contentSaved").value
-    ) || 0,
-
-
-    platform:
-    document.getElementById("contentPlatform").value,
-
-
-    status:
-contentStatus.value
-
-
-};
-
-
-
-if(editingContentId !== null){
-
-    const index = account.contents.findIndex(
-        item => item.id === editingContentId
-    );
-
-    if(index !== -1){
-
-        account.contents[index] = {
-
-            ...account.contents[index],
-
-            ...content,
-
-            id: editingContentId
-
-        };
-
-    }
-
-    editingContentId = null;
-
-}else{
-
-    account.contents.push(content);
-
-}
-
-saveDatabase();
-
-renderContents();
-
-loadAnalytics();
-
-renderPlatforms();
-
-loadEngagement();
-
-renderPlatformComparison();
-
-renderHashtags();
-
-document
-.getElementById("contentModal")
-.style.display="none";
-
-
-showToast(
-    "Content created successfully!",
-    "success"
-);
-
-
-
-console.log(
-    "CONTENT SAVED",
-    content
-);
-
-
-};
-
-closeContentModal.onclick=function(){
-
-
-    document
-    .getElementById("contentModal")
-    .style.display="none";
-
-
-};
-
-
-}
-
-// =====================================
-// RENDER CONTENT TABLE
-// =====================================
-
-function renderContents(){
-
-    const table =
-    document.getElementById("contentTableBody");
-
-    if(!table) return;
-
-    table.innerHTML = "";
-
-    const sortedContents =
-[...account.contents].sort((a,b)=>{
-
-    return new Date(a.date) - new Date(b.date);
-
-});
-
-
-sortedContents.forEach((content,index)=>{
-
-        table.innerHTML += `
-
-<tr>
-
-<td>
-${index + 1}
-</td>
-
-
-<td>
-${content.date || "-"}
-</td>
-
-
-<td>
-${content.caption || "-"}
-</td>
-
-
-<td>
-${content.hashtag || "-"}
-</td>
-
-
-<td>
-${content.platform || "-"}
-</td>
-
-
-<td>
-
-<span class="status-badge ${(content.status || "Published").toLowerCase()}">
-
-${
-content.status === "Published"
-? "🟢"
-: content.status === "Scheduled"
-? "🔵"
-: content.status === "Draft"
-? "🟠"
-: "🟣"
-}
-
-${content.status || "Published"}
-
-</span>
-
-</td>
-
-
-<td>
-
-${formatNumber(content.views || 0)}
-
-</td>
-
-
-<td>
-
-${formatNumber(
-(
-Number(content.likes)||0
-)
-+
-(
-Number(content.comments)||0
-)
-+
-(
-Number(content.shares)||0
-)
-+
-(
-Number(content.saved)||0
-)
-)}
-
-</td>
-
-
-<td>
-
-<div class="content-actions">
-
-<button class="edit-content" data-id="${content.id}">
-Edit
-</button>
-
-
-<button class="delete-content" data-id="${content.id}">
-Delete
-</button>
-
-
-</div>
-
-</td>
-
-
-</tr>
-
-`;
-
-    });
-
-// =============================
-// EDIT BUTTON
-// =============================
-
-document.querySelectorAll(".edit-content").forEach(button => {
-
-    button.onclick = function(){
-
-        const id = Number(this.dataset.id);
-
-        const content = account.contents.find(
-            item => item.id === id
-        );
-
-        if(!content) return;
-
-        editingContentId = id;
-
-        document.getElementById("contentDate").value =
-            content.date || "";
-
-        document.getElementById("contentCaption").value =
-            content.caption || "";
-
-        document.getElementById("contentHashtag").value =
-            content.hashtag || "";
-
-        document.getElementById("contentType").value =
-            content.contentType || "";
-
-        document.getElementById("contentViews").value =
-            content.views || 0;
-
-        document.getElementById("contentLikes").value =
-            content.likes || 0;
-
-        document.getElementById("contentComments").value =
-            content.comments || 0;
-
-        document.getElementById("contentShares").value =
-            content.shares || 0;
-
-        document.getElementById("contentSaved").value =
-            content.saved || 0;
-
-        document.getElementById("contentPlatform").value =
-            content.platform || "";
-
-        document.getElementById("contentStatus").value =
-            content.status || "Published";
-
-        document.getElementById("contentModalTitle").textContent =
-            "Edit Content";
-
-        document.getElementById("contentModal").style.display =
-            "flex";
-
-    };
-
-});
-
-// =============================
-// DELETE CONTENT SYSTEM
-// =============================
-
-let deleteContentId = null;
-
-
-const deleteModal =
-document.getElementById("deleteModal");
-
-console.log(
-    "Delete Modal:",
-    deleteModal
-);
-
-
-const cancelDelete =
-document.getElementById("cancelDelete");
-
-
-const confirmDelete =
-document.getElementById("confirmDelete");
-
-
-
-document.querySelectorAll(".delete-content")
-.forEach(button=>{
-
-    console.log(
-        "DELETE BUTTON CONNECTED",
-        button
-    );
-
-
-    button.onclick=function(){
-
-    console.log(
-        "Opening delete modal",
-        this.dataset.id
-    );
-
-
-    deleteContentId =
-    Number(this.dataset.id);
-
-
-    deleteModal.style.display =
-    "flex";
-
-
-    console.log(
-        "Modal style:",
-        deleteModal.style.display
-    );
-
-};
-
-
-});
-
-
-
-// CANCEL DELETE
-
-cancelDelete.onclick=function(){
-
-
-    deleteModal.style.display =
-    "none";
-
-
-    deleteContentId = null;
-
-
-};
-
-
-
-// CONFIRM DELETE
-
-confirmDelete.onclick = function(){
-
-    if(deleteContentId === null){
-
-        return;
-
-    }
-
-    account.contents =
-    account.contents.filter(
-
-        item =>
-        item.id != deleteContentId
-
-    );
-
-    saveDatabase();
-
-renderContents();
-
-loadAnalytics();
-
-renderPlatforms();
-
-loadEngagement();
-
-renderPlatformComparison();
-
-renderHashtags();
-
-renderMonthlyReport();
-
-    deleteModal.style.display =
-    "none";
-
-    deleteContentId = null;
-
-    showToast(
-        "Content deleted successfully!",
-        "success"
-    );
-
-};
-
-}
-
-renderContents();
-
-function deleteContent(index){
-
-    account.contents.splice(index,1);
-
-    saveDatabase();
-
-    renderContents();
-
-}
-
-
-
-renderContents();
-
-loadEngagement();
-
-renderPlatformComparison();
-
-renderHashtags();
-
-renderMonthlyReport();
-
-// renderContents();
-
-// renderHashtags();
-
-// =====================================
-// TOAST NOTIFICATION
-// =====================================
-
-function showToast(message, type = "success"){
-
-    const toast =
-    document.getElementById("toast");
-
-    const icon =
-    toast.querySelector(".toast-icon");
-
-    const text =
-    toast.querySelector(".toast-message");
-
-    text.textContent = message;
-
-    if(type === "success"){
-
-        icon.innerHTML = "✓";
-        icon.style.background = "#22c55e";
-
-    }
-
-    else if(type === "error"){
-
-        icon.innerHTML = "✕";
-        icon.style.background = "#ef4444";
-
-    }
-
-    else if(type === "warning"){
-
-        icon.innerHTML = "!";
-        icon.style.background = "#f59e0b";
-
-    }
-
-    toast.classList.add("show");
-
-    clearTimeout(toast.timer);
-
-    toast.timer = setTimeout(function(){
-
-        toast.classList.remove("show");
-
-    },3000);
-
-}
-
-window.account = account;
-window.profile = profile;
-
-window.goBack = function(){
-
-    window.history.back();
-
-};
-
-function goBack(){
-
-    window.location.href = "dashboard.html";
-
-}
-
-const backButton =
-document.getElementById("backButton");
-
-
-backButton.onclick=function(){
-
-    window.location.href="dashboard.html";
-
-};
-
-// ============================
-// ENGAGEMENT ANALYTICS
-// ============================
-
-function loadEngagement(){
-
-    console.log("ENGAGEMENT FUNCTION RUNNING");
-
-
-    let contents =
-    account.contents || [];
-
-
-    console.log("CONTENT DATA:", contents);
-
-
-
-    let totalLikes = 0;
-
-    let totalComments = 0;
-
-    let totalShares = 0;
-
-    let totalSaved = 0;
-
-    let totalViews = 0;
-
-    let contentTypeCount = {};
-
-    let platformEngagement = {};
-
-
-
-// =============================
-// TOP CONTENT VARIABLES
-// =============================
-
-let topContent = null;
-
-let topContentEngagement = 0;
-
-
-
-
-    contents.forEach(content=>{
-
-
-        totalLikes += Number(content.likes) || 0;
-
-        totalComments += Number(content.comments) || 0;
-
-        totalShares += Number(content.shares) || 0;
-
-        totalSaved += Number(content.saved) || 0;
-
-        totalViews += Number(content.views) || 0;
-
-// COUNT CONTENT TYPES
-
-let type = content.contentType || "Uncategorized";
-
-
-if(!contentTypeCount[type]){
-
-    contentTypeCount[type] = 0;
-
-}
-
-
-contentTypeCount[type]++;
-
-        let platform = content.platform;
-
-
-
-        if(!platformEngagement[platform]){
-
-            platformEngagement[platform] = 0;
-
-        }
-
-
-
-        let contentEngagement =
-
-(Number(content.likes) || 0)
-
-+
-
-(Number(content.comments) || 0)
-
-+
-
-(Number(content.shares) || 0)
-
-+
-
-(Number(content.saved) || 0);
-
-
-
-platformEngagement[platform] += contentEngagement;
-
-if(contentEngagement > topContentEngagement){
-
-    topContentEngagement = contentEngagement;
-
-    topContent = content;
-
-}
-
-});
-
-
-    let totalEngagement =
-
-        totalLikes
-
-        +
-
-        totalComments
-
-        +
-
-        totalShares
-
-        +
-
-        totalSaved;
-
-
-
-    let engagementRate = 0;
-
-
-    if(totalViews > 0){
-
-        engagementRate =
-
-        ((totalEngagement / totalViews) * 100)
-
-        .toFixed(1);
-
-    }
-
-
-
-    let bestPlatform = "-";
-
-    let highestEngagement = 0;
-
-
-
-    Object.keys(platformEngagement)
-    .forEach(platform=>{
-
-
-        if(platformEngagement[platform] > highestEngagement){
-
-
-            highestEngagement =
-            platformEngagement[platform];
-
-
-            bestPlatform =
-            platform;
-
-
-        }
-
-
-    });
-
-
-
-    console.log(
-        "TOTAL ENGAGEMENT:",
-        totalEngagement
-    );
-
-
-    const totalEngagementEl =
-document.getElementById("totalEngagement");
-
-const engagementRateEl =
-document.getElementById("engagementRate");
-
-const bestPlatformEl =
-document.getElementById("bestPlatform");
-
-const totalLikesEl =
-document.getElementById("totalLikes");
-
-const totalCommentsEl =
-document.getElementById("totalComments");
-
-const totalSharesEl =
-document.getElementById("totalShares");
-
-const totalSavedEl =
-document.getElementById("totalSaved");
-
-
-if(totalEngagementEl)
-totalEngagementEl.textContent =
-totalEngagement.toLocaleString();
-
-
-if(engagementRateEl)
-engagementRateEl.textContent =
-engagementRate + "%";
-
-
-if(bestPlatformEl)
-bestPlatformEl.textContent =
-bestPlatform;
-
-
-if(totalLikesEl)
-totalLikesEl.textContent =
-totalLikes.toLocaleString();
-
-
-if(totalCommentsEl)
-totalCommentsEl.textContent =
-totalComments.toLocaleString();
-
-
-if(totalSharesEl)
-totalSharesEl.textContent =
-totalShares.toLocaleString();
-
-
-if(totalSavedEl)
-totalSavedEl.textContent =
-totalSaved.toLocaleString();
-
-// =============================
-// DISPLAY TOP CONTENT
-// =============================
-
-
-const topContentResult =
-document.getElementById("topContentResult");
-
-
-if(topContentResult){
-
-
-    if(topContent){
-
-
-        topContentResult.innerHTML = `
-
-        <div class="top-content-item">
-
-
-            <p class="top-content-caption">
-${topContent.caption || "Untitled"}
-</p>
-
-
-            <p>
-            Platform:
-            ${topContent.platform}
-            </p>
-
-
-            <p>
-            👁 Views:
-            ${formatNumber(topContent.views)}
-            </p>
-
-
-            <p>
-            🔥 Engagement:
-            ${formatNumber(topContentEngagement)}
-            </p>
-
-
-        </div>
-
-        `;
-
-
-    }else{
-
-
-        topContentResult.innerHTML =
-        "No content data yet.";
-
-
-    }
-
-
-}
-
-// =============================
-// DISPLAY CONTENT TYPES
-// =============================
-
-const contentTypeResult =
-document.getElementById("contentTypeResult");
-
-
-if(contentTypeResult){
-
-
-    let html = "";
-
-
-    Object.keys(contentTypeCount)
-    .forEach(type=>{
-
-
-        html += `
-
-        <div class="content-type-item">
-
-            <span>
-            ${type}
-            </span>
-
-            <strong>
-            ${contentTypeCount[type]} posts
-            </strong>
-
-        </div>
-
-        `;
-
-
-    });
-
-
-    if(html === ""){
-
-        html = "No content type data yet.";
-
-    }
-
-
-    contentTypeResult.innerHTML = html;
-
-
-}
-
-}
 
 // =====================================
 // PLATFORM COMPARISON
@@ -1985,107 +1943,215 @@ if(contentTypeResult){
 
 function renderPlatformComparison(){
 
-    const platformComparisonResult =
-    document.getElementById("platformComparisonResult");
 
-    if(!platformComparisonResult) return;
+    const result =
+    document.getElementById(
+        "platformComparisonResult"
+    );
 
-    let contents = account.contents || [];
 
-    let platforms = {};
 
-    contents.forEach(content=>{
+    if(!result)
+        return;
 
-        let platform = content.platform || "Unknown";
+
+
+    let platforms={};
+
+
+
+    account.contents.forEach(content=>{
+
+
+        let platform =
+        content.platform || "Unknown";
+
+
 
         if(!platforms[platform]){
 
-            platforms[platform] = {
+
+            platforms[platform]={
 
                 views:0,
+
                 likes:0,
+
                 comments:0,
+
                 shares:0,
-                saves:0
+
+                saved:0
 
             };
 
+
         }
 
+
+
+
         platforms[platform].views +=
-        Number(content.views) || 0;
+        Number(content.views)||0;
+
+
 
         platforms[platform].likes +=
-        Number(content.likes) || 0;
+        Number(content.likes)||0;
+
+
 
         platforms[platform].comments +=
-        Number(content.comments) || 0;
+        Number(content.comments)||0;
+
+
 
         platforms[platform].shares +=
-        Number(content.shares) || 0;
+        Number(content.shares)||0;
 
-        platforms[platform].saves +=
-        Number(content.saved) || 0;
+
+
+        platforms[platform].saved +=
+        Number(content.saved)||0;
+
+
 
     });
 
-    let html = "";
 
-    Object.keys(platforms).forEach(platform=>{
 
-        let data = platforms[platform];
+
+    let html="";
+
+
+
+
+    Object.keys(platforms)
+    .forEach(platform=>{
+
+
+        let data =
+        platforms[platform];
+
+
 
         let engagement =
-        data.likes +
-        data.comments +
-        data.shares +
-        data.saves;
 
-        let rate = 0;
+        data.likes
 
-        if(data.views > 0){
+        +
 
-            rate = (
+        data.comments
+
+        +
+
+        data.shares
+
+        +
+
+        data.saved;
+
+
+
+
+        let rate=0;
+
+
+
+        if(data.views>0){
+
+
+            rate =
+            (
                 engagement /
                 data.views *
                 100
             ).toFixed(1);
 
+
         }
+
+
+
+
 
         html += `
 
-        <div class="platform-performance-item">
 
-            <div class="platform-performance-header">
+<div class="platform-performance-item">
 
-                <span>${platform}</span>
 
-                <strong>${rate}%</strong>
+<div class="platform-performance-header">
 
-            </div>
 
-            <div class="performance-bar">
+<span>
 
-                <span style="width:${rate}%"></span>
+${platform}
 
-            </div>
+</span>
 
-        </div>
 
-        `;
+
+<strong>
+
+${rate}%
+
+</strong>
+
+
+
+</div>
+
+
+
+<div class="performance-bar">
+
+
+<span style="width:${rate}%"></span>
+
+
+</div>
+
+
+
+</div>
+
+
+`;
+
+
 
     });
 
-    if(html === ""){
 
-        html = "No platform data yet.";
+
+
+    if(html===""){
+
+
+        html =
+        "No platform data yet.";
+
 
     }
 
-    platformComparisonResult.innerHTML = html;
+
+
+
+    result.innerHTML =
+    html;
+
+
 
 }
+
+
+
+
+
+
+
+
 
 // =====================================
 // HASHTAG ANALYTICS
@@ -2093,44 +2159,81 @@ function renderPlatformComparison(){
 
 function renderHashtags(){
 
+
     const hashtagList =
-    document.getElementById("hashtagList");
+    document.getElementById(
+        "hashtagList"
+    );
+
 
     const hashtagSummary =
-    document.getElementById("hashtagSummary");
+    document.getElementById(
+        "hashtagSummary"
+    );
 
-    if(!hashtagList) return;
 
-    let hashtags = {};
+
+    if(!hashtagList)
+        return;
+
+
+
+
+    let hashtags={};
+
+
+
+
 
     account.contents.forEach(content=>{
 
-        if(!content.hashtag) return;
 
-        // Split hashtags by spaces
+        if(!content.hashtag)
+            return;
+
+
+
         let tags =
         content.hashtag.split(/\s+/);
 
+
+
+
         tags.forEach(tag=>{
 
-            tag = tag.trim();
 
-            if(tag==="") return;
+            tag =
+            tag.replace("#","")
+            .trim();
 
-            // Remove #
-            tag = tag.replace("#","");
 
-            // Ignore upper/lower case
+
+            if(tag==="")
+                return;
+
+
+
+
             let key =
             tag.toLowerCase();
 
+
+
+
             if(!hashtags[key]){
+
 
                 hashtags[key]={
 
+
                     name:
-                    tag.charAt(0).toUpperCase()
-                    + tag.slice(1).toLowerCase(),
+                    tag.charAt(0)
+                    .toUpperCase()
+                    +
+                    tag.slice(1)
+                    .toLowerCase(),
+
+
 
                     used:0,
 
@@ -2144,65 +2247,134 @@ function renderHashtags(){
 
                     saved:0
 
+
                 };
+
 
             }
 
+
+
+
+
             hashtags[key].used++;
+
+
 
             hashtags[key].views +=
             Number(content.views)||0;
 
+
+
             hashtags[key].likes +=
             Number(content.likes)||0;
+
+
 
             hashtags[key].comments +=
             Number(content.comments)||0;
 
+
+
             hashtags[key].shares +=
             Number(content.shares)||0;
+
+
 
             hashtags[key].saved +=
             Number(content.saved)||0;
 
+
+
         });
+
+
 
     });
 
+
+
+
+
+
     let html="";
+
+
 
     let totalUsage=0;
 
+
+
     let bestHashtag="-";
+
+
 
     let highestViews=0;
 
+
+
+
+
+
     Object.values(hashtags)
 
-    .sort((a,b)=>b.views-a.views)
+    .sort(
+        (a,b)=>
+        b.views-a.views
+    )
 
     .forEach(tag=>{
 
-        totalUsage += tag.used;
+
+
+        totalUsage +=
+        tag.used;
+
+
+
 
         if(tag.views > highestViews){
 
-            highestViews = tag.views;
 
-            bestHashtag = "#" + tag.name;
+            highestViews =
+            tag.views;
+
+
+            bestHashtag =
+            "#"+tag.name;
+
 
         }
 
+
+
+
+
         let engagement =
 
-            tag.likes +
-            tag.comments +
-            tag.shares +
-            tag.saved;
+        tag.likes
 
-        let rate = 0;
+        +
+
+        tag.comments
+
+        +
+
+        tag.shares
+
+        +
+
+        tag.saved;
+
+
+
+
+        let rate=0;
+
+
 
         if(tag.views>0){
+
 
             rate =
             (
@@ -2211,208 +2383,108 @@ function renderHashtags(){
                 100
             ).toFixed(1);
 
+
         }
+
+
+
+
+
 
         html += `
 
+
 <tr>
 
+
 <td class="hashtag-name">
+
 #${tag.name}
+
 </td>
 
+
+
 <td>
+
 ${tag.used}
+
 </td>
 
+
+
 <td>
+
 ${formatNumber(tag.views)}
+
 </td>
 
+
+
 <td>
+
 ${formatNumber(tag.likes)}
+
 </td>
 
+
+
 <td>
+
 ${formatNumber(tag.comments)}
+
 </td>
 
+
+
 <td>
+
 ${formatNumber(tag.shares)}
+
 </td>
+
+
 
 <td>
+
 ${formatNumber(tag.saved)}
+
 </td>
 
-<td class="hashtag-rate">
+
+
+<td>
+
 ${rate}%
+
 </td>
+
+
 
 </tr>
 
+
 `;
 
+
+
     });
+
+
+
+
+
 
     if(html===""){
 
-        html = `
-        <tr>
-            <td colspan="8">
-                No hashtag data yet.
-            </td>
-        </tr>
-        `;
 
-    }
-
-    hashtagList.innerHTML = html;
-
-    hashtagSummary.innerHTML = `
-
-<div class="hashtag-card">
-
-<span>
-Total Hashtags
-</span>
-
-<h2>
-${Object.keys(hashtags).length}
-</h2>
-
-</div>
-
-<div class="hashtag-card">
-
-<span>
-Total Usage
-</span>
-
-<h2>
-${totalUsage}
-</h2>
-
-</div>
-
-<div class="hashtag-card">
-
-<span>
-Best Hashtag
-</span>
-
-<h2>
-${bestHashtag}
-</h2>
-
-</div>
-
-<div class="hashtag-card">
-
-<span>
-Most Views
-</span>
-
-<h2>
-${formatNumber(highestViews)}
-</h2>
-
-</div>
-
-`;
-
-
-// =====================================
-// HASHTAGS BY PLATFORM
-// =====================================
-
-const platformAnalytics =
-document.getElementById("platformHashtagAnalytics");
-
-if(platformAnalytics){
-
-    let platformHTML = "";
-
-    account.platforms.forEach(platform=>{
-
-        let platformTags = {};
-
-        account.contents
-        .filter(content=>content.platform===platform.platform)
-        .forEach(content=>{
-
-            if(!content.hashtag) return;
-
-            content.hashtag
-            .split(/\s+/)
-            .forEach(tag=>{
-
-                tag = tag.replace("#","").trim();
-
-                if(tag==="") return;
-
-                tag = tag.toLowerCase();
-
-                if(!platformTags[tag]){
-
-                    platformTags[tag]={
-
-                        used:0,
-
-                        views:0
-
-                    };
-
-                }
-
-                platformTags[tag].used++;
-
-                platformTags[tag].views +=
-                Number(content.views)||0;
-
-            });
-
-        });
-
-        platformHTML += `
-
-<div class="platform-hashtag-card">
-
-<h3>${platform.platform}</h3>
-
-<table class="hashtag-table">
-
-<thead>
+        html=`
 
 <tr>
 
-<th>Hashtag</th>
+<td colspan="8">
 
-<th>Used</th>
-
-<th>Views</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-`;
-
-        let sortedTags =
-        Object.entries(platformTags)
-        .sort((a,b)=>b[1].views-a[1].views);
-
-        if(sortedTags.length===0){
-
-            platformHTML += `
-
-<tr>
-
-<td colspan="3">
-
-No hashtags yet.
+No hashtag data yet.
 
 </td>
 
@@ -2420,46 +2492,643 @@ No hashtags yet.
 
 `;
 
-        }else{
 
-            sortedTags.forEach(([tag,data])=>{
+    }
 
-                platformHTML += `
 
-<tr>
 
-<td>#${tag}</td>
 
-<td>${data.used}</td>
+    hashtagList.innerHTML =
+    html;
 
-<td>${formatNumber(data.views)}</td>
 
-</tr>
 
-`;
 
-            });
 
-        }
 
-        platformHTML += `
 
-</tbody>
+    if(hashtagSummary){
 
-</table>
+
+
+        hashtagSummary.innerHTML = `
+
+
+<div class="hashtag-card">
+
+<span>
+
+Total Hashtags
+
+</span>
+
+
+<h2>
+
+${Object.keys(hashtags).length}
+
+</h2>
 
 </div>
 
+
+
+
+<div class="hashtag-card">
+
+<span>
+
+Total Usage
+
+</span>
+
+
+<h2>
+
+${totalUsage}
+
+</h2>
+
+</div>
+
+
+
+
+
+<div class="hashtag-card">
+
+<span>
+
+Best Hashtag
+
+</span>
+
+
+<h2>
+
+${bestHashtag}
+
+</h2>
+
+</div>
+
+
+
+
+
+<div class="hashtag-card">
+
+<span>
+
+Most Views
+
+</span>
+
+
+<h2>
+
+${formatNumber(highestViews)}
+
+</h2>
+
+</div>
+
+
 `;
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+// =====================================
+// ENGAGEMENT ANALYTICS
+// =====================================
+
+function loadEngagement(){
+
+
+
+    const contents =
+    account.contents || [];
+
+
+
+    let likes=0;
+
+    let comments=0;
+
+    let shares=0;
+
+    let saved=0;
+
+    let views=0;
+
+
+
+    let contentTypes={};
+
+    let platformEngagement={};
+
+
+
+    let topContent=null;
+
+    let topScore=-1;
+
+
+
+
+
+    contents.forEach(content=>{
+
+
+
+        likes +=
+        Number(content.likes)||0;
+
+
+
+        comments +=
+        Number(content.comments)||0;
+
+
+
+        shares +=
+        Number(content.shares)||0;
+
+
+
+        saved +=
+        Number(content.saved)||0;
+
+
+
+        views +=
+        Number(content.views)||0;
+
+
+
+
+
+
+        let type =
+        content.contentType ||
+        "Uncategorized";
+
+
+
+        contentTypes[type] =
+        (contentTypes[type]||0)+1;
+
+
+
+
+
+        let platform =
+        content.platform ||
+        "Unknown";
+
+
+
+        let engagement =
+
+        (Number(content.likes)||0)
+
+        +
+
+        (Number(content.comments)||0)
+
+        +
+
+        (Number(content.shares)||0)
+
+        +
+
+        (Number(content.saved)||0);
+
+
+
+
+
+        platformEngagement[platform] =
+        (platformEngagement[platform]||0)
+        +
+        engagement;
+
+
+
+
+
+
+        let score =
+        Number(content.views||0)
+        +
+        (engagement*10);
+
+
+
+
+        if(score > topScore){
+
+
+            topScore=score;
+
+            topContent=content;
+
+
+        }
+
+
+
 
     });
 
-    platformAnalytics.innerHTML =
-    platformHTML;
+
+
+
+
+    let totalEngagement =
+    likes+
+    comments+
+    shares+
+    saved;
+
+
+
+
+    let rate = "0.0";
+
+if(Number(views) > 0){
+
+    rate = (
+        (Number(totalEngagement) /
+        Number(views)) * 100
+    ).toFixed(1);
 
 }
 
+
+
+
+
+
+    let bestPlatform = "-";
+
+let highest = 0;
+
+
+Object.keys(platformEngagement).forEach(platform=>{
+
+    let value = Number(platformEngagement[platform]) || 0;
+
+
+    if(value > highest){
+
+        highest = value;
+
+        bestPlatform = platform;
+
+    }
+
+});
+
+
+
+
+    let elements={
+
+
+        totalEngagement:
+        totalEngagement,
+
+
+        engagementRate:
+        rate+"%",
+
+
+        bestPlatform:
+        bestPlatform,
+
+
+        totalLikes:
+        likes,
+
+
+        totalComments:
+        comments,
+
+
+        totalShares:
+        shares,
+
+
+        totalSaved:
+        saved
+
+
+    };
+
+
+
+
+
+    Object.keys(elements)
+.forEach(id=>{
+
+
+    let el =
+    document.getElementById(id);
+
+
+
+    if(el){
+
+
+        if(
+            id === "engagementRate" ||
+            id === "bestPlatform"
+        ){
+
+            el.textContent =
+            elements[id];
+
+
+        }
+
+        else{
+
+
+            el.textContent =
+            Number(elements[id])
+            .toLocaleString();
+
+
+        }
+
+
+    }
+
+
+
+});
+
+
+
+
+
+    const topResult =
+    document.getElementById(
+        "topContentResult"
+    );
+
+
+
+    if(topResult){
+
+
+
+        if(topContent){
+
+
+            topResult.innerHTML=`
+
+
+<div class="top-content-item">
+
+
+<p class="top-content-caption">
+
+${topContent.caption || "Untitled"}
+
+</p>
+
+
+<p>
+
+Platform:
+${topContent.platform}
+
+</p>
+
+
+<p>
+
+👁 Views:
+${formatNumber(topContent.views)}
+
+</p>
+
+
+<p>
+
+🔥 Engagement:
+${formatNumber(
+(Number(topContent.likes)||0)
++
+(Number(topContent.comments)||0)
++
+(Number(topContent.shares)||0)
++
+(Number(topContent.saved)||0)
+)}
+
+</p>
+
+
+
+</div>
+
+
+`;
+
+
+        }
+
+        else{
+
+
+            topResult.innerHTML =
+            "No content data yet.";
+
+
+        }
+
+
+    }
+
+
+
+
+
+
+    const typeResult =
+    document.getElementById(
+        "contentTypeResult"
+    );
+
+
+
+    if(typeResult){
+
+
+        let html="";
+
+
+
+        Object.keys(contentTypes)
+        .forEach(type=>{
+
+
+            html += `
+
+
+<div class="content-type-item">
+
+
+<span>
+
+${type}
+
+</span>
+
+
+<strong>
+
+${contentTypes[type]} posts
+
+</strong>
+
+
+</div>
+
+
+`;
+
+
+        });
+
+
+
+        typeResult.innerHTML =
+        html || "No content type data yet.";
+
+
+    }
+
+
+
+
+
 }
+
+// =====================================
+// PART 5
+// MONTHLY + WEEKLY REPORT
+// FILTERS
+// LOGO
+// STARTUP
+// =====================================
+
+
+
+// =====================================
+// GROWTH CALCULATOR
+// =====================================
+
+function calculateGrowth(current, previous){
+
+
+    if(previous===0){
+
+
+        return current===0
+        ?
+        0
+        :
+        100;
+
+
+    }
+
+
+
+    return (
+        (current-previous)
+        /
+        previous
+        *
+        100
+    );
+
+
+}
+
+
+
+
+
+function growthIndicator(value){
+
+
+    if(value>0){
+
+
+        return `
+
+<small class="monthly-growth growth-up">
+
+↑ ${value.toFixed(1)}% from last month
+
+</small>
+
+`;
+
+    }
+
+
+    if(value<0){
+
+
+        return `
+
+<small class="monthly-growth growth-down">
+
+↓ ${Math.abs(value).toFixed(1)}% from last month
+
+</small>
+
+`;
+
+    }
+
+
+
+    return `
+
+<small class="monthly-growth growth-neutral">
+
+— 0% from last month
+
+</small>
+
+`;
+
+}
+
+
+
+
 
 // =====================================
 // MONTHLY REPORT
@@ -2467,446 +3136,1007 @@ No hashtags yet.
 
 function renderMonthlyReport(){
 
-    const summary =
-    document.getElementById("monthlySummary");
 
-    if(!summary) return;
+const summary =
+document.getElementById(
+"monthlySummary"
+);
 
-    const monthlyFilter =
-document.getElementById("monthlyFilter");
 
-const now = new Date();
+if(!summary)
+return;
 
-const currentMonth = monthlyFilter
-? Number(monthlyFilter.value)
-: now.getMonth();
 
-const currentYear = now.getFullYear();
 
-    let totalViews = 0;
-    let totalPosts = 0;
-    let totalEngagement = 0;
+const monthFilter =
+document.getElementById(
+"monthlyFilter"
+);
 
-    account.contents.forEach(content=>{
 
-        if(!content.date) return;
+const yearFilter =
+document.getElementById(
+"monthlyYearFilter"
+);
 
-        const date = new Date(content.date);
 
-        if(
-            date.getMonth() === currentMonth &&
-            date.getFullYear() === currentYear
-        ){
 
-            totalPosts++;
+const now =
+new Date();
 
-            totalViews +=
-            Number(content.views) || 0;
 
-            totalEngagement +=
-            (Number(content.likes)||0)
-            +
-            (Number(content.comments)||0)
-            +
-            (Number(content.shares)||0)
-            +
-            (Number(content.saved)||0);
 
-        }
+const month =
+monthFilter
+?
+Number(monthFilter.value)
+:
+now.getMonth();
 
-    });
 
-    let totalFollowers = 0;
 
-    account.platforms.forEach(platform=>{
+const year =
+yearFilter
+?
+Number(yearFilter.value)
+:
+now.getFullYear();
 
-        totalFollowers +=
-        Number(platform.analytics?.followers) || 0;
 
-    });
 
-    summary.innerHTML = `
 
-    <div class="monthly-card">
 
-        <span>Total Views</span>
+let views=0;
 
-        <h2>${formatNumber(totalViews)}</h2>
+let posts=0;
 
-    </div>
+let engagement=0;
 
-    <div class="monthly-card">
 
-        <span>Total Posts</span>
 
-        <h2>${totalPosts}</h2>
+account.contents.forEach(content=>{
 
-    </div>
 
-    <div class="monthly-card">
+if(!content.date)
+return;
 
-        <span>Engagement</span>
 
-        <h2>${formatNumber(totalEngagement)}</h2>
 
-    </div>
+let date =
+new Date(content.date);
 
-    <div class="monthly-card">
 
-        <span>Followers</span>
 
-        <h2>${formatNumber(totalFollowers)}</h2>
+if(
+date.getMonth()===month
+&&
+date.getFullYear()===year
+){
 
-    </div>
 
-    `;
+posts++;
 
-const monthlyPlatforms =
+
+views +=
+Number(content.views)||0;
+
+
+
+engagement +=
+
+(Number(content.likes)||0)
+
++
+
+(Number(content.comments)||0)
+
++
+
+(Number(content.shares)||0)
+
++
+
+(Number(content.saved)||0);
+
+
+
+}
+
+
+
+});
+
+
+function renderMonthlyPlatformReport(){
+
+
+const platformBox =
 document.getElementById("monthlyPlatforms");
 
-if(monthlyPlatforms){
 
-    let platformStats = {};
+const bestBox =
+document.getElementById("monthlyBestPlatform");
 
-    account.contents.forEach(content=>{
 
-        if(!content.date) return;
+if(!platformBox)
+return;
 
-        const date = new Date(content.date);
 
-        if(
-            date.getMonth() !== currentMonth ||
-            date.getFullYear() !== currentYear
-        ){
-            return;
-        }
+let platforms={};
 
-        if(!platformStats[content.platform]){
 
-            platformStats[content.platform] = {
+account.contents.forEach(content=>{
 
-                posts:0,
 
-                views:0,
+    if(!content.date)
+    return;
 
-                engagement:0
 
-            };
+    let date =
+    new Date(content.date);
 
-        }
 
-        platformStats[content.platform].posts++;
+    let selectedMonth =
+    Number(document.getElementById("monthlyFilter")?.value ?? new Date().getMonth());
 
-        platformStats[content.platform].views +=
-        Number(content.views)||0;
 
-        platformStats[content.platform].engagement +=
+    let selectedYear =
+    Number(document.getElementById("monthlyYearFilter")?.value ?? new Date().getFullYear());
 
-            (Number(content.likes)||0)
 
-            +
 
-            (Number(content.comments)||0)
+    if(
+        date.getMonth() !== selectedMonth ||
+        date.getFullYear() !== selectedYear
+    ){
+        return;
+    }
 
-            +
 
-            (Number(content.shares)||0)
 
-            +
+    let platform =
+    content.platform || "Unknown";
 
-            (Number(content.saved)||0);
 
-    });
+    if(!platforms[platform]){
 
-    let html = "";
+        platforms[platform]={
+            views:0,
+            engagement:0
+        };
 
-    Object.keys(platformStats).forEach(platform=>{
+    }
 
-        const data = platformStats[platform];
 
-        html += `
+    platforms[platform].views +=
+    Number(content.views)||0;
+
+
+    platforms[platform].engagement +=
+
+    (Number(content.likes)||0)+
+    (Number(content.comments)||0)+
+    (Number(content.shares)||0)+
+    (Number(content.saved)||0);
+
+
+});
+
+
+
+let html="";
+
+
+let best="-";
+let highest=0;
+
+
+
+Object.keys(platforms).forEach(platform=>{
+
+
+    let data =
+    platforms[platform];
+
+
+    if(data.engagement > highest){
+
+        highest=data.engagement;
+        best=platform;
+
+    }
+
+
+
+    html += `
+
 
 <div class="platform-performance-item">
 
-    <div class="platform-performance-header">
+<div class="platform-performance-header">
 
-        <span>${platform}</span>
+<span>
+${platform}
+</span>
 
-        <strong>${formatNumber(data.views)} Views</strong>
-
-    </div>
-
-    <p>
-        ${data.posts} Posts •
-        ${formatNumber(data.engagement)} Engagement
-    </p>
+<strong>
+${formatNumber(data.views)} views
+</strong>
 
 </div>
 
+</div>
+
+
 `;
 
-    });
 
-    if(html===""){
+});
 
-        html="No platform data this month.";
 
-    }
 
-    monthlyPlatforms.innerHTML = html;
+platformBox.innerHTML =
+html || "No platform data this month.";
 
-    // =====================================
-// MONTHLY BEST PLATFORM
-// =====================================
 
-const monthlyBestPlatform =
-document.getElementById("monthlyBestPlatform");
+if(bestBox){
 
-if(monthlyBestPlatform){
+bestBox.innerHTML =
+`
 
-    let bestPlatform = "-";
-    let bestViews = -1;
+<h2>${best}</h2>
 
-    Object.keys(platformStats).forEach(platform=>{
+<p>
+Highest engagement this month
+</p>
 
-        if(platformStats[platform].views > bestViews){
+`;
 
-            bestViews = platformStats[platform].views;
-            bestPlatform = platform;
+}
 
-        }
 
-    });
+}
 
-    if(bestViews < 0){
 
-        monthlyBestPlatform.innerHTML =
-        "No platform data this month.";
+let rate =
+views>0
+?
+(
+engagement/views*100
+).toFixed(1)
+:
+0;
 
-    }else{
 
-        const data = platformStats[bestPlatform];
 
-        monthlyBestPlatform.innerHTML = `
 
-<div class="monthly-best-card">
 
-    <h3>${bestPlatform}</h3>
+summary.innerHTML=`
 
-    <p>${data.posts} Posts</p>
 
-    <p>${formatNumber(data.views)} Views</p>
+<div class="monthly-card">
 
-    <p>${formatNumber(data.engagement)} Engagement</p>
+
+<div class="monthly-card-icon">
+👁
+</div>
+
+
+<div class="monthly-card-info">
+
+
+<span>
+
+Total Views
+
+</span>
+
+
+<h2>
+
+${formatNumber(views)}
+
+</h2>
+
 
 </div>
 
-`;
 
-    }
+</div>
 
-}
 
-// =====================================
-// MONTHLY TOP CONTENT
-// =====================================
 
-const monthlyTopContent =
-document.getElementById("monthlyTopContent");
 
-if(monthlyTopContent){
 
-    let bestContent = null;
+<div class="monthly-card">
 
-    let bestEngagement = -1;
 
-    account.contents.forEach(content=>{
+<div class="monthly-card-icon">
+📝
+</div>
 
-        if(!content.date) return;
 
-        const date = new Date(content.date);
+<div class="monthly-card-info">
 
-        if(
-            date.getMonth() !== currentMonth ||
-            date.getFullYear() !== currentYear
-        ){
-            return;
-        }
 
-        const engagement =
+<span>
 
-            (Number(content.likes)||0)
+Total Posts
 
-            +
+</span>
 
-            (Number(content.comments)||0)
 
-            +
+<h2>
 
-            (Number(content.shares)||0)
+${posts}
 
-            +
+</h2>
 
-            (Number(content.saved)||0);
 
-        if(engagement > bestEngagement){
+</div>
 
-            bestEngagement = engagement;
 
-            bestContent = content;
+</div>
 
-        }
 
-    });
 
-    if(bestContent){
 
-        monthlyTopContent.innerHTML = `
 
-        <div class="top-content-item">
 
-            <p class="top-content-caption">
-                ${bestContent.caption || "Untitled"}
-            </p>
+<div class="monthly-card">
 
-            <p>
-                Platform:
-                ${bestContent.platform}
-            </p>
 
-            <p>
-                👁 Views:
-                ${formatNumber(bestContent.views)}
-            </p>
+<div class="monthly-card-icon">
+🔥
+</div>
 
-            <p>
-                🔥 Engagement:
-                ${formatNumber(bestEngagement)}
-            </p>
 
-        </div>
+<div class="monthly-card-info">
 
-        `;
 
-    }else{
+<span>
 
-        monthlyTopContent.innerHTML =
-        "No content this month.";
+Engagement
 
-    }
+</span>
 
-}
 
-// =====================================
-// MONTHLY CONTENT TABLE
-// =====================================
+<h2>
 
-const monthlyContentTable =
-document.getElementById("monthlyContentTable");
+${formatNumber(engagement)}
 
-if(monthlyContentTable){
+</h2>
 
-    let html = "";
 
-    account.contents.forEach(content=>{
+</div>
 
-        if(!content.date) return;
 
-        const date = new Date(content.date);
+</div>
 
-        if(
-            date.getMonth() !== currentMonth ||
-            date.getFullYear() !== currentYear
-        ){
-            return;
-        }
 
-        const engagement =
 
-            (Number(content.likes)||0)
 
-            +
 
-            (Number(content.comments)||0)
 
-            +
+<div class="monthly-card">
 
-            (Number(content.shares)||0)
 
-            +
+<div class="monthly-card-icon">
+📊
+</div>
 
-            (Number(content.saved)||0);
 
-        html += `
+<div class="monthly-card-info">
 
-<tr>
 
-    <td>${content.date}</td>
+<span>
 
-    <td>${content.platform}</td>
+Engagement Rate
 
-    <td>${content.caption || "-"}</td>
+</span>
 
-    <td>${formatNumber(content.views || 0)}</td>
 
-    <td>${formatNumber(engagement)}</td>
+<h2>
 
-</tr>
+${rate}%
+
+</h2>
+
+
+</div>
+
+
+</div>
+
 
 `;
 
-    });
 
-    if(html === ""){
 
-        html = `
 
-<tr>
 
-    <td colspan="5">
 
-        No content this month.
+}
 
-    </td>
 
-</tr>
+
+// =====================================
+// WEEKLY REPORT
+// =====================================
+
+function renderWeeklyReport(){
+
+
+const summary =
+document.getElementById(
+"weeklySummary"
+);
+
+
+
+if(!summary)
+return;
+
+
+
+const month =
+Number(
+document.getElementById(
+"weeklyMonthFilter"
+)?.value
+|| new Date().getMonth()
+);
+
+
+
+const week =
+Number(
+document.getElementById(
+"weeklyFilter"
+)?.value
+||0
+);
+
+
+
+
+
+const start =
+week*7+1;
+
+
+
+const end =
+start+6;
+
+
+
+let views=0;
+
+let posts=0;
+
+let engagement=0;
+
+
+
+
+
+account.contents.forEach(content=>{
+
+
+if(!content.date)
+return;
+
+
+
+let date =
+new Date(content.date);
+
+
+
+if(
+date.getMonth()===month
+&&
+date.getDate()>=start
+&&
+date.getDate()<=end
+){
+
+
+posts++;
+
+
+views +=
+Number(content.views)||0;
+
+
+
+engagement +=
+
+(Number(content.likes)||0)
+
++
+
+(Number(content.comments)||0)
+
++
+
+(Number(content.shares)||0)
+
++
+
+(Number(content.saved)||0);
+
+
+
+}
+
+
+
+});
+
+
+
+
+
+let rate =
+views>0
+?
+(
+engagement/views*100
+).toFixed(1)
+:
+0;
+
+
+
+
+
+summary.innerHTML=`
+
+
+<div class="monthly-card">
+
+
+<div class="monthly-card-icon">
+👁
+</div>
+
+
+<div class="monthly-card-info">
+
+<span>
+
+Views
+
+</span>
+
+
+<h2>
+
+${formatNumber(views)}
+
+</h2>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="monthly-card">
+
+
+<div class="monthly-card-icon">
+📝
+</div>
+
+
+<div class="monthly-card-info">
+
+
+<span>
+
+Posts
+
+</span>
+
+
+<h2>
+
+${posts}
+
+</h2>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="monthly-card">
+
+
+<div class="monthly-card-icon">
+🔥
+</div>
+
+
+<div class="monthly-card-info">
+
+
+<span>
+
+Engagement
+
+</span>
+
+
+<h2>
+
+${formatNumber(engagement)}
+
+</h2>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<div class="monthly-card">
+
+
+<div class="monthly-card-icon">
+📊
+</div>
+
+
+<div class="monthly-card-info">
+
+
+<span>
+
+Rate
+
+</span>
+
+
+<h2>
+
+${rate}%
+
+</h2>
+
+
+</div>
+
+
+</div>
+
 
 `;
 
-    }
-
-    monthlyContentTable.innerHTML = html;
+renderMonthlyPlatformReport();
 
 }
 
-if(monthlyFilter){
 
-    monthlyFilter.addEventListener(
-        "change",
-        function(){
 
-            renderMonthlyReport();
-
-        }
-    );
-
-}
-
-}
-
-}
 
 
 // =====================================
-// READY FOR FUTURE FEATURES
+// BUILD MONTH FILTER
 // =====================================
 
-// Content
-// Calendar
-// Engagement
-// Monthly Report
-// Weekly Report
-// AI Insights
-// Notifications
-// Export
+function buildMonthlyFilters(){
 
+
+const month =
+document.getElementById(
+"monthlyFilter"
+);
+
+
+
+const year =
+document.getElementById(
+"monthlyYearFilter"
+);
+
+
+
+if(!month || !year)
+return;
+
+
+
+const months=[
+
+"January",
+"February",
+"March",
+"April",
+"May",
+"June",
+"July",
+"August",
+"September",
+"October",
+"November",
+"December"
+
+];
+
+
+
+month.innerHTML="";
+
+
+
+months.forEach((m,i)=>{
+
+
+month.innerHTML+=`
+
+<option value="${i}">
+
+${m}
+
+</option>
+
+`;
+
+});
+
+
+
+month.value =
+new Date().getMonth();
+
+
+
+year.innerHTML="";
+
+
+
+let current =
+new Date().getFullYear();
+
+
+
+for(
+let y=current-5;
+y<=current+1;
+y++
+){
+
+
+year.innerHTML+=`
+
+<option value="${y}">
+
+${y}
+
+</option>
+
+`;
+
+}
+
+
+
+year.value=current;
+
+
+
+}
+
+
+
+
+
+
+// =====================================
+// LOGO BUTTON
+// =====================================
+
+const logoButton =
+document.getElementById(
+"logoButton"
+);
+
+
+const logoModal =
+document.getElementById(
+"logoModal"
+);
+
+
+const saveLogo =
+document.getElementById(
+"saveLogo"
+);
+
+
+const logoUrl =
+document.getElementById(
+"logoUrl"
+);
+
+
+
+if(account.logoButtonImage && logoButton){
+
+
+logoButton.innerHTML=`
+
+<img src="${account.logoButtonImage}">
+
+`;
+
+}
+
+
+
+if(logoButton){
+
+
+logoButton.onclick=function(){
+
+
+logoModal.style.display="flex";
+
+
+};
+
+
+}
+
+
+
+if(saveLogo){
+
+
+saveLogo.onclick=function(){
+
+
+let url =
+logoUrl.value.trim();
+
+
+
+if(url==="")
+return;
+
+
+
+account.logoButtonImage=url;
+
+
+
+saveDatabase();
+
+
+
+logoButton.innerHTML=`
+
+<img src="${url}">
+
+`;
+
+
+
+logoModal.style.display="none";
+
+
+
+};
+
+
+
+}
+
+
+
+
+
+// =====================================
+// AUTO SAVE
+// =====================================
+
+window.addEventListener(
+
+"beforeunload",
+
+()=>{
+
+saveDatabase();
+
+}
+
+);
+
+
+
+
+
+
+// =====================================
+// FINAL LOAD
+// =====================================
+
+
+renderContents();
+
+loadAnalytics();
+
+renderPlatforms();
+
+loadEngagement();
+
+renderHashtags();
+
+renderPlatformComparison();
+
+buildMonthlyFilters();
+
+document
+.getElementById("monthlyFilter")
+?.addEventListener("change", renderMonthlyReport);
+
+
+document
+.getElementById("monthlyYearFilter")
+?.addEventListener("change", renderMonthlyReport);
+
+
+document
+.getElementById("weeklyMonthFilter")
+?.addEventListener("change", renderWeeklyReport);
+
+
+document
+.getElementById("weeklyFilter")
+?.addEventListener("change", renderWeeklyReport);
+
+renderMonthlyReport();
+
+renderWeeklyReport();
+
+
+
+
+// GLOBAL ACCESS
+
+window.account =
+account;
+
+
+window.profile =
+profile;
+
+
+
+window.goBack=function(){
+
+
+window.location.href=
+"dashboard.html";
+
+
+};

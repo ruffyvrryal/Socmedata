@@ -350,8 +350,6 @@ data-tab="hashtag">
 
             <thead>
 
-                <thead>
-
 <tr>
 
 <th>No</th>
@@ -691,116 +689,300 @@ class="platform-hashtag-analytics">
 
 </section>
 
-
 <section class="tab-content" id="monthly">
 
-    <div class="monthly-header">
+    <div class="monthly-dashboard">
 
-        <div>
+        <div class="monthly-header">
 
-            <h2>
-                Monthly Report
-            </h2>
+            <div>
 
-            <p>
-                Analyze your monthly social media performance.
-            </p>
+                <h2>Monthly Analytics</h2>
+
+                <p>
+                    Analyze your monthly social media performance.
+                </p>
+
+            </div>
+
+            <select id="monthlyFilter"></select>
+
+            <select id="monthlyYearFilter"></select>
+            
 
         </div>
 
-        <select id="monthlyFilter">
+        <div
+        id="monthlySummary"
+        class="monthly-summary">
 
-            <option value="0">January</option>
-            <option value="1">February</option>
-            <option value="2">March</option>
-            <option value="3">April</option>
-            <option value="4">May</option>
-            <option value="5">June</option>
-            <option value="6">July</option>
-            <option value="7">August</option>
-            <option value="8">September</option>
-            <option value="9">October</option>
-            <option value="10">November</option>
-            <option value="11">December</option>
+        </div>
 
-        </select>
+        <div class="monthly-grid">
+
+            <div class="monthly-panel">
+
+                <h3>
+                    Platform Performance
+                </h3>
+
+                <div id="monthlyPlatforms">
+
+                </div>
+
+            </div>
+
+            <div class="monthly-panel">
+
+                <h3>
+                    Best Platform
+                </h3>
+
+                <div id="monthlyBestPlatform">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="monthly-panel">
+
+            <h3>
+                Top Performing Content
+            </h3>
+
+            <div id="monthlyTopContent">
+
+            </div>
+
+        </div>
+
+        <div class="monthly-panel">
+
+            <h3>
+                Monthly Content Performance
+            </h3>
+
+            <table class="monthly-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+                        <th>Platform</th>
+                        <th>Caption</th>
+                        <th>Views</th>
+                        <th>Engagement</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="monthlyContentTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
 
     </div>
-
-    <div class="monthly-summary" id="monthlySummary">
-
-    </div>
-
-    <h2 class="monthly-section-title">
-    Platform Performance
-</h2>
-
-<div
-    id="monthlyPlatforms"
-    class="monthly-platform-grid">
-
-</div>
-
-<h2 class="monthly-section-title">
-    Best Platform This Month
-</h2>
-
-<div
-    id="monthlyBestPlatform"
-    class="monthly-best-platform">
-
-</div>
-
-<h2 class="monthly-section-title">
-    Top Performing Content
-</h2>
-
-<div
-    class="monthly-top-content"
-    id="monthlyTopContent">
-
-</div>
-
-<h2 class="monthly-section-title">
-    Monthly Content Performance
-</h2>
-
-<div class="monthly-table-container">
-
-    <table class="monthly-table">
-
-        <thead>
-
-            <tr>
-
-                <th>Date</th>
-                <th>Platform</th>
-                <th>Caption</th>
-                <th>Views</th>
-                <th>Engagement</th>
-
-            </tr>
-
-        </thead>
-
-        <tbody id="monthlyContentTable">
-
-        </tbody>
-
-    </table>
-
-</div>
 
 </section>
 
-
 <section class="tab-content" id="weekly">
 
-    <h2>Weekly Report</h2>
+    <div class="monthly-dashboard">
 
-    <p>
-        Weekly performance summary.
-    </p>
+
+        <div class="monthly-header">
+
+            <div>
+
+                <h2>
+                    Weekly Analytics
+                </h2>
+
+                <p>
+                    Analyze your weekly social media performance.
+                </p>
+
+            </div>
+
+
+            <div class="weekly-select-group">
+
+<select id="weeklyMonthFilter">
+
+    <option value="0">January</option>
+    <option value="1">February</option>
+    <option value="2">March</option>
+    <option value="3">April</option>
+    <option value="4">May</option>
+    <option value="5">June</option>
+    <option value="6">July</option>
+    <option value="7">August</option>
+    <option value="8">September</option>
+    <option value="9">October</option>
+    <option value="10">November</option>
+    <option value="11">December</option>
+
+</select>
+
+
+<select id="weeklyFilter">
+
+    <option value="0">
+        Week 1
+    </option>
+
+    <option value="1">
+        Week 2
+    </option>
+
+    <option value="2">
+        Week 3
+    </option>
+
+    <option value="3">
+        Week 4
+    </option>
+
+    <option value="4">
+        Week 5
+    </option>
+
+</select>
+
+</div>
+
+
+        </div>
+
+
+
+        <div
+        id="weeklySummary"
+        class="monthly-summary">
+
+        </div>
+
+
+
+        <div class="monthly-grid">
+
+
+            <div class="monthly-panel">
+
+                <h3>
+                    Platform Performance
+                </h3>
+
+
+                <div id="weeklyPlatforms">
+
+                </div>
+
+
+            </div>
+
+
+
+
+            <div class="monthly-panel">
+
+                <h3>
+                    Best Platform
+                </h3>
+
+
+                <div id="weeklyBestPlatform">
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+        <div class="monthly-panel">
+
+
+            <h3>
+                Top Performing Content
+            </h3>
+
+
+            <div id="weeklyTopContent">
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+
+        <div class="monthly-panel">
+
+
+            <h3>
+                Weekly Content Performance
+            </h3>
+
+
+
+            <table class="monthly-table">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+
+                        <th>Platform</th>
+
+                        <th>Caption</th>
+
+                        <th>Views</th>
+
+                        <th>Engagement</th>
+
+
+                    </tr>
+
+
+                </thead>
+
+
+
+                <tbody id="weeklyContentTable">
+
+
+                </tbody>
+
+
+
+            </table>
+
+
+
+        </div>
+
+
+
+    </div>
+
 
 </section>
 
@@ -940,10 +1122,7 @@ class="modal">
 
         </div>
 
-    </div>
-
-    </div>
-
+        </div>
 
 </div>
 
@@ -1308,60 +1487,6 @@ class="close">
 
 </div>
 
-<script>
-
-
-const addContentBtn =
-document.getElementById("addContentBtn");
-
-
-const contentModal =
-document.getElementById("contentModal");
-
-
-console.log(
-"Button:",
-addContentBtn
-);
-
-
-console.log(
-"Modal:",
-contentModal
-);
-
-
-
-if(addContentBtn && contentModal){
-
-
-addContentBtn.addEventListener(
-"click",
-function(){
-
-    editingContentId = null;
-
-document.getElementById("contentModalTitle").textContent =
-"Add Content";
-
-document.getElementById("contentModal").style.display = "flex";
-
-
-console.log(
-"Add Content clicked"
-);
-
-
-contentModal.style.display="flex";
-
-
-});
-
-
-}
-
-
-</script>
 
 <!-- TOAST NOTIFICATION -->
 

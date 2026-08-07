@@ -19,13 +19,30 @@ const monthNames = [
 
 let currentDate = new Date();
 
+if(!window.account){
+
+    console.warn(
+        "Calendar waiting for account data"
+    );
+
+}
+
 // =====================================
 // CALENDAR ENGINE
 // =====================================
 
 function getContentsByDate(date){
 
-    return account.contents.filter(function(content){
+    if(!window.account){
+
+        console.log("Account not loaded yet");
+
+        return [];
+
+    }
+
+
+    return window.account.contents.filter(function(content){
 
         return content.date === date;
 
@@ -341,7 +358,10 @@ window.addEventListener("click", function(e){
 
 });
 
-console.log("Account Contents:", account.contents);
+console.log(
+    "Account Contents:",
+    window.account ? window.account.contents : "Account missing"
+);
 
 function getPlatformEmoji(platform){
 
