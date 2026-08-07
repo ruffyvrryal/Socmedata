@@ -3247,171 +3247,17 @@ engagement +=
 });
 
 
-function renderMonthlyPlatformReport(){
-
-
-const platformBox =
-document.getElementById("monthlyPlatforms");
-
-
-const bestBox =
-document.getElementById("monthlyBestPlatform");
-
-
-if(!platformBox)
-return;
-
-
-let platforms={};
-
-
-account.contents.forEach(content=>{
-
-
-    if(!content.date)
-    return;
-
-
-    let date =
-    new Date(content.date);
-
-
-    let selectedMonth =
-    Number(document.getElementById("monthlyFilter")?.value ?? new Date().getMonth());
-
-
-    let selectedYear =
-    Number(document.getElementById("monthlyYearFilter")?.value ?? new Date().getFullYear());
-
-
-
-    if(
-        date.getMonth() !== selectedMonth ||
-        date.getFullYear() !== selectedYear
-    ){
-        return;
-    }
-
-
-
-    let platform =
-    content.platform || "Unknown";
-
-
-    if(!platforms[platform]){
-
-        platforms[platform]={
-            views:0,
-            engagement:0
-        };
-
-    }
-
-
-    platforms[platform].views +=
-    Number(content.views)||0;
-
-
-    platforms[platform].engagement +=
-
-    (Number(content.likes)||0)+
-    (Number(content.comments)||0)+
-    (Number(content.shares)||0)+
-    (Number(content.saved)||0);
-
-
-});
-
-
-
-let html="";
-
-
-let best="-";
-let highest=0;
-
-
-
-Object.keys(platforms).forEach(platform=>{
-
-
-    let data =
-    platforms[platform];
-
-
-    if(data.engagement > highest){
-
-        highest=data.engagement;
-        best=platform;
-
-    }
-
-
-
-    html += `
-
-
-<div class="platform-performance-item">
-
-<div class="platform-performance-header">
-
-<span>
-${platform}
-</span>
-
-<strong>
-${formatNumber(data.views)} views
-</strong>
-
-</div>
-
-</div>
-
-
-`;
-
-
-});
-
-
-
-platformBox.innerHTML =
-html || "No platform data this month.";
-
-
-if(bestBox){
-
-bestBox.innerHTML =
-`
-
-<h2>${best}</h2>
-
-<p>
-Highest engagement this month
-</p>
-
-`;
-
-}
-
-
-}
-
-
-let rate =
-views>0
-?
-(
-engagement/views*100
-).toFixed(1)
-:
-0;
-
-
-
-
-
-summary.innerHTML=`
+    let rate =
+    views > 0
+    ?
+    (
+        engagement / views * 100
+    ).toFixed(1)
+    :
+    0;
+
+
+    summary.innerHTML = `
 
 
 <div class="monthly-card">
@@ -3424,18 +3270,13 @@ summary.innerHTML=`
 
 <div class="monthly-card-info">
 
-
 <span>
-
-Total Views
-
+Views
 </span>
 
 
 <h2>
-
 ${formatNumber(views)}
-
 </h2>
 
 
@@ -3443,9 +3284,6 @@ ${formatNumber(views)}
 
 
 </div>
-
-
-
 
 
 <div class="monthly-card">
@@ -3458,18 +3296,13 @@ ${formatNumber(views)}
 
 <div class="monthly-card-info">
 
-
 <span>
-
-Total Posts
-
+Posts
 </span>
 
 
 <h2>
-
 ${posts}
-
 </h2>
 
 
@@ -3477,9 +3310,6 @@ ${posts}
 
 
 </div>
-
-
-
 
 
 
@@ -3493,18 +3323,13 @@ ${posts}
 
 <div class="monthly-card-info">
 
-
 <span>
-
 Engagement
-
 </span>
 
 
 <h2>
-
 ${formatNumber(engagement)}
-
 </h2>
 
 
@@ -3512,9 +3337,6 @@ ${formatNumber(engagement)}
 
 
 </div>
-
-
-
 
 
 
@@ -3528,18 +3350,13 @@ ${formatNumber(engagement)}
 
 <div class="monthly-card-info">
 
-
 <span>
-
-Engagement Rate
-
+Rate
 </span>
 
 
 <h2>
-
 ${rate}%
-
 </h2>
 
 
@@ -3551,14 +3368,327 @@ ${rate}%
 
 `;
 
+renderMonthlyPlatformReport();
 
+renderMonthlyTopContent(month, year);
 
-
+renderMonthlyContentTable(month, year);
 
 
 }
 
 
+
+// =====================================
+// MONTHLY PLATFORM REPORT
+// =====================================
+
+function renderMonthlyPlatformReport(){
+
+
+    const platformBox =
+    document.getElementById(
+        "monthlyPlatforms"
+    );
+
+
+    const bestBox =
+    document.getElementById(
+        "monthlyBestPlatform"
+    );
+
+
+
+    if(!platformBox)
+        return;
+
+
+
+    let platforms = {};
+
+
+
+    const monthFilter =
+    document.getElementById(
+        "monthlyFilter"
+    );
+
+
+    const yearFilter =
+    document.getElementById(
+        "monthlyYearFilter"
+    );
+
+
+
+    const selectedMonth =
+    monthFilter
+    ?
+    Number(monthFilter.value)
+    :
+    new Date().getMonth();
+
+
+
+    const selectedYear =
+    yearFilter
+    ?
+    Number(yearFilter.value)
+    :
+    new Date().getFullYear();
+
+
+
+
+
+    account.contents.forEach(content=>{
+
+
+
+        if(!content.date)
+            return;
+
+
+
+        let date =
+        new Date(content.date);
+
+
+
+
+        if(
+            date.getMonth() !== selectedMonth ||
+            date.getFullYear() !== selectedYear
+        ){
+
+            return;
+
+        }
+
+
+
+
+
+        let platform =
+        content.platform || "Unknown";
+
+
+
+
+        if(!platforms[platform]){
+
+
+            platforms[platform]={
+
+                views:0,
+
+                engagement:0,
+
+                posts:0
+
+            };
+
+
+        }
+
+
+
+
+
+        platforms[platform].views +=
+        Number(content.views) || 0;
+
+
+
+
+        platforms[platform].engagement +=
+
+        (Number(content.likes)||0)
+
+        +
+
+        (Number(content.comments)||0)
+
+        +
+
+        (Number(content.shares)||0)
+
+        +
+
+        (Number(content.saved)||0);
+
+
+
+
+        platforms[platform].posts++;
+
+
+
+
+    });
+
+
+
+
+
+
+    let html = "";
+
+
+
+    let bestPlatform = "-";
+
+let highestEngagement = -1;
+
+
+
+
+
+    Object.keys(platforms)
+
+    .forEach(platform=>{
+
+
+
+        let data =
+        platforms[platform];
+
+
+
+
+
+        if(
+            data.engagement >
+            highestEngagement
+        ){
+
+            highestEngagement =
+            data.engagement;
+
+
+            bestPlatform =
+            platform;
+
+
+        }
+
+
+
+
+
+        html += `
+
+
+<div class="platform-performance-item">
+
+
+    <div class="platform-performance-header">
+
+
+        <span>
+            ${platform}
+        </span>
+
+
+        <strong>
+            ${formatNumber(data.views)}
+            views
+        </strong>
+
+
+    </div>
+
+
+
+    <div class="platform-performance-detail">
+
+
+        <span>
+            ${data.posts} posts
+        </span>
+
+
+        <span>
+            ${formatNumber(data.engagement)}
+            engagement
+        </span>
+
+
+    </div>
+
+
+
+</div>
+
+
+`;
+
+
+
+    });
+
+
+
+
+
+
+    if(html === ""){
+
+
+        html =
+        "No platform data this month.";
+
+
+    }
+
+
+
+
+    platformBox.innerHTML =
+    html;
+
+
+
+
+
+    if(bestBox){
+
+    if(bestPlatform !== "-"){
+
+        bestBox.innerHTML = `
+
+        <div class="best-platform-result">
+
+            <h2>
+                ${bestPlatform}
+            </h2>
+
+            <p>
+                ${formatNumber(highestEngagement)}
+                engagement
+            </p>
+
+        </div>
+
+        `;
+
+    }
+
+    else{
+
+        bestBox.innerHTML = `
+        <p>
+        No platform data this month.
+        </p>
+        `;
+
+    }
+
+}
+
+
+
+}
 
 // =====================================
 // WEEKLY REPORT
@@ -3832,6 +3962,290 @@ ${rate}%
 `;
 
 renderMonthlyPlatformReport();
+
+renderMonthlyTopContent(month, year);
+
+renderMonthlyContentTable(month, year);
+
+}
+
+// =====================================
+// MONTHLY TOP CONTENT
+// =====================================
+
+function renderMonthlyTopContent(month, year){
+
+
+const box =
+document.getElementById(
+"monthlyTopContent"
+);
+
+
+if(!box)
+return;
+
+
+
+let contents =
+account.contents.filter(content=>{
+
+
+if(!content.date)
+return false;
+
+
+let date =
+new Date(content.date);
+
+
+return (
+date.getMonth() === month &&
+date.getFullYear() === year
+);
+
+
+});
+
+
+
+if(contents.length===0){
+
+
+box.innerHTML =
+"No content data this month.";
+
+return;
+
+
+}
+
+
+
+contents.sort((a,b)=>{
+
+
+let scoreA =
+(Number(a.views)||0)
++
+(
+(Number(a.likes)||0)
++
+(Number(a.comments)||0)
++
+(Number(a.shares)||0)
++
+(Number(a.saved)||0)
+)*10;
+
+
+
+let scoreB =
+(Number(b.views)||0)
++
+(
+(Number(b.likes)||0)
++
+(Number(b.comments)||0)
++
+(Number(b.shares)||0)
++
+(Number(b.saved)||0)
+)*10;
+
+
+
+return scoreB-scoreA;
+
+
+});
+
+
+
+let top =
+contents[0];
+
+
+
+box.innerHTML = `
+
+
+<div class="top-monthly-item">
+
+
+<h3>
+${top.caption || "Untitled Content"}
+</h3>
+
+
+<p>
+Platform:
+${top.platform || "-"}
+</p>
+
+
+<p>
+👁 ${formatNumber(top.views)} views
+</p>
+
+
+<p>
+🔥 ${
+(Number(top.likes)||0)
++
+(Number(top.comments)||0)
++
+(Number(top.shares)||0)
++
+(Number(top.saved)||0)
+}
+ engagement
+</p>
+
+
+</div>
+
+
+`;
+
+
+}
+
+
+
+
+// =====================================
+// MONTHLY CONTENT TABLE
+// =====================================
+
+function renderMonthlyContentTable(month, year){
+
+
+const table =
+document.getElementById(
+"monthlyContentTable"
+);
+
+
+if(!table)
+return;
+
+
+
+let contents =
+account.contents.filter(content=>{
+
+
+if(!content.date)
+return false;
+
+
+
+let date =
+new Date(content.date);
+
+
+
+return(
+date.getMonth()===month &&
+date.getFullYear()===year
+);
+
+
+});
+
+
+
+
+if(contents.length===0){
+
+
+table.innerHTML = `
+
+<tr>
+
+<td colspan="5">
+
+No content data this month.
+
+</td>
+
+</tr>
+
+`;
+
+
+return;
+
+
+}
+
+
+
+
+let html="";
+
+
+
+contents.forEach(content=>{
+
+
+let engagement =
+
+(Number(content.likes)||0)
++
+(Number(content.comments)||0)
++
+(Number(content.shares)||0)
++
+(Number(content.saved)||0);
+
+
+
+html += `
+
+
+<tr>
+
+
+<td>
+${content.date}
+</td>
+
+
+<td>
+${content.platform || "-"}
+</td>
+
+
+<td>
+${content.caption || "-"}
+</td>
+
+
+<td>
+${formatNumber(content.views)}
+</td>
+
+
+<td>
+${formatNumber(engagement)}
+</td>
+
+
+</tr>
+
+
+`;
+
+
+});
+
+
+
+table.innerHTML =
+html;
+
 
 }
 
