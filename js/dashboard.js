@@ -1,27 +1,184 @@
 // =============================
 // SOCMEDATA DASHBOARD
+// FIRESTORE VERSION
 // =============================
 
-// Load all vaults
-let profiles =
-JSON.parse(localStorage.getItem("profiles")) || [];
+import {
+    getProfiles,
+    saveProfile
+} from "./firebase-db.js";
 
-// Get active vault
-let activeProfileId =
+
+// =============================
+// APPLICATION DATA
+// =============================
+
+let profiles = [];
+
+let profile = null;
+
+const activeProfileId =
 localStorage.getItem("activeProfileId");
 
-// Find active vault
-let profile =
-profiles.find(
-    p => p.id == activeProfileId
-);
 
-// No vault selected
-if(!profile){
+// =============================
+// LOAD ACTIVE VAULT
+// =============================
 
-    alert("No vault selected.");
+async function loadActiveVault() {
 
-    window.location.href="../index.html";
+    console.log(
+        "Loading active vault..."
+    );
+
+    console.log(
+        "Active Profile ID:",
+        activeProfileId
+    );
+
+
+    // No active vault ID
+
+    if (
+        activeProfileId === null ||
+        activeProfileId === undefined
+    ) {
+
+        console.error(
+            "No activeProfileId found."
+        );
+
+        alert(
+            "No vault selected."
+        );
+
+        window.location.href =
+            "../index.html";
+
+        return false;
+
+    }
+
+
+    try {
+
+        // Load vaults from Firestore
+
+        profiles =
+            await getProfiles();
+
+
+        console.log(
+            "Vaults loaded:",
+            profiles
+        );
+
+
+        // Find selected vault
+
+        profile =
+            profiles.find(
+                p =>
+                    String(p.id) ===
+                    String(activeProfileId)
+            );
+
+
+        // Vault does not exist
+
+        if (!profile) {
+
+            console.error(
+                "Active vault not found:",
+                activeProfileId
+            );
+
+            alert(
+                "Vault not found."
+            );
+
+            window.location.href =
+                "../index.html";
+
+            return false;
+
+        }
+
+
+        // Make sure arrays exist
+
+        if (
+            !Array.isArray(
+                profile.accounts
+            )
+        ) {
+
+            profile.accounts = [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                profile.contents
+            )
+        ) {
+
+            profile.contents = [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                profile.schedules
+            )
+        ) {
+
+            profile.schedules = [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                profile.activities
+            )
+        ) {
+
+            profile.activities = [];
+
+        }
+
+
+        console.log(
+            "Active vault:",
+            profile
+        );
+
+
+        return true;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Failed to load vault:",
+            error
+        );
+
+
+        alert(
+            "Unable to load vault."
+        );
+
+        window.location.href =
+            "../index.html";
+
+        return false;
+
+    }
 
 }
 
@@ -118,6 +275,10 @@ document.getElementById("editAccountIconURL");
 // store account being edited
 
 let selectedEditAccount = null;
+
+// store account being deleted
+
+let selectedDeleteAccount = null;
 
 // =============================
 // DELETE MODAL ACTIONS
@@ -309,12 +470,6 @@ editAccountIconURL.oninput=function(){
 // =============================
 // NAVIGATION
 // =============================
-
-vaultTitle.textContent =
-profile.name;
-
-currentVault.textContent =
-profile.name;
 
 backToVaults.onclick=function(){
 
@@ -865,45 +1020,160 @@ if(searchAccount){
 // INITIAL LOAD
 // =============================
 
-showAccounts();
+async function initializeDashboard() {
 
-function createAccount(icon){
-
-
-    profile.accounts.push({
-
-        id:Date.now(),
-
-        name:
-        accountName.value,
-
-        description:
-        accountDescription.value,
+    const loaded =
+        await loadActiveVault();
 
 
-        icon:
-        icon,
+    if (!loaded) {
+
+        return;
+
+    }
 
 
-        platforms:[]
+    // Set vault information
 
-    });
+    vaultTitle.textContent =
+        profile.name;
 
-
-    localStorage.setItem(
-
-        "profiles",
-
-        JSON.stringify(profiles)
-
-    );
+    currentVault.textContent =
+        profile.name;
 
 
-    accountModal.style.display="none";
-
+    // Render accounts
 
     showAccounts();
 
+}
+
+
+initializeDashboard();
+
+// =============================
+// CREATE ACCOUNT
+// FIRESTORE
+// =============================
+
+async function createAccount(icon) {
+
+    const newAccount = {
+
+        id: Date.now(),
+
+        name:
+            accountName.value.trim(),
+
+        description:
+            accountDescription.value.trim(),
+
+        icon:
+            icon,
+
+        platforms: []
+
+    };
+
+
+    // Add account to active vault
+
+    profile.accounts.push(
+        newAccount
+    );
+
+
+    try {
+
+        console.log(
+            "Saving account to Firestore:",
+            newAccount
+        );
+
+
+        // Save updated vault
+
+        const success =
+            await saveProfile(profile);
+
+
+        if (!success) {
+
+            // Roll back if Firestore failed
+
+            profile.accounts =
+                profile.accounts.filter(
+                    account =>
+                        account.id !==
+                        newAccount.id
+                );
+
+
+            alert(
+                "Failed to save account."
+            );
+
+            return;
+
+        }
+
+
+        // Close modal
+
+        accountModal.style.display =
+            "none";
+
+
+        // Clear form
+
+        accountName.value = "";
+
+        accountDescription.value = "";
+
+        accountIconUpload.value = "";
+
+        accountIconURL.value = "";
+
+        iconPreview.src = "";
+
+        iconPreviewBox.style.display =
+            "none";
+
+
+        // Refresh account list
+
+        showAccounts();
+
+
+        console.log(
+            "Account saved successfully."
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Create account error:",
+            error
+        );
+
+
+        // Roll back local change
+
+        profile.accounts =
+            profile.accounts.filter(
+                account =>
+                    account.id !==
+                    newAccount.id
+            );
+
+
+        alert(
+            "Failed to save account."
+        );
+
+    }
 
 }
 
@@ -931,13 +1201,97 @@ function updateAccount(icon){
 
 
 
-    localStorage.setItem(
+    // =============================
+// DELETE ACCOUNT
+// FIRESTORE
+// =============================
 
-        "profiles",
+confirmDeleteAccount.onclick = async function () {
 
-        JSON.stringify(profiles)
+    if (!selectedDeleteAccount) {
 
-    );
+        return;
+
+    }
+
+
+    const deletedAccountId =
+        selectedDeleteAccount.id;
+
+
+    // Remove account locally first
+
+    profile.accounts =
+        profile.accounts.filter(
+            account =>
+                account.id !==
+                deletedAccountId
+        );
+
+
+    try {
+
+        console.log(
+            "Deleting account from Firestore:",
+            deletedAccountId
+        );
+
+
+        // Save updated vault
+
+        const success =
+            await saveProfile(profile);
+
+
+        if (!success) {
+
+            alert(
+                "Failed to delete account."
+            );
+
+            return;
+
+        }
+
+
+        // Close modal
+
+        deleteAccountModal.style.display =
+            "none";
+
+
+        // Clear selected account
+
+        selectedDeleteAccount =
+            null;
+
+
+        // Refresh account list
+
+        showAccounts();
+
+
+        console.log(
+            "Account deleted successfully."
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Delete account error:",
+            error
+        );
+
+
+        alert(
+            "Failed to delete account."
+        );
+
+    }
+
+};
 
 
 
