@@ -3657,16 +3657,71 @@ let highestEngagement = -1;
 
         bestBox.innerHTML = `
 
-        <div class="best-platform-result">
+        <div class="monthly-best-platform">
 
-            <h2>
-                ${bestPlatform}
-            </h2>
+            <div class="monthly-best-platform-glow"></div>
 
-            <p>
-                ${formatNumber(highestEngagement)}
-                engagement
-            </p>
+            <div class="monthly-best-platform-top">
+
+                <div class="monthly-best-platform-trophy">
+                    🏆
+                </div>
+
+                <span class="monthly-best-platform-badge">
+                    #1 PERFORMER
+                </span>
+
+            </div>
+
+
+            <div class="monthly-best-platform-main">
+
+                <span class="monthly-best-platform-label">
+                    BEST PLATFORM THIS MONTH
+                </span>
+
+                <h2>
+                    ${bestPlatform}
+                </h2>
+
+                <p>
+                    Leading your social media performance
+                </p>
+
+            </div>
+
+
+            <div class="monthly-best-platform-bottom">
+
+                <div class="monthly-best-platform-stat">
+
+                    <span>
+                        Engagement
+                    </span>
+
+                    <strong>
+                        ${formatNumber(highestEngagement)}
+                    </strong>
+
+                </div>
+
+
+                <div class="monthly-best-platform-divider"></div>
+
+
+                <div class="monthly-best-platform-stat">
+
+                    <span>
+                        Performance
+                    </span>
+
+                    <strong>
+                        TOP
+                    </strong>
+
+                </div>
+
+            </div>
 
         </div>
 
@@ -3677,16 +3732,28 @@ let highestEngagement = -1;
     else{
 
         bestBox.innerHTML = `
-        <p>
-        No platform data this month.
-        </p>
+
+        <div class="monthly-best-platform-empty">
+
+            <div class="monthly-empty-icon">
+                🏆
+            </div>
+
+            <h3>
+                No Winner Yet
+            </h3>
+
+            <p>
+                Add content this month to see your best platform.
+            </p>
+
+        </div>
+
         `;
 
-    }
+       }
 
 }
-
-
 
 }
 
@@ -3696,264 +3763,1138 @@ let highestEngagement = -1;
 
 function renderWeeklyReport(){
 
+    const monthSelect =
+        document.getElementById("weeklyMonthFilter");
 
-const summary =
+    const weekSelect =
+        document.getElementById("weeklyFilter");
+
+
+    if(!monthSelect || !weekSelect){
+
+        console.log("Weekly filters not found.");
+
+        return;
+
+    }
+
+
+    const selectedMonth =
+        Number(monthSelect.value);
+
+    const selectedWeek =
+        Number(weekSelect.value);
+
+
+    if(
+        Number.isNaN(selectedMonth) ||
+        Number.isNaN(selectedWeek)
+    ){
+
+        console.log("Invalid weekly filter.");
+
+        return;
+
+    }
+
+
+    // =====================================
+    // YEAR
+    // =====================================
+
+    const selectedYear =
+        new Date().getFullYear();
+
+
+    // =====================================
+    // WEEK RANGE
+    // =====================================
+
+    const startDay =
+        (selectedWeek * 7) + 1;
+
+
+    const lastDayOfMonth =
+        new Date(
+            selectedYear,
+            selectedMonth + 1,
+            0
+        ).getDate();
+
+
+    const endDay =
+        Math.min(
+            startDay + 6,
+            lastDayOfMonth
+        );
+
+
+    const startDate =
+        new Date(
+            selectedYear,
+            selectedMonth,
+            startDay,
+            0,
+            0,
+            0,
+            0
+        );
+
+
+    const endDate =
+        new Date(
+            selectedYear,
+            selectedMonth,
+            endDay,
+            23,
+            59,
+            59,
+            999
+        );
+
+
+    console.log(
+        "Weekly range:",
+        startDate,
+        endDate
+    );
+
+
+    // =====================================
+    // FILTER ACCOUNT CONTENT
+    // =====================================
+
+    const weeklyContents =
+        (account.contents || []).filter(content=>{
+
+            if(!content.date)
+                return false;
+
+
+            const contentDate =
+                new Date(content.date);
+
+
+            return (
+                contentDate >= startDate &&
+                contentDate <= endDate
+            );
+
+        });
+
+
+    console.log(
+        "WEEKLY CONTENTS:",
+        weeklyContents
+    );
+
+
+    // =====================================
+    // CALCULATE SUMMARY
+    // =====================================
+
+    let weeklyPosts = 0;
+
+    let weeklyViews = 0;
+
+    let weeklyLikes = 0;
+
+    let weeklyComments = 0;
+
+    let weeklyShares = 0;
+
+    let weeklySaved = 0;
+
+
+    weeklyContents.forEach(content=>{
+
+        weeklyPosts++;
+
+
+        weeklyViews +=
+            Number(content.views) || 0;
+
+
+        weeklyLikes +=
+            Number(content.likes) || 0;
+
+
+        weeklyComments +=
+            Number(content.comments) || 0;
+
+
+        weeklyShares +=
+            Number(content.shares) || 0;
+
+
+        weeklySaved +=
+            Number(content.saved) || 0;
+
+    });
+
+
+    const weeklyEngagement =
+        weeklyLikes +
+        weeklyComments +
+        weeklyShares +
+        weeklySaved;
+
+
+    const weeklyRate =
+        weeklyViews > 0
+        ?
+        (
+            weeklyEngagement /
+            weeklyViews *
+            100
+        ).toFixed(1)
+        :
+        "0.0";
+
+
+    // =====================================
+    // WEEKLY SUMMARY
+    // =====================================
+
+    const summary =
+        document.getElementById(
+            "weeklySummary"
+        );
+
+
+    if(summary){
+
+        summary.innerHTML = `
+
+        <div class="monthly-card">
+
+            <div class="monthly-card-icon">
+                👁
+            </div>
+
+            <div class="monthly-card-info">
+
+                <span>
+                    Views
+                </span>
+
+                <h2>
+                    ${formatNumber(weeklyViews)}
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="monthly-card">
+
+            <div class="monthly-card-icon">
+                📝
+            </div>
+
+            <div class="monthly-card-info">
+
+                <span>
+                    Posts
+                </span>
+
+                <h2>
+                    ${weeklyPosts}
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="monthly-card">
+
+            <div class="monthly-card-icon">
+                🔥
+            </div>
+
+            <div class="monthly-card-info">
+
+                <span>
+                    Engagement
+                </span>
+
+                <h2>
+                    ${formatNumber(weeklyEngagement)}
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="monthly-card">
+
+            <div class="monthly-card-icon">
+                📊
+            </div>
+
+            <div class="monthly-card-info">
+
+                <span>
+                    Rate
+                </span>
+
+                <h2>
+                    ${weeklyRate}%
+                </h2>
+
+            </div>
+
+        </div>
+
+        `;
+
+    }
+
+
+    // =====================================
+    // DATE RANGE
+    // =====================================
+
+    const dateRange =
+        document.getElementById(
+            "weeklyDateRange"
+        );
+
+
+    if(dateRange){
+
+        dateRange.textContent =
+
+            `${startDate.toLocaleDateString(
+                "en-US",
+                {
+                    month:"short",
+                    day:"numeric"
+                }
+            )} – ${endDate.toLocaleDateString(
+                "en-US",
+                {
+                    month:"short",
+                    day:"numeric",
+                    year:"numeric"
+                }
+            )}`;
+
+    }
+
+
+    // =====================================
+    // PLATFORM PERFORMANCE
+    // =====================================
+
+    renderWeeklyPlatformReport(
+        weeklyContents
+    );
+
+
+    // =====================================
+    // BEST PLATFORM
+    // =====================================
+
+    renderWeeklyBestPlatform(
+        weeklyContents
+    );
+
+
+    // =====================================
+    // TOP CONTENT
+    // =====================================
+
+    renderWeeklyTopContent(
+        weeklyContents
+    );
+
+
+    // =====================================
+    // CONTENT TABLE
+    // =====================================
+
+    renderWeeklyContentTable(
+        weeklyContents
+    );
+
+}
+
+
+
+// =====================================
+// WEEKLY PLATFORM REPORT
+// =====================================
+
+function renderWeeklyPlatformReport(
+    weeklyContents
+){
+
+    const box =
+        document.getElementById(
+            "weeklyPlatforms"
+        );
+
+
+    if(!box)
+        return;
+
+
+    const platforms = {};
+
+
+    weeklyContents.forEach(content=>{
+
+        const platform =
+            content.platform || "Unknown";
+
+
+        if(!platforms[platform]){
+
+            platforms[platform] = {
+
+                views:0,
+
+                engagement:0,
+
+                posts:0
+
+            };
+
+        }
+
+
+        platforms[platform].views +=
+            Number(content.views) || 0;
+
+
+        platforms[platform].engagement +=
+
+            (Number(content.likes) || 0) +
+
+            (Number(content.comments) || 0) +
+
+            (Number(content.shares) || 0) +
+
+            (Number(content.saved) || 0);
+
+
+        platforms[platform].posts++;
+
+    });
+
+
+    let html = "";
+
+
+    Object.keys(platforms).forEach(platform=>{
+
+        const data =
+            platforms[platform];
+
+
+        html += `
+
+        <div class="platform-performance-item">
+
+            <div class="platform-performance-header">
+
+                <span>
+                    ${platform}
+                </span>
+
+                <strong>
+                    ${formatNumber(data.views)}
+                    views
+                </strong>
+
+            </div>
+
+
+            <div class="platform-performance-detail">
+
+                <span>
+                    ${data.posts} posts
+                </span>
+
+                <span>
+                    ${formatNumber(data.engagement)}
+                    engagement
+                </span>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+
+    if(html === ""){
+
+        html =
+            "No platform data this week.";
+
+    }
+
+
+    box.innerHTML =
+        html;
+
+}
+
+
+// =====================================
+// WEEKLY BEST PLATFORM
+// PREMIUM DESIGN
+// =====================================
+
+function renderWeeklyBestPlatform(
+    weeklyContents
+){
+
+    const box =
+        document.getElementById(
+            "weeklyBestPlatform"
+        );
+
+
+    if(!box)
+        return;
+
+
+    const platforms = {};
+
+
+    // =====================================
+    // CALCULATE PLATFORM PERFORMANCE
+    // =====================================
+
+    weeklyContents.forEach(content=>{
+
+        const platform =
+            content.platform || "Unknown";
+
+
+        if(!platforms[platform]){
+
+            platforms[platform] = {
+
+                views: 0,
+
+                engagement: 0,
+
+                posts: 0
+
+            };
+
+        }
+
+
+        platforms[platform].views +=
+            Number(content.views) || 0;
+
+
+        platforms[platform].engagement +=
+
+            (Number(content.likes) || 0) +
+
+            (Number(content.comments) || 0) +
+
+            (Number(content.shares) || 0) +
+
+            (Number(content.saved) || 0);
+
+
+        platforms[platform].posts++;
+
+    });
+
+
+    // =====================================
+    // FIND BEST PLATFORM
+    // =====================================
+
+    let bestPlatform = null;
+
+
+    Object.keys(platforms).forEach(platform=>{
+
+        if(
+            !bestPlatform ||
+
+            platforms[platform].engagement >
+            platforms[bestPlatform].engagement
+        ){
+
+            bestPlatform =
+                platform;
+
+        }
+
+    });
+
+
+    // =====================================
+    // NO DATA
+    // =====================================
+
+    if(!bestPlatform){
+
+        box.innerHTML = `
+
+        <div class="weekly-best-empty">
+
+            <div class="weekly-best-empty-icon">
+                🏆
+            </div>
+
+            <h3>
+                No platform data yet
+            </h3>
+
+            <p>
+                Publish content during this week
+                to see your best platform.
+            </p>
+
+        </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    // =====================================
+    // BEST PLATFORM DATA
+    // =====================================
+
+    const data =
+        platforms[bestPlatform];
+
+
+    const engagementRate =
+        data.views > 0
+        ?
+        (
+            data.engagement /
+            data.views *
+            100
+        ).toFixed(1)
+        :
+        "0.0";
+
+
+    // =====================================
+    // PLATFORM ICON
+    // =====================================
+
+    const icon =
+        getPlatformIcon(bestPlatform);
+
+
+    // =====================================
+    // PLATFORM CLASS
+    // =====================================
+
+    const platformClass =
+        getPlatformClass(bestPlatform);
+
+
+    // =====================================
+    // RENDER PREMIUM CARD
+    // =====================================
+
+    box.innerHTML = `
+
+    <div class="
+        weekly-best-platform-card
+        ${platformClass}
+    ">
+
+
+        <div class="weekly-best-top">
+
+
+            <div class="weekly-best-badge">
+
+                🏆
+
+                <span>
+                    BEST PLATFORM
+                </span>
+
+            </div>
+
+
+            <div class="weekly-best-rank">
+
+                #1
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="weekly-best-main">
+
+
+            <div class="weekly-best-icon">
+
+                <img
+                    src="${icon}"
+                    alt="${bestPlatform}"
+                >
+
+            </div>
+
+
+            <div class="weekly-best-platform-name">
+
+                <span>
+                    This Week's Winner
+                </span>
+
+                <h2>
+                    ${bestPlatform}
+                </h2>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="weekly-best-stats">
+
+
+            <div class="weekly-best-stat">
+
+                <span>
+                    Views
+                </span>
+
+                <strong>
+                    ${formatNumber(data.views)}
+                </strong>
+
+            </div>
+
+
+            <div class="weekly-best-stat">
+
+                <span>
+                    Engagement
+                </span>
+
+                <strong>
+                    ${formatNumber(data.engagement)}
+                </strong>
+
+            </div>
+
+
+            <div class="weekly-best-stat">
+
+                <span>
+                    Posts
+                </span>
+
+                <strong>
+                    ${data.posts}
+                </strong>
+
+            </div>
+
+
+            <div class="weekly-best-stat">
+
+                <span>
+                    Rate
+                </span>
+
+                <strong>
+                    ${engagementRate}%
+                </strong>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="weekly-best-footer">
+
+            <span>
+                🏆 Highest engagement this week
+            </span>
+
+        </div>
+
+
+    </div>
+
+    `;
+
+}
+
+
+
+// =====================================
+// WEEKLY TOP CONTENT
+// =====================================
+
+function renderWeeklyTopContent(
+    weeklyContents
+){
+
+    const box =
+        document.getElementById(
+            "weeklyTopContent"
+        );
+
+
+    if(!box)
+        return;
+
+
+    if(weeklyContents.length === 0){
+
+        box.innerHTML =
+            "No content data this week.";
+
+        return;
+
+    }
+
+
+    const sorted =
+        [...weeklyContents].sort(
+            (a,b)=>{
+
+                const engagementA =
+
+                    (Number(a.likes) || 0) +
+
+                    (Number(a.comments) || 0) +
+
+                    (Number(a.shares) || 0) +
+
+                    (Number(a.saved) || 0);
+
+
+                const engagementB =
+
+                    (Number(b.likes) || 0) +
+
+                    (Number(b.comments) || 0) +
+
+                    (Number(b.shares) || 0) +
+
+                    (Number(b.saved) || 0);
+
+
+                const scoreA =
+
+                    (Number(a.views) || 0) +
+
+                    engagementA * 10;
+
+
+                const scoreB =
+
+                    (Number(b.views) || 0) +
+
+                    engagementB * 10;
+
+
+                return scoreB - scoreA;
+
+            }
+        );
+
+
+    const top =
+        sorted[0];
+
+
+    const engagement =
+
+        (Number(top.likes) || 0) +
+
+        (Number(top.comments) || 0) +
+
+        (Number(top.shares) || 0) +
+
+        (Number(top.saved) || 0);
+
+
+    box.innerHTML = `
+
+    <div class="top-monthly-item">
+
+        <h3>
+            ${top.caption || "Untitled Content"}
+        </h3>
+
+        <p>
+            Platform:
+            ${top.platform || "-"}
+        </p>
+
+        <p>
+            👁 ${formatNumber(top.views || 0)}
+            views
+        </p>
+
+        <p>
+            🔥 ${formatNumber(engagement)}
+            engagement
+        </p>
+
+    </div>
+
+    `;
+
+}
+
+
+
+// =====================================
+// WEEKLY CONTENT TABLE
+// =====================================
+
+function renderWeeklyContentTable(
+    weeklyContents
+){
+
+    const table =
+        document.getElementById(
+            "weeklyContentTable"
+        );
+
+
+    if(!table)
+        return;
+
+
+    if(weeklyContents.length === 0){
+
+        table.innerHTML = `
+
+        <tr>
+
+            <td colspan="5">
+
+                No content data this week.
+
+            </td>
+
+        </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    let html = "";
+
+
+    weeklyContents.forEach(content=>{
+
+        const engagement =
+
+            (Number(content.likes) || 0) +
+
+            (Number(content.comments) || 0) +
+
+            (Number(content.shares) || 0) +
+
+            (Number(content.saved) || 0);
+
+
+        html += `
+
+        <tr>
+
+            <td>
+                ${content.date || "-"}
+            </td>
+
+            <td>
+                ${content.platform || "-"}
+            </td>
+
+            <td>
+                ${content.caption || "-"}
+            </td>
+
+            <td>
+                ${formatNumber(content.views || 0)}
+            </td>
+
+            <td>
+                ${formatNumber(engagement)}
+            </td>
+
+        </tr>
+
+        `;
+
+    });
+
+
+    table.innerHTML =
+        html;
+
+}
+
+
+
+// =====================================
+// MONTHLY TOP CONTENT
+// =====================================
+
+function renderMonthlyTopContent(month, year){
+
+
+const box =
 document.getElementById(
-"weeklySummary"
+"monthlyTopContent"
 );
 
 
-
-if(!summary)
+if(!box)
 return;
 
 
 
-const month =
-Number(
-document.getElementById(
-"weeklyMonthFilter"
-)?.value
-|| new Date().getMonth()
-);
-
-
-
-const week =
-Number(
-document.getElementById(
-"weeklyFilter"
-)?.value
-||0
-);
-
-
-
-
-
-const start =
-week*7+1;
-
-
-
-const end =
-start+6;
-
-
-
-let views=0;
-
-let posts=0;
-
-let engagement=0;
-
-
-
-
-
-account.contents.forEach(content=>{
+let contents =
+account.contents.filter(content=>{
 
 
 if(!content.date)
-return;
-
+return false;
 
 
 let date =
 new Date(content.date);
 
 
-
-if(
-date.getMonth()===month
-&&
-date.getDate()>=start
-&&
-date.getDate()<=end
-){
-
-
-posts++;
-
-
-views +=
-Number(content.views)||0;
-
-
-
-engagement +=
-
-(Number(content.likes)||0)
-
-+
-
-(Number(content.comments)||0)
-
-+
-
-(Number(content.shares)||0)
-
-+
-
-(Number(content.saved)||0);
-
-
-
-}
-
+return (
+date.getMonth() === month &&
+date.getFullYear() === year
+);
 
 
 });
 
 
 
+if(contents.length===0){
 
 
-let rate =
-views>0
-?
+box.innerHTML =
+"No content data this month.";
+
+return;
+
+
+}
+
+
+
+contents.sort((a,b)=>{
+
+
+let scoreA =
+(Number(a.views)||0)
++
 (
-engagement/views*100
-).toFixed(1)
-:
-0;
+(Number(a.likes)||0)
++
+(Number(a.comments)||0)
++
+(Number(a.shares)||0)
++
+(Number(a.saved)||0)
+)*10;
 
 
 
+let scoreB =
+(Number(b.views)||0)
++
+(
+(Number(b.likes)||0)
++
+(Number(b.comments)||0)
++
+(Number(b.shares)||0)
++
+(Number(b.saved)||0)
+)*10;
 
 
-summary.innerHTML=`
 
+return scoreB-scoreA;
 
-<div class="monthly-card">
 
+});
 
-<div class="monthly-card-icon">
-👁
-</div>
 
 
-<div class="monthly-card-info">
+let top =
+contents[0];
 
-<span>
 
-Views
 
-</span>
+box.innerHTML = `
 
 
-<h2>
+<div class="top-monthly-item">
 
-${formatNumber(views)}
 
-</h2>
+<h3>
+${top.caption || "Untitled Content"}
+</h3>
 
 
-</div>
+<p>
+Platform:
+${top.platform || "-"}
+</p>
 
 
-</div>
+<p>
+👁 ${formatNumber(top.views)} views
+</p>
 
 
-
-
-
-<div class="monthly-card">
-
-
-<div class="monthly-card-icon">
-📝
-</div>
-
-
-<div class="monthly-card-info">
-
-
-<span>
-
-Posts
-
-</span>
-
-
-<h2>
-
-${posts}
-
-</h2>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="monthly-card">
-
-
-<div class="monthly-card-icon">
-🔥
-</div>
-
-
-<div class="monthly-card-info">
-
-
-<span>
-
-Engagement
-
-</span>
-
-
-<h2>
-
-${formatNumber(engagement)}
-
-</h2>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="monthly-card">
-
-
-<div class="monthly-card-icon">
-📊
-</div>
-
-
-<div class="monthly-card-info">
-
-
-<span>
-
-Rate
-
-</span>
-
-
-<h2>
-
-${rate}%
-
-</h2>
-
-
-</div>
+<p>
+🔥 ${
+(Number(top.likes)||0)
++
+(Number(top.comments)||0)
++
+(Number(top.shares)||0)
++
+(Number(top.saved)||0)
+}
+ engagement
+</p>
 
 
 </div>
@@ -3961,11 +4902,6 @@ ${rate}%
 
 `;
 
-renderMonthlyPlatformReport();
-
-renderMonthlyTopContent(month, year);
-
-renderMonthlyContentTable(month, year);
 
 }
 

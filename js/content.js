@@ -228,19 +228,27 @@ editButton.onclick = function(){
 
 
     contentTitle.value =
-    content.title;
+content.title;
 
 
-    contentPlatform.value =
-    content.platform;
+contentPlatform.value =
+content.platform;
 
 
-    contentType.value =
-    content.type;
+contentType.value =
+content.type;
 
 
-    contentStatus.value =
-    content.status;
+contentStatus.value =
+content.status;
+
+
+contentViews.value =
+content.views || 0;
+
+
+contentReach.value =
+content.reach || 0;
 
 
 };
@@ -310,15 +318,19 @@ addContent.onclick=function(){
 
     contentTitle.value = "";
 
-    contentPlatform.selectedIndex = 0;
+contentPlatform.selectedIndex = 0;
 
-    contentType.selectedIndex = 0;
+contentType.selectedIndex = 0;
 
-    contentStatus.selectedIndex = 0;
+contentStatus.selectedIndex = 0;
+
+contentViews.value = "";
+
+contentReach.value = "";
 
 
-    contentModal.style.display =
-    "flex";
+contentModal.style.display =
+"flex";
 
 };
 
@@ -358,6 +370,12 @@ window.onclick = function(event){
 
 const contentPlatform =
 document.getElementById("contentPlatform");
+
+const contentViews =
+document.getElementById("contentViews");
+
+const contentReach =
+document.getElementById("contentReach");
 
 const saveContent =
 document.getElementById("saveContent");
