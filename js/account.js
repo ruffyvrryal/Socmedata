@@ -287,7 +287,114 @@ const addContent =
 
 let selectedPlatformValue = "all";
 
+// =====================================
+// ACCOUNT CENTER PLATFORM DROPDOWN
+// =====================================
 
+const platformFilterDropdown =
+    document.getElementById("platformFilter");
+
+const selectedPlatform =
+    document.getElementById("selectedPlatform");
+
+const platformOptions =
+    document.querySelectorAll(
+        "#platformFilter .custom-option"
+    );
+
+
+if(platformFilterDropdown){
+
+    const trigger =
+        platformFilterDropdown.querySelector(
+            ".custom-select-trigger"
+        );
+
+
+    // OPEN / CLOSE DROPDOWN
+
+    if(trigger){
+
+        trigger.onclick = function(event){
+
+            event.stopPropagation();
+
+            platformFilterDropdown.classList.toggle(
+                "open"
+            );
+
+        };
+
+    }
+
+
+    // SELECT PLATFORM
+
+    platformOptions.forEach(option => {
+
+        option.onclick = function(event){
+
+            event.stopPropagation();
+
+
+            selectedPlatformValue =
+                this.dataset.value;
+
+
+            // Update displayed text
+
+            if(selectedPlatform){
+
+                selectedPlatform.textContent =
+                    this.textContent.trim();
+
+            }
+
+
+            // Active option
+
+            platformOptions.forEach(item => {
+
+                item.classList.remove(
+                    "active"
+                );
+
+            });
+
+
+            this.classList.add("active");
+
+
+            // Close dropdown
+
+            platformFilterDropdown.classList.remove(
+                "open"
+            );
+
+
+            // Refresh platform cards
+
+            renderPlatforms();
+
+        };
+
+    });
+
+
+    // CLOSE WHEN CLICKING OUTSIDE
+
+    document.addEventListener(
+        "click",
+        function(){
+
+            platformFilterDropdown.classList.remove(
+                "open"
+            );
+
+        }
+    );
+
+}
 
 
 // =====================================
