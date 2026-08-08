@@ -5898,18 +5898,9 @@ document
 .getElementById("weeklyFilter")
 ?.addEventListener("change", renderWeeklyReport);
 
-
 document
 .getElementById("weeklyYearFilter")
 ?.addEventListener("change", renderWeeklyReport);
-
-
-document
-.getElementById("weeklyFilter")
-?.addEventListener(
-    "change",
-    renderWeeklyReport
-);
 
 renderMonthlyReport();
 

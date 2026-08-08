@@ -301,8 +301,12 @@ getContentsByDate(date);
 </p>
 
                     <p>
-                        👁 ${formatNumber(post.views || 0)} Views
-                    </p>
+    👁 ${formatNumber(post.impressions || 0)} Impressions
+</p>
+
+<p>
+    👥 ${formatNumber(post.reach || 0)} Reach
+</p>
 
                     <p>
                         ❤️ ${formatNumber(post.likes || 0)} Likes
