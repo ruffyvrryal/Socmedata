@@ -29,19 +29,26 @@ Loading profile...
 </p>
 
 
-<button id="addContent">
+<button id="addContentBtn">
 
-+ Create Content
+    + Create Content
 
 </button>
 
+
+<!-- =====================================
+     CONTENT TOOLBAR
+===================================== -->
+
 <div class="content-toolbar">
+
 
     <input
         type="text"
         id="searchContent"
         placeholder="🔍 Search content..."
     >
+
 
     <select id="statusFilter">
 
@@ -63,216 +70,428 @@ Loading profile...
 
     </select>
 
+
     <select id="platformFilter">
 
-    <option value="all">
-        All Platforms
-    </option>
+        <option value="all">
+            All Platforms
+        </option>
 
-    <option value="Instagram">
-        Instagram
-    </option>
+        <option value="Instagram">
+            Instagram
+        </option>
 
-    <option value="TikTok">
-        TikTok
-    </option>
+        <option value="TikTok">
+            TikTok
+        </option>
 
-    <option value="YouTube">
-        YouTube
-    </option>
+        <option value="YouTube">
+            YouTube
+        </option>
 
-    <option value="Facebook">
-        Facebook
-    </option>
+        <option value="Facebook">
+            Facebook
+        </option>
 
-    <option value="X">
-        X
-    </option>
+        <option value="X">
+            X
+        </option>
 
-    <option value="Threads">
-        Threads
-    </option>
+        <option value="Threads">
+            Threads
+        </option>
 
-</select>
+    </select>
+
 
 </div>
+
+
+
+<!-- =====================================
+     CONTENT LIST
+===================================== -->
 
 <div class="content-box">
 
 
-<h2>
-My Content
-</h2>
+    <h2>
+        My Content
+    </h2>
 
 
+    <div id="contentList">
 
-<div id="contentList">
+        <p>
+            No content yet
+        </p>
 
-<p>
-No content yet
-</p>
+    </div>
+
 
 </div>
 
 
-</div>
 
+<!-- =====================================
+     CONTENT MODAL
+===================================== -->
 
+<div
+    id="contentModal"
+    class="modal"
+>
 
-<div id="contentModal" class="modal">
 
     <div class="modal-content">
 
+
+        <!-- MODAL HEADER -->
+
         <div class="modal-header">
 
-            <h2 id="modalTitle">
-Create Content
-</h2>
 
-            <span id="closeModal" class="close">
+            <h2 id="contentModalTitle">
+                Create Content
+            </h2>
+
+
+            <span
+                id="closeContentModal"
+                class="close"
+            >
+
                 &times;
+
             </span>
+
 
         </div>
 
+
+
+        <!-- MODAL BODY -->
+
         <div class="modal-body">
 
-<label>Title</label>
 
-<input
+
+            <!-- TITLE -->
+
+            <label>
+                Title
+            </label>
+
+
+            <input
+                type="text"
+                id="contentTitle"
+                placeholder="Enter content title"
+            >
+
+
+
+            <!-- PLATFORM -->
+
+            <label>
+                Platform
+            </label>
+
+
+            <select id="contentPlatform">
+
+                <option value="Instagram">
+                    Instagram
+                </option>
+
+                <option value="Facebook">
+                    Facebook
+                </option>
+
+                <option value="TikTok">
+                    TikTok
+                </option>
+
+                <option value="YouTube">
+                    YouTube
+                </option>
+
+                <option value="Threads">
+                    Threads
+                </option>
+
+                <option value="X">
+                    X
+                </option>
+
+            </select>
+
+
+
+            <!-- CONTENT TYPE -->
+
+            <label>
+                Content Type
+            </label>
+
+
+            <select id="contentType">
+
+                <option value="Post">
+                    Post
+                </option>
+
+                <option value="Reel">
+                    Reel
+                </option>
+
+                <option value="Story">
+                    Story
+                </option>
+
+                <option value="Carousel">
+                    Carousel
+                </option>
+
+                <option value="Video">
+                    Video
+                </option>
+
+                <option value="Short">
+                    Short
+                </option>
+
+                <option value="Live">
+                    Live
+                </option>
+
+            </select>
+
+
+
+            <!-- STATUS -->
+
+            <label>
+                Status
+            </label>
+
+
+            <select id="contentStatus">
+
+                <option value="Draft">
+                    Draft
+                </option>
+
+                <option value="Scheduled">
+                    Scheduled
+                </option>
+
+                <option value="Published">
+                    Published
+                </option>
+
+                <option value="Archived">
+                    Archived
+                </option>
+
+            </select>
+
+
+
+            <!-- DATE -->
+
+            <label>
+                Publish Date
+            </label>
+
+
+            <input
+                type="date"
+                id="contentDate"
+            >
+
+
+
+            <!-- CAPTION -->
+
+            <label>
+                Caption
+            </label>
+
+
+            <textarea
+                id="contentCaption"
+                rows="5"
+                placeholder="Write your caption..."
+            ></textarea>
+
+
+
+            <!-- HASHTAGS -->
+
+            <label>
+                Hashtags
+            </label>
+
+
+            <input
 type="text"
-id="contentTitle"
-placeholder="Enter content title"
->
-
-<label>Platform</label>
-
-<select id="contentPlatform">
-
-<option>Instagram</option>
-<option>Facebook</option>
-<option>TikTok</option>
-<option>YouTube</option>
-<option>Threads</option>
-<option>X</option>
-<option>LinkedIn</option>
-<option>Pinterest</option>
-
-</select>
-
-
-<label>Content Type</label>
-
-<select id="contentType">
-
-<option>Post</option>
-<option>Reel</option>
-<option>Story</option>
-<option>Carousel</option>
-<option>Video</option>
-<option>Short</option>
-<option>Live</option>
-
-</select>
-
-
-<label>Status</label>
-
-<select id="contentStatus">
-
-<option>Draft</option>
-<option>Scheduled</option>
-<option>Published</option>
-<option>Archived</option>
-
-</select>
-
-
-<label>Publish Date</label>
-
-<input
-type="date"
-id="contentDate"
->
-
-
-<label>Caption</label>
-
-<textarea
-id="contentCaption"
-rows="5"
-placeholder="Write your caption..."
-></textarea>
-
-
-<label>Hashtags</label>
-
-<input
-type="text"
-id="contentTags"
+id="contentHashtag"
 placeholder="#marketing #instagram"
 >
 
 
-<label>Impressions</label>
 
-<input
-type="number"
-id="contentViews"
-placeholder="Total views / plays"
-min="0"
->
+            <!-- IMPRESSIONS -->
+
+            <label>
+                Impressions
+            </label>
 
 
-<label>Reach</label>
-
-<input
-type="number"
-id="contentReach"
-placeholder="Total people reached"
-min="0"
->
+            <input
+                type="number"
+                id="contentImpressions"
+                placeholder="Total impressions"
+                min="0"
+            >
 
 
-<label>Notes</label>
 
-<textarea
-id="contentNotes"
-rows="4"
-placeholder="Internal notes..."
-></textarea>
+            <!-- REACH -->
+
+            <label>
+                Reach
+            </label>
 
 
-<div class="modal-buttons">
+            <input
+                type="number"
+                id="contentReach"
+                placeholder="Total people reached"
+                min="0"
+            >
 
-<button
-type="button"
-id="cancelContent">
 
-Cancel
 
-</button>
+            <!-- LIKES -->
 
-<button
-type="button"
-id="saveContent">
+            <label>
+                Likes
+            </label>
 
-Create Content
 
-</button>
+            <input
+                type="number"
+                id="contentLikes"
+                placeholder="Total likes"
+                min="0"
+            >
 
-</div>
 
-</div>
+
+            <!-- COMMENTS -->
+
+            <label>
+                Comments
+            </label>
+
+
+            <input
+                type="number"
+                id="contentComments"
+                placeholder="Total comments"
+                min="0"
+            >
+
+
+
+            <!-- SHARES -->
+
+            <label>
+                Shares
+            </label>
+
+
+            <input
+                type="number"
+                id="contentShares"
+                placeholder="Total shares"
+                min="0"
+            >
+
+
+
+            <!-- SAVED -->
+
+            <label>
+                Saves
+            </label>
+
+
+            <input
+                type="number"
+                id="contentSaved"
+                placeholder="Total saves"
+                min="0"
+            >
+
+
+
+            <!-- NOTES -->
+
+            <label>
+                Notes
+            </label>
+
+
+            <textarea
+                id="contentNotes"
+                rows="4"
+                placeholder="Internal notes..."
+            ></textarea>
+
+
+
+            <!-- BUTTONS -->
+
+            <div class="modal-buttons">
+
+
+                <button
+                    type="button"
+                    id="cancelContent"
+                >
+
+                    Cancel
+
+                </button>
+
+
+                <button
+                    type="button"
+                    id="saveContent"
+                >
+
+                    Create Content
+
+                </button>
+
+
+            </div>
+
+
+        </div>
+
 
     </div>
 
-</div>
-
-
 
 </div>
 
+
+
+</div>
 
 
 

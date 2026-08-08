@@ -1,430 +1,1522 @@
-console.log("CONTENT.JS LOADED VERSION 2");
+console.log("CONTENT.JS LOADED VERSION 3");
 
-// =============================
+
+// =====================================
 // SOCMEDATA CONTENT MANAGEMENT
-// =============================
+// =====================================
+// Uses the SAME database structure
+// as the Account Dashboard.
+//
+// Vault
+//   ↓
+// Profile
+//   ↓
+// Account
+//   ↓
+// account.contents
+// =====================================
 
 
-// Load profiles
+
+// =====================================
+// LOAD DATABASE
+// =====================================
 
 let profiles =
-JSON.parse(localStorage.getItem("profiles")) || [];
+    JSON.parse(
+        localStorage.getItem("profiles")
+    ) || [];
 
 
-
-// Get active profile
 
 let activeProfileId =
-localStorage.getItem("activeProfileId");
+    localStorage.getItem(
+        "activeProfileId"
+    );
 
 
 
-// Find profile
-
-let profile =
-profiles.find(
-    p => p.id == activeProfileId
-);
+let activeAccountId =
+    localStorage.getItem(
+        "activeAccountId"
+    );
 
 
 
 console.log(
-    "Content Profile:",
-    profile
+    "Active Profile:",
+    activeProfileId
+);
+
+
+console.log(
+    "Active Account:",
+    activeAccountId
 );
 
 
 
+// =====================================
+// FIND ACTIVE PROFILE
+// =====================================
 
-// Profile name
-
-const profileName =
-document.getElementById("profileName");
-
-
-
-if(profileName && profile){
-
-    profileName.textContent =
-    profile.name;
-
-}
-
-
-
-
-// Content list
-
-const contentList =
-document.getElementById("contentList");
-
-const searchContent =
-document.getElementById("searchContent");
-
-const statusFilter =
-document.getElementById("statusFilter");
-
-const platformFilter =
-document.getElementById("platformFilter");
-
-// =============================
-// EDIT MODE
-// =============================
-
-let editingIndex = -1;
-
-function showContents(){
-
-
-if(!contentList || !profile)
-return;
-
-
-
-contentList.innerHTML="";
-
-
-
-if(profile.contents.length === 0){
-
-
-contentList.innerHTML = `
-
-<p>
-No content yet
-</p>
-
-`;
-
-
-return;
-
-}
-
-
-
-let filteredContents =
-profile.contents.filter(content => {
-
-    const matchesSearch =
-    content.title
-    .toLowerCase()
-    .includes(
-        searchContent.value.toLowerCase()
+let profile =
+    profiles.find(
+        p => p.id == activeProfileId
     );
 
-    const matchesStatus =
-statusFilter.value === "all" ||
-content.status.toLowerCase() === statusFilter.value;
 
-const matchesPlatform =
-platformFilter.value === "all" ||
-content.platform === platformFilter.value;
 
-return (
-    matchesSearch &&
-    matchesStatus &&
-    matchesPlatform
-);
+if(!profile){
 
-});
+    console.error(
+        "Profile not found."
+    );
 
+    alert("Vault not found.");
 
-filteredContents.forEach((content,index)=>{
-
-
-let card =
-document.createElement("div");
-
-
-
-card.className =
-"content-card";
-
-
-
-card.innerHTML = `
-
-<div class="content-header">
-
-<h3>
-🎬 ${content.title}
-</h3>
-
-<span class="status ${content.status.toLowerCase()}">
-${content.status}
-</span>
-
-</div>
-
-
-<div class="content-info">
-
-<p>
-📱 ${content.platform}
-</p>
-
-<p>
-🎞 ${content.type}
-</p>
-
-</div>
-
-
-<p class="content-date">
-📅 ${content.date}
-</p>
-
-
-<div class="content-actions">
-
-<button class="edit-content">
-✏ Edit
-</button>
-
-<button class="delete-content">
-🗑 Delete
-</button>
-
-<div style="
-width:20px;
-height:20px;
-background:red;
-border-radius:50%;
-display:inline-block;
-">
-</div>
-
-<span 
-class="status-dot ${content.status.toLowerCase()}"
-title="${content.status}">
-</span>
-
-</div>
-
-`;
-
-const editButton =
-card.querySelector(".edit-content");
-
-const deleteButton =
-card.querySelector(".delete-content");
-
-editButton.onclick = function(){
-
-    editingIndex = index;
-
-
-    contentModal.style.display =
-    "flex";
-
-
-    modalTitle.textContent =
-    "Edit Content";
-
-
-    saveContent.textContent =
-    "Update Content";
-
-
-    contentTitle.value =
-content.title;
-
-
-contentPlatform.value =
-content.platform;
-
-
-contentType.value =
-content.type;
-
-
-contentStatus.value =
-content.status;
-
-
-contentViews.value =
-content.views || 0;
-
-
-contentReach.value =
-content.reach || 0;
-
-
-};
-
-deleteButton.onclick = function(){
-
-    let confirmDelete =
-    confirm("Delete this content?");
-
-    if(confirmDelete){
-
-        profile.contents.splice(index,1);
-
-        localStorage.setItem(
-            "profiles",
-            JSON.stringify(profiles)
-        );
-
-        showContents();
-
-        console.log(
-            "Content Deleted",
-            profile.contents
-        );
-
-    }
-
-};
-
-contentList.appendChild(card);
-
-
-
-});
-
+    window.location.href =
+        "../index.html";
 
 }
 
 
 
+// =====================================
+// FIND ACTIVE ACCOUNT
+// =====================================
 
-showContents();
+let account =
+    profile.accounts?.find(
+        a => a.id == activeAccountId
+    );
 
-// =============================
-// ADD CONTENT
-// =============================
+
+
+if(!account){
+
+    console.error(
+        "Account not found."
+    );
+
+    alert("Account not found.");
+
+    window.location.href =
+        "dashboard.html";
+
+}
+
+
+
+// =====================================
+// DATABASE SAFETY
+// =====================================
+
+if(!account.contents){
+
+    account.contents = [];
+
+}
+
+
+
+// =====================================
+// SAVE DATABASE
+// =====================================
+
+function saveDatabase(){
+
+    localStorage.setItem(
+
+        "profiles",
+
+        JSON.stringify(
+            profiles
+        )
+
+    );
+
+}
+
+
+
+// =====================================
+// PROFILE NAME
+// =====================================
+
+const profileName =
+    document.getElementById(
+        "profileName"
+    );
+
+
+
+if(profileName){
+
+    profileName.textContent =
+        profile.name || "My Vault";
+
+}
+
+
+
+// =====================================
+// ELEMENTS
+// =====================================
+
+const contentList =
+    document.getElementById(
+        "contentList"
+    );
+
+
+const searchContent =
+    document.getElementById(
+        "searchContent"
+    );
+
+
+const statusFilter =
+    document.getElementById(
+        "statusFilter"
+    );
+
+
+const platformFilter =
+    document.getElementById(
+        "platformFilter"
+    );
 
 
 const addContent =
-document.getElementById("addContent");
+    document.getElementById(
+        "addContentBtn"
+    );
 
 
-if(addContent){
-
-addContent.onclick=function(){
-
-    editingIndex = -1;
-
-
-    modalTitle.textContent =
-    "Create Content";
+const contentModal =
+    document.getElementById(
+        "contentModal"
+    );
 
 
-    saveContent.textContent =
-    "Create Content";
+const closeContentModal =
+    document.getElementById(
+        "closeContentModal"
+    );
 
 
-    contentTitle.value = "";
-
-contentPlatform.selectedIndex = 0;
-
-contentType.selectedIndex = 0;
-
-contentStatus.selectedIndex = 0;
-
-contentViews.value = "";
-
-contentReach.value = "";
+const cancelContent =
+    document.getElementById(
+        "cancelContent"
+    );
 
 
-contentModal.style.display =
-"flex";
+const saveContent =
+    document.getElementById(
+        "saveContent"
+    );
 
-};
+
+const contentModalTitle =
+    document.getElementById(
+        "contentModalTitle"
+    );
+
+
+
+// =====================================
+// FORM ELEMENTS
+// =====================================
+
+const contentTitle =
+    document.getElementById(
+        "contentTitle"
+    );
+
+
+const contentPlatform =
+    document.getElementById(
+        "contentPlatform"
+    );
+
+
+const contentType =
+    document.getElementById(
+        "contentType"
+    );
+
+
+const contentStatus =
+    document.getElementById(
+        "contentStatus"
+    );
+
+
+const contentDate =
+    document.getElementById(
+        "contentDate"
+    );
+
+
+const contentCaption =
+    document.getElementById(
+        "contentCaption"
+    );
+
+
+const contentHashtag =
+    document.getElementById(
+        "contentHashtag"
+    );
+
+
+const contentImpressions =
+    document.getElementById(
+        "contentImpressions"
+    );
+
+
+const contentReach =
+    document.getElementById(
+        "contentReach"
+    );
+
+
+const contentLikes =
+    document.getElementById(
+        "contentLikes"
+    );
+
+
+const contentComments =
+    document.getElementById(
+        "contentComments"
+    );
+
+
+const contentShares =
+    document.getElementById(
+        "contentShares"
+    );
+
+
+const contentSaved =
+    document.getElementById(
+        "contentSaved"
+    );
+
+
+const contentNotes =
+    document.getElementById(
+        "contentNotes"
+    );
+
+
+
+// =====================================
+// EDIT MODE
+// =====================================
+
+let editingContentId = null;
+
+
+
+// =====================================
+// NUMBER FORMAT
+// =====================================
+
+function formatNumber(number){
+
+    return Number(number || 0)
+        .toLocaleString("id-ID");
 
 }
 
-// =============================
-// CONTENT MODAL
-// =============================
-
-const contentModal =
-document.getElementById("contentModal");
-
-const closeModal =
-document.getElementById("closeModal");
 
 
-// Close Button
+// =====================================
+// ENGAGEMENT CALCULATOR
+// =====================================
 
-closeModal.onclick = function(){
+function getEngagement(content){
 
-    contentModal.style.display = "none";
+    return (
 
-};
+        Number(content.likes) || 0
+
+    ) + (
+
+        Number(content.comments) || 0
+
+    ) + (
+
+        Number(content.shares) || 0
+
+    ) + (
+
+        Number(content.saved) || 0
+
+    );
+
+}
 
 
-// Click Outside Modal
 
-window.onclick = function(event){
+// =====================================
+// RENDER CONTENTS
+// =====================================
 
-    if(event.target == contentModal){
+function showContents(){
 
-        contentModal.style.display = "none";
+    if(!contentList){
+
+        console.error(
+            "contentList not found."
+        );
+
+        return;
 
     }
 
-};
-
-const contentPlatform =
-document.getElementById("contentPlatform");
-
-const contentViews =
-document.getElementById("contentViews");
-
-const contentReach =
-document.getElementById("contentReach");
-
-const saveContent =
-document.getElementById("saveContent");
-
-console.log("Save Button:", saveContent);
-
-const modalTitle =
-document.getElementById("modalTitle");
 
 
-// =============================
-// SEARCH CONTENT
-// =============================
+    contentList.innerHTML = "";
+
+
+
+    let contents =
+        account.contents || [];
+
+
+
+    // =================================
+    // SEARCH
+    // =================================
+
+    const searchValue =
+        searchContent
+        ?
+        searchContent.value
+            .toLowerCase()
+            .trim()
+        :
+        "";
+
+
+
+    // =================================
+    // FILTER
+    // =================================
+
+    let filteredContents =
+        contents.filter(content=>{
+
+
+            const title =
+                (
+                    content.title ||
+                    ""
+                ).toLowerCase();
+
+
+            const caption =
+                (
+                    content.caption ||
+                    ""
+                ).toLowerCase();
+
+
+            const hashtag =
+                (
+                    content.hashtag ||
+                    ""
+                ).toLowerCase();
+
+
+
+            const matchesSearch =
+
+                searchValue === ""
+
+                ||
+
+                title.includes(
+                    searchValue
+                )
+
+                ||
+
+                caption.includes(
+                    searchValue
+                )
+
+                ||
+
+                hashtag.includes(
+                    searchValue
+                );
+
+
+
+            const matchesStatus =
+
+                !statusFilter
+
+                ||
+
+                statusFilter.value === "all"
+
+                ||
+
+                (
+                    content.status ||
+                    "Draft"
+                ).toLowerCase()
+                ===
+                statusFilter.value;
+
+
+
+            const matchesPlatform =
+
+                !platformFilter
+
+                ||
+
+                platformFilter.value === "all"
+
+                ||
+
+                content.platform
+                ===
+                platformFilter.value;
+
+
+
+            return (
+
+                matchesSearch &&
+
+                matchesStatus &&
+
+                matchesPlatform
+
+            );
+
+
+        });
+
+
+
+    // =================================
+    // EMPTY STATE
+    // =================================
+
+    if(filteredContents.length === 0){
+
+        contentList.innerHTML = `
+
+        <div class="content-empty-state">
+
+            <div class="content-empty-icon">
+                📝
+            </div>
+
+            <h3>
+                No Content Found
+            </h3>
+
+            <p>
+                Create content or change your filters.
+            </p>
+
+        </div>
+
+        `;
+
+        return;
+
+    }
+
+
+
+    // =================================
+    // RENDER CARDS
+    // =================================
+
+    filteredContents.forEach(
+        content=>{
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+
+
+        card.className =
+            "content-card";
+
+
+
+        const engagement =
+            getEngagement(
+                content
+            );
+
+
+
+        const status =
+            content.status ||
+            "Draft";
+
+
+
+        card.innerHTML = `
+
+        <div class="content-header">
+
+
+            <div>
+
+                <h3>
+
+                    🎬
+
+                    ${
+                        content.title ||
+                        content.caption ||
+                        "Untitled Content"
+                    }
+
+                </h3>
+
+            </div>
+
+
+            <span
+                class="status ${status.toLowerCase()}"
+            >
+
+                ${status}
+
+            </span>
+
+
+        </div>
+
+
+
+        <div class="content-info">
+
+
+            <p>
+
+                📱
+
+                ${
+                    content.platform ||
+                    "-"
+                }
+
+            </p>
+
+
+            <p>
+
+                🎞
+
+                ${
+                    content.contentType ||
+                    "-"
+                }
+
+            </p>
+
+
+        </div>
+
+
+
+        <p class="content-date">
+
+            📅
+
+            ${
+                content.date ||
+                "-"
+            }
+
+        </p>
+
+
+
+        <div class="content-metrics">
+
+
+            <span>
+
+                👁
+
+                ${formatNumber(
+                    content.impressions
+                )}
+
+            </span>
+
+
+            <span>
+
+                👥
+
+                ${formatNumber(
+                    content.reach
+                )}
+
+            </span>
+
+
+            <span>
+
+                🔥
+
+                ${formatNumber(
+                    engagement
+                )}
+
+            </span>
+
+
+        </div>
+
+
+
+        <div class="content-actions">
+
+
+            <button
+                class="edit-content"
+                data-id="${content.id}"
+            >
+
+                ✏ Edit
+
+            </button>
+
+
+            <button
+                class="delete-content"
+                data-id="${content.id}"
+            >
+
+                🗑 Delete
+
+            </button>
+
+
+        </div>
+
+
+        `;
+
+
+
+        // =================================
+        // EDIT
+        // =================================
+
+        const editButton =
+            card.querySelector(
+                ".edit-content"
+            );
+
+
+
+        if(editButton){
+
+            editButton.onclick =
+                function(){
+
+                    openEditContent(
+                        content.id
+                    );
+
+                };
+
+        }
+
+
+
+        // =================================
+        // DELETE
+        // =================================
+
+        const deleteButton =
+            card.querySelector(
+                ".delete-content"
+            );
+
+
+
+        if(deleteButton){
+
+            deleteButton.onclick =
+                function(){
+
+                    deleteContent(
+                        content.id
+                    );
+
+                };
+
+        }
+
+
+
+        contentList.appendChild(
+            card
+        );
+
+
+    });
+
+}
+
+
+
+// =====================================
+// OPEN CREATE MODAL
+// =====================================
+
+function openCreateContent(){
+
+    editingContentId =
+        null;
+
+
+
+    if(contentModalTitle){
+
+        contentModalTitle.textContent =
+            "Create Content";
+
+    }
+
+
+
+    if(saveContent){
+
+        saveContent.textContent =
+            "Create Content";
+
+    }
+
+
+
+    clearContentForm();
+
+
+
+    if(contentModal){
+
+        contentModal.style.display =
+            "flex";
+
+    }
+
+}
+
+
+
+// =====================================
+// CLEAR FORM
+// =====================================
+
+function clearContentForm(){
+
+    if(contentTitle)
+        contentTitle.value = "";
+
+
+    if(contentPlatform)
+        contentPlatform.selectedIndex = 0;
+
+
+    if(contentType)
+        contentType.selectedIndex = 0;
+
+
+    if(contentStatus)
+        contentStatus.value =
+            "Draft";
+
+
+    if(contentDate)
+        contentDate.value = "";
+
+
+    if(contentCaption)
+        contentCaption.value = "";
+
+
+    if(contentHashtag)
+        contentHashtag.value = "";
+
+
+    if(contentImpressions)
+        contentImpressions.value = "";
+
+
+    if(contentReach)
+        contentReach.value = "";
+
+
+    if(contentLikes)
+        contentLikes.value = "";
+
+
+    if(contentComments)
+        contentComments.value = "";
+
+
+    if(contentShares)
+        contentShares.value = "";
+
+
+    if(contentSaved)
+        contentSaved.value = "";
+
+
+    if(contentNotes)
+        contentNotes.value = "";
+
+}
+
+
+
+// =====================================
+// OPEN EDIT MODAL
+// =====================================
+
+function openEditContent(id){
+
+    const content =
+        account.contents.find(
+            item =>
+                item.id == id
+        );
+
+
+
+    if(!content)
+        return;
+
+
+
+    editingContentId =
+        content.id;
+
+
+
+    if(contentModalTitle){
+
+        contentModalTitle.textContent =
+            "Edit Content";
+
+    }
+
+
+
+    if(saveContent){
+
+        saveContent.textContent =
+            "Update Content";
+
+    }
+
+
+
+    if(contentTitle)
+        contentTitle.value =
+            content.title || "";
+
+
+    if(contentPlatform)
+        contentPlatform.value =
+            content.platform || "Instagram";
+
+
+    if(contentType)
+        contentType.value =
+            content.contentType || "Post";
+
+
+    if(contentStatus)
+        contentStatus.value =
+            content.status || "Draft";
+
+
+    if(contentDate)
+        contentDate.value =
+            content.date || "";
+
+
+    if(contentCaption)
+        contentCaption.value =
+            content.caption || "";
+
+
+    if(contentHashtag)
+        contentHashtag.value =
+            content.hashtag || "";
+
+
+    if(contentImpressions)
+        contentImpressions.value =
+            content.impressions || 0;
+
+
+    if(contentReach)
+        contentReach.value =
+            content.reach || 0;
+
+
+    if(contentLikes)
+        contentLikes.value =
+            content.likes || 0;
+
+
+    if(contentComments)
+        contentComments.value =
+            content.comments || 0;
+
+
+    if(contentShares)
+        contentShares.value =
+            content.shares || 0;
+
+
+    if(contentSaved)
+        contentSaved.value =
+            content.saved || 0;
+
+
+    if(contentNotes)
+        contentNotes.value =
+            content.notes || "";
+
+
+
+    if(contentModal){
+
+        contentModal.style.display =
+            "flex";
+
+    }
+
+}
+
+
+
+// =====================================
+// SAVE CONTENT
+// =====================================
+
+function saveContentData(){
+
+    // =================================
+    // BASIC VALIDATION
+    // =================================
+
+    if(!contentTitle){
+
+        return;
+
+    }
+
+
+
+    const title =
+        contentTitle.value.trim();
+
+
+
+    if(title === ""){
+
+        alert(
+            "Please enter a content title."
+        );
+
+        return;
+
+    }
+
+
+
+    if(!contentDate ||
+       contentDate.value === ""){
+
+        alert(
+            "Please select a publish date."
+        );
+
+        return;
+
+    }
+
+
+
+    // =================================
+    // BUILD CONTENT OBJECT
+    // =================================
+
+    const contentData = {
+
+        id:
+            editingContentId !== null
+            ?
+            editingContentId
+            :
+            Date.now(),
+
+
+        accountId:
+            activeAccountId,
+
+
+        title:
+            title,
+
+
+        platform:
+            contentPlatform
+            ?
+            contentPlatform.value
+            :
+            "",
+
+
+        contentType:
+            contentType
+            ?
+            contentType.value
+            :
+            "Post",
+
+
+        status:
+            contentStatus
+            ?
+            contentStatus.value
+            :
+            "Draft",
+
+
+        date:
+            contentDate
+            ?
+            contentDate.value
+            :
+            "",
+
+
+        caption:
+            contentCaption
+            ?
+            contentCaption.value
+            :
+            "",
+
+
+        hashtag:
+            contentHashtag
+            ?
+            contentHashtag.value
+            :
+            "",
+
+
+        impressions:
+            Number(
+                contentImpressions
+                ?
+                contentImpressions.value
+                :
+                0
+            ) || 0,
+
+
+        reach:
+            Number(
+                contentReach
+                ?
+                contentReach.value
+                :
+                0
+            ) || 0,
+
+
+        likes:
+            Number(
+                contentLikes
+                ?
+                contentLikes.value
+                :
+                0
+            ) || 0,
+
+
+        comments:
+            Number(
+                contentComments
+                ?
+                contentComments.value
+                :
+                0
+            ) || 0,
+
+
+        shares:
+            Number(
+                contentShares
+                ?
+                contentShares.value
+                :
+                0
+            ) || 0,
+
+
+        saved:
+            Number(
+                contentSaved
+                ?
+                contentSaved.value
+                :
+                0
+            ) || 0,
+
+
+        notes:
+            contentNotes
+            ?
+            contentNotes.value
+            :
+            ""
+
+    };
+
+
+
+    // =================================
+    // UPDATE EXISTING
+    // =================================
+
+    if(editingContentId !== null){
+
+        const index =
+            account.contents.findIndex(
+                item =>
+                    item.id ==
+                    editingContentId
+            );
+
+
+
+        if(index !== -1){
+
+            account.contents[index] =
+                {
+
+                    ...account.contents[index],
+
+                    ...contentData,
+
+                    id:
+                        editingContentId
+
+                };
+
+        }
+
+    }
+
+
+
+    // =================================
+    // CREATE NEW
+    // =================================
+
+    else{
+
+        account.contents.push(
+            contentData
+        );
+
+    }
+
+
+
+    // =================================
+    // SAVE
+    // =================================
+
+    saveDatabase();
+
+
+
+    // =================================
+    // RESET EDIT MODE
+    // =================================
+
+    editingContentId =
+        null;
+
+
+
+    // =================================
+    // CLOSE MODAL
+    // =================================
+
+    if(contentModal){
+
+        contentModal.style.display =
+            "none";
+
+    }
+
+
+
+    // =================================
+    // REFRESH CONTENT
+    // =================================
+
+    showContents();
+
+
+
+    console.log(
+        "Content saved:",
+        contentData
+    );
+
+}
+
+
+
+// =====================================
+// DELETE CONTENT
+// =====================================
+
+function deleteContent(id){
+
+    const content =
+        account.contents.find(
+            item =>
+                item.id == id
+        );
+
+
+
+    if(!content)
+        return;
+
+
+
+    const confirmed =
+        confirm(
+            `Delete "${content.title || "this content"}"?`
+        );
+
+
+
+    if(!confirmed)
+        return;
+
+
+
+    account.contents =
+        account.contents.filter(
+            item =>
+                item.id != id
+        );
+
+
+
+    saveDatabase();
+
+
+
+    showContents();
+
+
+
+    console.log(
+        "Content deleted:",
+        id
+    );
+
+}
+
+
+
+// =====================================
+// ADD CONTENT BUTTON
+// =====================================
+
+if(addContent){
+
+    addContent.onclick =
+        openCreateContent;
+
+}
+
+
+
+// =====================================
+// SAVE BUTTON
+// =====================================
+
+if(saveContent){
+
+    saveContent.onclick =
+        saveContentData;
+
+}
+
+
+
+// =====================================
+// CLOSE MODAL
+// =====================================
+
+if(closeContentModal){
+
+    closeContentModal.onclick =
+        function(){
+
+            if(contentModal){
+
+                contentModal.style.display =
+                    "none";
+
+            }
+
+            editingContentId =
+                null;
+
+        };
+
+}
+
+
+
+// =====================================
+// CANCEL BUTTON
+// =====================================
+
+if(cancelContent){
+
+    cancelContent.onclick =
+        function(){
+
+            if(contentModal){
+
+                contentModal.style.display =
+                    "none";
+
+            }
+
+            editingContentId =
+                null;
+
+        };
+
+}
+
+
+
+// =====================================
+// CLICK OUTSIDE MODAL
+// =====================================
+
+window.addEventListener(
+    "click",
+    function(event){
+
+        if(
+            contentModal &&
+            event.target ===
+            contentModal
+        ){
+
+            contentModal.style.display =
+                "none";
+
+            editingContentId =
+                null;
+
+        }
+
+    }
+);
+
+
+
+// =====================================
+// SEARCH
+// =====================================
 
 if(searchContent){
 
     searchContent.addEventListener(
         "input",
-        function(){
-
-            showContents();
-
-        }
+        showContents
     );
 
 }
+
+
+
+// =====================================
+// STATUS FILTER
+// =====================================
 
 if(statusFilter){
 
     statusFilter.addEventListener(
         "change",
-        function(){
-
-            showContents();
-
-        }
+        showContents
     );
 
 }
+
+
+
+// =====================================
+// PLATFORM FILTER
+// =====================================
 
 if(platformFilter){
 
     platformFilter.addEventListener(
         "change",
-        function(){
-
-            showContents();
-
-        }
+        showContents
     );
 
 }
+
+
+
+// =====================================
+// INITIAL RENDER
+// =====================================
+
+showContents();
+
+
+
+console.log(
+    "Content Management initialized."
+);

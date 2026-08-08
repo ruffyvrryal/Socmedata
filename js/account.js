@@ -83,40 +83,124 @@ if(!account.platforms){
 
 }
 
+// =====================================
+// IMPRESSION + REACH MIGRATION
+// =====================================
 
+account.contents.forEach(content => {
+
+    // Old "views" become "impressions"
+    if(
+        content.impressions === undefined ||
+        content.impressions === null
+    ){
+
+        content.impressions =
+            Number(content.views) || 0;
+
+    }
+
+
+    // New metric
+    if(
+        content.reach === undefined ||
+        content.reach === null
+    ){
+
+        content.reach = 0;
+
+    }
+
+});
 
 // =====================================
 // PLATFORM MIGRATION
 // =====================================
 
-account.platforms.forEach(platform=>{
+account.platforms.forEach(platform => {
 
-
+    // Create analytics object if missing
     if(!platform.analytics){
 
-        platform.analytics={
-
-            views:0,
-
-            followers:
-            platform.followers || 0,
-
-            contents:0,
-
-            growth:0
-
-        };
+        platform.analytics = {};
 
     }
 
 
+    // -------------------------------------
+    // MIGRATE OLD VIEWS → IMPRESSIONS
+    // -------------------------------------
+
+    if(
+        platform.analytics.impressions === undefined ||
+        platform.analytics.impressions === null
+    ){
+
+        platform.analytics.impressions =
+            Number(platform.analytics.views) || 0;
+
+    }
+
+
+    // -------------------------------------
+    // REACH
+    // -------------------------------------
+
+    if(
+        platform.analytics.reach === undefined ||
+        platform.analytics.reach === null
+    ){
+
+        platform.analytics.reach = 0;
+
+    }
+
+
+    // -------------------------------------
+    // FOLLOWERS
+    // -------------------------------------
+
+    platform.analytics.followers =
+        Number(platform.followers) || 0;
+
+
+    // -------------------------------------
+    // CONTENT COUNT
+    // -------------------------------------
+
+    if(
+        platform.analytics.contents === undefined ||
+        platform.analytics.contents === null
+    ){
+
+        platform.analytics.contents = 0;
+
+    }
+
+
+    // -------------------------------------
+    // GROWTH
+    // -------------------------------------
+
+    if(
+        platform.analytics.growth === undefined ||
+        platform.analytics.growth === null
+    ){
+
+        platform.analytics.growth = 0;
+
+    }
+
+
+    // -------------------------------------
+    // PLATFORM CONTENT ARRAY
+    // -------------------------------------
 
     if(!platform.contents){
 
-        platform.contents=[];
+        platform.contents = [];
 
     }
-
 
 });
 
@@ -130,15 +214,17 @@ if(!account.analytics){
 
     account.analytics={
 
-        views:0,
+    impressions:0,
 
-        followers:0,
+    reach:0,
 
-        contents:0,
+    followers:0,
 
-        growth:0
+    contents:0,
 
-    };
+    growth:0
+
+};
 
 }
 
@@ -165,8 +251,8 @@ const accountTitle =
 document.getElementById("accountTitle");
 
 
-const totalViews =
-document.getElementById("totalViews");
+const totalImpressions =
+document.getElementById("totalImpressions");
 
 
 const contentCount =
@@ -179,6 +265,11 @@ document.getElementById("growth");
 
 const platformGrid =
 document.getElementById("platformGrid");
+
+const addContent =
+    document.getElementById(
+        "addContentBtn"
+    );
 
 
 
@@ -241,13 +332,19 @@ function calculateAnalytics(){
     let analytics = {
 
 
-        totalViews:0,
+        totalImpressions:0,
+
+
+        totalReach:0,
 
 
         totalContents:0,
 
 
         totalGrowth:0,
+
+
+        totalFollowers:0,
 
 
         platforms:{}
@@ -260,12 +357,31 @@ function calculateAnalytics(){
     account.contents.forEach(content=>{
 
 
-        let views =
-        Number(content.views)||0;
+        // =====================================
+        // IMPRESSIONS
+        // =====================================
+
+        let impressions =
+            Number(content.impressions) || 0;
 
 
 
-        analytics.totalViews += views;
+        // =====================================
+        // REACH
+        // =====================================
+
+        let reach =
+            Number(content.reach) || 0;
+
+
+
+        analytics.totalImpressions +=
+            impressions;
+
+
+
+        analytics.totalReach +=
+            reach;
 
 
 
@@ -273,8 +389,12 @@ function calculateAnalytics(){
 
 
 
+        // =====================================
+        // PLATFORM
+        // =====================================
+
         let platform =
-        content.platform || "Unknown";
+            content.platform || "Unknown";
 
 
 
@@ -283,7 +403,9 @@ function calculateAnalytics(){
 
             analytics.platforms[platform]={
 
-                views:0,
+                impressions:0,
+
+                reach:0,
 
                 contents:0
 
@@ -294,7 +416,13 @@ function calculateAnalytics(){
 
 
 
-        analytics.platforms[platform].views += views;
+        analytics.platforms[platform].impressions +=
+            impressions;
+
+
+
+        analytics.platforms[platform].reach +=
+            reach;
 
 
 
@@ -305,16 +433,18 @@ function calculateAnalytics(){
 
 
 
+    // =====================================
+    // ACCOUNT GROWTH
+    // =====================================
 
     account.platforms.forEach(platform=>{
 
 
+        analytics.totalFollowers +=
+            Number(platform.followers) || 0;
+
         analytics.totalGrowth +=
-
-        Number(
-            platform.analytics?.growth
-        ) || 0;
-
+    Number(platform.analytics?.growth) || 0;
 
 
     });
@@ -340,18 +470,41 @@ function loadAnalytics(){
     let analytics =
     calculateAnalytics();
 
+account.analytics.impressions =
+    analytics.totalImpressions;
 
+account.analytics.reach =
+    analytics.totalReach;
 
-    if(totalViews){
+account.analytics.contents =
+    analytics.totalContents;
 
-        totalViews.textContent =
+account.analytics.followers =
+    analytics.totalFollowers;
+
+account.analytics.growth =
+    analytics.totalGrowth;
+
+    if(totalImpressions){
+
+    totalImpressions.textContent =
         formatNumber(
-            analytics.totalViews
+            analytics.totalImpressions
         );
 
-    }
+}
 
+const followers =
+    document.getElementById("followers");
 
+if(followers){
+
+    followers.textContent =
+        formatNumber(
+            analytics.totalFollowers
+        );
+
+}
 
     if(contentCount){
 
@@ -557,12 +710,13 @@ function renderPlatforms(){
 
 
         let stats =
-        analytics.platforms[platform.platform]
-        ||
-        {
-            views:0,
-            contents:0
-        };
+    analytics.platforms[platform.platform]
+    ||
+    {
+        impressions:0,
+        reach:0,
+        contents:0
+    };
 
 
 
@@ -644,20 +798,31 @@ function renderPlatforms(){
 
         <div class="stat-box">
 
+    <span>
+        Impressions
+    </span>
 
-            <span>
-                Views
-            </span>
+    <strong>
 
+        ${formatNumber(stats.impressions)}
 
-            <strong>
+    </strong>
 
-            ${formatNumber(stats.views)}
+</div>
 
-            </strong>
+<div class="stat-box">
 
+    <span>
+        Reach
+    </span>
 
-        </div>
+    <strong>
+
+        ${formatNumber(stats.reach)}
+
+    </strong>
+
+</div>
 
 
 
@@ -742,8 +907,11 @@ function renderPlatforms(){
 
             saveDatabase();
 
+syncPlatformAnalytics();
 
-            renderPlatforms();
+renderPlatforms();
+
+loadAnalytics();
 
 
         };
@@ -756,7 +924,56 @@ function renderPlatforms(){
 }
 
 
+// =====================================
+// SYNC PLATFORM ANALYTICS
+// =====================================
 
+function syncPlatformAnalytics(){
+
+    const analytics =
+        calculateAnalytics();
+
+
+    account.platforms.forEach(platform => {
+
+        const stats =
+            analytics.platforms[platform.platform]
+            ||
+            {
+                impressions: 0,
+                reach: 0,
+                contents: 0
+            };
+
+
+        if(!platform.analytics){
+
+            platform.analytics = {};
+
+        }
+
+
+        platform.analytics.impressions =
+            stats.impressions;
+
+
+        platform.analytics.reach =
+            stats.reach;
+
+
+        platform.analytics.contents =
+            stats.contents;
+
+
+        platform.analytics.followers =
+            Number(platform.followers) || 0;
+
+    });
+
+
+    saveDatabase();
+
+}
 
 
 // =====================================
@@ -792,7 +1009,10 @@ const platformFollowers =
 document.getElementById("platformFollowers");
 
 
-
+const connectPlatformBtn =
+document.getElementById(
+    "connectPlatformBtn"
+);
 
 
 if(connectPlatformBtn){
@@ -911,25 +1131,20 @@ savePlatform.onclick=function(){
 
         analytics:{
 
+    impressions:0,
 
-            views:0,
+    reach:0,
 
+    followers:
+        Number(platformFollowers.value) || 0,
 
-            followers:
-            Number(platformFollowers.value)||0,
+    contents:0,
 
+    growth:0
 
-            contents:0,
+},
 
-
-            growth:0
-
-
-        },
-
-
-
-        contents:[]
+contents:[]
 
 
 
@@ -941,13 +1156,11 @@ savePlatform.onclick=function(){
 
     saveDatabase();
 
+syncPlatformAnalytics();
 
+renderPlatforms();
 
-    renderPlatforms();
-
-
-
-    loadAnalytics();
+loadAnalytics();
 
 
 
@@ -994,7 +1207,144 @@ document.getElementById("cancelContent");
 const saveContent =
 document.getElementById("saveContent");
 
+// =====================================
+// ADD CONTENT BUTTON
+// =====================================
 
+if(addContent){
+
+    addContent.onclick=function(){
+
+        // Reset edit mode
+        editingContentId = null;
+
+
+        // Reset modal title
+
+        const title =
+        document.getElementById(
+            "contentModalTitle"
+        );
+
+        if(title){
+
+            title.textContent =
+            "Add Content";
+
+        }
+
+
+        // Reset form
+
+        const form =
+        contentModal?.querySelector("form");
+
+        if(form){
+
+            form.reset();
+
+        }
+
+
+        // Reset individual fields
+
+        const date =
+        document.getElementById("contentDate");
+
+        const caption =
+        document.getElementById("contentCaption");
+
+        const hashtag =
+        document.getElementById("contentHashtag");
+
+        const type =
+        document.getElementById("contentType");
+
+        const impressions =
+        document.getElementById("contentImpressions");
+
+        const reach =
+        document.getElementById("contentReach");
+
+        const likes =
+        document.getElementById("contentLikes");
+
+        const comments =
+        document.getElementById("contentComments");
+
+        const shares =
+        document.getElementById("contentShares");
+
+        const saved =
+        document.getElementById("contentSaved");
+
+        const platform =
+        document.getElementById("contentPlatform");
+
+        const status =
+        document.getElementById("contentStatus");
+
+
+        if(date)
+            date.value = "";
+
+
+        if(caption)
+            caption.value = "";
+
+
+        if(hashtag)
+            hashtag.value = "";
+
+
+        if(type)
+            type.value = "";
+
+
+        if(impressions)
+            impressions.value = 0;
+
+
+        if(reach)
+            reach.value = 0;
+
+
+        if(likes)
+            likes.value = 0;
+
+
+        if(comments)
+            comments.value = 0;
+
+
+        if(shares)
+            shares.value = 0;
+
+
+        if(saved)
+            saved.value = 0;
+
+
+        if(platform)
+            platform.value = "";
+
+
+        if(status)
+            status.value = "Published";
+
+
+        // Open modal
+
+        if(contentModal){
+
+            contentModal.style.display =
+            "flex";
+
+        }
+
+    };
+
+}
 
 const contentStatus =
 document.getElementById("contentStatus");
@@ -1049,170 +1399,290 @@ closeContentModal.onclick=function(){
 
 if(saveContent){
 
+    saveContent.onclick=function(){
 
-saveContent.onclick=function(){
+        try{
 
+            const date =
+                document.getElementById("contentDate");
 
-    let content = {
+            const caption =
+                document.getElementById("contentCaption");
 
+            const hashtag =
+                document.getElementById("contentHashtag");
 
-        id:
-        Date.now(),
+            const contentType =
+                document.getElementById("contentType");
 
+            const impressions =
+                document.getElementById("contentImpressions");
 
+            const reach =
+                document.getElementById("contentReach");
 
-        accountId:
-        activeAccountId,
+            const likes =
+                document.getElementById("contentLikes");
 
+            const comments =
+                document.getElementById("contentComments");
 
+            const shares =
+                document.getElementById("contentShares");
 
-        date:
-        document.getElementById("contentDate").value,
+            const saved =
+                document.getElementById("contentSaved");
 
+            const platform =
+                document.getElementById("contentPlatform");
 
-
-        caption:
-        document.getElementById("contentCaption").value,
-
-
-
-        hashtag:
-        document.getElementById("contentHashtag").value,
-
-
-
-        contentType:
-        document.getElementById("contentType").value,
-
-
-
-        views:
-        Number(
-            document.getElementById("contentViews").value
-        ) || 0,
+            const status =
+                document.getElementById("contentStatus");
 
 
+            // =====================================
+            // CHECK REQUIRED ELEMENTS
+            // =====================================
 
-        likes:
-        Number(
-            document.getElementById("contentLikes").value
-        ) || 0,
+            const missing = [];
 
-
-
-        comments:
-        Number(
-            document.getElementById("contentComments").value
-        ) || 0,
-
-
-
-        shares:
-        Number(
-            document.getElementById("contentShares").value
-        ) || 0,
-
+            if(!date) missing.push("contentDate");
+            if(!caption) missing.push("contentCaption");
+            if(!hashtag) missing.push("contentHashtag");
+            if(!contentType) missing.push("contentType");
+            if(!impressions) missing.push("contentImpressions");
+            if(!reach) missing.push("contentReach");
+            if(!likes) missing.push("contentLikes");
+            if(!comments) missing.push("contentComments");
+            if(!shares) missing.push("contentShares");
+            if(!saved) missing.push("contentSaved");
+            if(!platform) missing.push("contentPlatform");
+            if(!status) missing.push("contentStatus");
 
 
-        saved:
-        Number(
-            document.getElementById("contentSaved").value
-        ) || 0,
+            if(missing.length > 0){
+
+                console.error(
+                    "Missing content form elements:",
+                    missing
+                );
+
+                alert(
+                    "Content form error.\n\nMissing:\n" +
+                    missing.join("\n")
+                );
+
+                return;
+
+            }
 
 
+            // =====================================
+            // CREATE CONTENT
+            // =====================================
 
-        platform:
-        document.getElementById("contentPlatform").value,
+            const content = {
 
+                id:
+                    editingContentId !== null
+                    ?
+                    editingContentId
+                    :
+                    Date.now(),
 
+                accountId:
+                    activeAccountId,
 
-        status:
-        contentStatus.value
+                date:
+                    date.value,
 
+                caption:
+                    caption.value.trim(),
 
+                hashtag:
+                    hashtag.value.trim(),
 
-    };
+                contentType:
+                    contentType.value,
 
+                impressions:
+                    Number(impressions.value) || 0,
 
+                reach:
+                    Number(reach.value) || 0,
 
+                likes:
+                    Number(likes.value) || 0,
 
+                comments:
+                    Number(comments.value) || 0,
 
-    if(editingContentId !== null){
+                shares:
+                    Number(shares.value) || 0,
 
+                saved:
+                    Number(saved.value) || 0,
 
-        let index =
-        account.contents.findIndex(
-            item =>
-            item.id === editingContentId
-        );
+                platform:
+                    platform.value,
 
-
-
-        if(index !== -1){
-
-
-            account.contents[index] = {
-
-                ...account.contents[index],
-
-                ...content,
-
-                id:editingContentId
+                status:
+                    status.value || "Published"
 
             };
 
 
+            // =====================================
+            // VALIDATION
+            // =====================================
+
+            if(!content.date){
+
+                alert("Please select a content date.");
+
+                return;
+
+            }
+
+
+            if(!content.platform){
+
+                alert("Please select a platform.");
+
+                return;
+
+            }
+
+
+            // =====================================
+            // EDIT EXISTING CONTENT
+            // =====================================
+
+            if(editingContentId !== null){
+
+                const index =
+                    account.contents.findIndex(
+                        item =>
+                        item.id === editingContentId
+                    );
+
+
+                if(index !== -1){
+
+                    account.contents[index] = content;
+
+                }
+
+            }
+
+
+            // =====================================
+            // ADD NEW CONTENT
+            // =====================================
+
+            else{
+
+                account.contents.push(content);
+
+            }
+
+
+            // =====================================
+            // SAVE DATABASE
+            // =====================================
+
+            saveDatabase();
+
+
+            // =====================================
+            // REFRESH UI
+            // =====================================
+
+            renderContents();
+
+            loadAnalytics();
+
+            renderPlatforms();
+
+            loadEngagement();
+
+            renderHashtags();
+
+            renderPlatformComparison();
+
+            renderMonthlyReport();
+
+            renderWeeklyReport();
+
+
+            // =====================================
+            // RESET EDIT MODE
+            // =====================================
+
+            editingContentId = null;
+
+
+            // =====================================
+            // CLOSE MODAL
+            // =====================================
+
+            if(contentModal){
+
+                contentModal.style.display =
+                    "none";
+
+            }
+
+
+            // =====================================
+            // RESET TITLE
+            // =====================================
+
+            const title =
+                document.getElementById(
+                    "contentModalTitle"
+                );
+
+            if(title){
+
+                title.textContent =
+                    "Add Content";
+
+            }
+
+
+            // =====================================
+            // SUCCESS
+            // =====================================
+
+            showToast(
+                "Content saved successfully!",
+                "success"
+            );
+
+
+            console.log(
+                "Content saved:",
+                content
+            );
+
         }
 
+        catch(error){
 
+            console.error(
+                "SAVE CONTENT ERROR:",
+                error
+            );
 
-        editingContentId=null;
+            alert(
+                "Unable to save content.\n\n" +
+                error.message
+            );
 
+        }
 
-
-    }
-
-    else{
-
-
-        account.contents.push(content);
-
-
-    }
-
-
-
-
-
-    saveDatabase();
-
-
-
-    renderContents();
-
-
-
-    loadAnalytics();
-
-
-
-    renderPlatforms();
-
-
-
-    contentModal.style.display="none";
-
-
-
-    showToast(
-        "Content saved successfully!",
-        "success"
-    );
-
-
-};
-
-
+    };
 
 }
 
@@ -1353,19 +1823,15 @@ ${content.status || "Published"}
 
 
 <td>
-
-${formatNumber(content.views || 0)}
-
+    ${formatNumber(content.impressions || 0)}
 </td>
 
-
-
-
+<td>
+    ${formatNumber(content.reach || 0)}
+</td>
 
 <td>
-
-${formatNumber(engagement)}
-
+    ${formatNumber(engagement)}
 </td>
 
 
@@ -1474,8 +1940,29 @@ Delete
 
 
 
-            document.getElementById("contentViews").value =
-            content.views || 0;
+            const impressionsField =
+document.getElementById(
+    "contentImpressions"
+);
+
+if(impressionsField){
+
+    impressionsField.value =
+    content.impressions || 0;
+
+}
+
+const reachField =
+document.getElementById(
+    "contentReach"
+);
+
+if(reachField){
+
+    reachField.value =
+    content.reach || 0;
+
+}
 
 
 
@@ -1956,7 +2443,7 @@ function renderPlatformComparison(){
 
 
 
-    let platforms={};
+    let platforms = {};
 
 
 
@@ -1972,18 +2459,13 @@ function renderPlatformComparison(){
 
 
             platforms[platform]={
-
-                views:0,
-
-                likes:0,
-
-                comments:0,
-
-                shares:0,
-
-                saved:0
-
-            };
+    impressions:0,
+    reach:0,
+    likes:0,
+    comments:0,
+    shares:0,
+    saved:0
+};
 
 
         }
@@ -1991,8 +2473,11 @@ function renderPlatformComparison(){
 
 
 
-        platforms[platform].views +=
-        Number(content.views)||0;
+        platforms[platform].impressions +=
+    Number(content.impressions) || 0;
+
+platforms[platform].reach +=
+    Number(content.reach) || 0;
 
 
 
@@ -2054,25 +2539,18 @@ function renderPlatformComparison(){
 
 
 
-        let rate=0;
+        let rate = 0;
 
+if(data.impressions > 0){
 
+    rate =
+    (
+        engagement /
+        data.impressions *
+        100
+    ).toFixed(1);
 
-        if(data.views>0){
-
-
-            rate =
-            (
-                engagement /
-                data.views *
-                100
-            ).toFixed(1);
-
-
-        }
-
-
-
+}
 
 
         html += `
@@ -2159,448 +2637,309 @@ ${rate}%
 
 function renderHashtags(){
 
-
     const hashtagList =
-    document.getElementById(
-        "hashtagList"
-    );
+        document.getElementById(
+            "hashtagList"
+        );
 
 
     const hashtagSummary =
-    document.getElementById(
-        "hashtagSummary"
-    );
-
+        document.getElementById(
+            "hashtagSummary"
+        );
 
 
     if(!hashtagList)
         return;
 
 
-
-
-    let hashtags={};
-
-
+    let hashtags = {};
 
 
 
     account.contents.forEach(content=>{
 
-
         if(!content.hashtag)
             return;
 
 
-
         let tags =
-        content.hashtag.split(/\s+/);
-
-
+            content.hashtag.split(/\s+/);
 
 
         tags.forEach(tag=>{
 
-
             tag =
-            tag.replace("#","")
-            .trim();
+                tag.replace(/^#/,"")
+                .trim();
 
 
-
-            if(tag==="")
+            if(tag === "")
                 return;
 
 
-
-
             let key =
-            tag.toLowerCase();
-
-
+                tag.toLowerCase();
 
 
             if(!hashtags[key]){
 
-
-                hashtags[key]={
-
+                hashtags[key] = {
 
                     name:
-                    tag.charAt(0)
-                    .toUpperCase()
-                    +
-                    tag.slice(1)
-                    .toLowerCase(),
+                        tag.charAt(0).toUpperCase()
+                        +
+                        tag.slice(1).toLowerCase(),
 
+                    used: 0,
 
+                    impressions: 0,
 
-                    used:0,
+                    reach: 0,
 
-                    views:0,
+                    likes: 0,
 
-                    likes:0,
+                    comments: 0,
 
-                    comments:0,
+                    shares: 0,
 
-                    shares:0,
-
-                    saved:0
-
+                    saved: 0
 
                 };
 
-
             }
-
-
-
 
 
             hashtags[key].used++;
 
 
+            hashtags[key].impressions +=
+    Number(content.impressions) || 0;
 
-            hashtags[key].views +=
-            Number(content.views)||0;
-
-
+hashtags[key].reach +=
+    Number(content.reach) || 0;
 
             hashtags[key].likes +=
-            Number(content.likes)||0;
-
+                Number(content.likes) || 0;
 
 
             hashtags[key].comments +=
-            Number(content.comments)||0;
-
+                Number(content.comments) || 0;
 
 
             hashtags[key].shares +=
-            Number(content.shares)||0;
-
+                Number(content.shares) || 0;
 
 
             hashtags[key].saved +=
-            Number(content.saved)||0;
-
-
+                Number(content.saved) || 0;
 
         });
-
-
 
     });
 
 
+    let html = "";
 
 
+    let totalUsage = 0;
+
+    let totalReach = 0;
+
+    let bestHashtag = "-";
 
 
-    let html="";
-
-
-
-    let totalUsage=0;
-
-
-
-    let bestHashtag="-";
-
-
-
-    let highestViews=0;
-
-
-
-
+    let highestImpressions = 0;
 
 
     Object.values(hashtags)
 
     .sort(
-        (a,b)=>
-        b.views-a.views
+        (a,b) =>
+            b.impressions - a.impressions
     )
 
     .forEach(tag=>{
 
 
-
         totalUsage +=
-        tag.used;
+            tag.used;
 
 
+        if(
+            tag.impressions >
+            highestImpressions
+        ){
 
-
-        if(tag.views > highestViews){
-
-
-            highestViews =
-            tag.views;
-
+            highestImpressions =
+                tag.impressions;
 
             bestHashtag =
-            "#"+tag.name;
-
+                "#" + tag.name;
 
         }
-
-
-
 
 
         let engagement =
 
-        tag.likes
-
-        +
-
-        tag.comments
-
-        +
-
-        tag.shares
-
-        +
-
-        tag.saved;
+            tag.likes +
+            tag.comments +
+            tag.shares +
+            tag.saved;
 
 
+        let rate = 0;
 
 
-        let rate=0;
-
-
-
-        if(tag.views>0){
-
+        if(tag.impressions > 0){
 
             rate =
-            (
-                engagement /
-                tag.views *
-                100
-            ).toFixed(1);
-
+                (
+                    engagement /
+                    tag.impressions *
+                    100
+                ).toFixed(1);
 
         }
 
 
-
-
-
-
         html += `
 
+        <tr>
 
-<tr>
-
-
-<td class="hashtag-name">
-
-#${tag.name}
-
-</td>
+            <td class="hashtag-name">
+                #${tag.name}
+            </td>
 
 
-
-<td>
-
-${tag.used}
-
-</td>
+            <td>
+                ${tag.used}
+            </td>
 
 
+            <td>
+                ${formatNumber(tag.impressions)}
+            </td>
 
-<td>
-
-${formatNumber(tag.views)}
-
-</td>
-
-
-
-<td>
-
-${formatNumber(tag.likes)}
-
-</td>
+            <td>
+                ${formatNumber(tag.reach)}
+            </td>
 
 
-
-<td>
-
-${formatNumber(tag.comments)}
-
-</td>
+            <td>
+                ${formatNumber(tag.likes)}
+            </td>
 
 
-
-<td>
-
-${formatNumber(tag.shares)}
-
-</td>
+            <td>
+                ${formatNumber(tag.comments)}
+            </td>
 
 
-
-<td>
-
-${formatNumber(tag.saved)}
-
-</td>
+            <td>
+                ${formatNumber(tag.shares)}
+            </td>
 
 
-
-<td>
-
-${rate}%
-
-</td>
+            <td>
+                ${formatNumber(tag.saved)}
+            </td>
 
 
+            <td>
+                ${rate}%
+            </td>
 
-</tr>
+        </tr>
 
-
-`;
-
-
+        `;
 
     });
 
 
+    if(html === ""){
 
+        html = `
 
+        <tr>
 
-
-    if(html===""){
-
-
-        html=`
-
-<tr>
-
-<td colspan="8">
-
-No hashtag data yet.
-
+            <td colspan="9">
+    No hashtag data yet.
 </td>
 
-</tr>
+        </tr>
 
-`;
-
+        `;
 
     }
-
-
 
 
     hashtagList.innerHTML =
-    html;
+        html;
 
 
-
-
-
-
+    // =====================================
+    // HASHTAG SUMMARY
+    // =====================================
 
     if(hashtagSummary){
 
+    hashtagSummary.innerHTML = `
+
+    <div class="hashtag-card">
+
+        <span>
+            Total Hashtags
+        </span>
+
+        <h2>
+            ${Object.keys(hashtags).length}
+        </h2>
+
+    </div>
 
 
-        hashtagSummary.innerHTML = `
+    <div class="hashtag-card">
+
+        <span>
+            Total Usage
+        </span>
+
+        <h2>
+            ${totalUsage}
+        </h2>
+
+    </div>
 
 
-<div class="hashtag-card">
+    <div class="hashtag-card">
 
-<span>
+        <span>
+            Best Hashtag
+        </span>
 
-Total Hashtags
+        <h2>
+            ${bestHashtag}
+        </h2>
 
-</span>
-
-
-<h2>
-
-${Object.keys(hashtags).length}
-
-</h2>
-
-</div>
+    </div>
 
 
+    <div class="hashtag-card">
 
+        <span>
+            Most Impressions
+        </span>
 
-<div class="hashtag-card">
+        <h2>
+            ${formatNumber(highestImpressions)}
+        </h2>
 
-<span>
+    </div>
 
-Total Usage
+    `;
 
-</span>
-
-
-<h2>
-
-${totalUsage}
-
-</h2>
-
-</div>
-
-
-
-
-
-<div class="hashtag-card">
-
-<span>
-
-Best Hashtag
-
-</span>
-
-
-<h2>
-
-${bestHashtag}
-
-</h2>
-
-</div>
-
-
-
-
-
-<div class="hashtag-card">
-
-<span>
-
-Most Views
-
-</span>
-
-
-<h2>
-
-${formatNumber(highestViews)}
-
-</h2>
-
-</div>
-
-
-`;
-
-
-
-    }
-
-
+}
 
 }
 
@@ -2632,7 +2971,9 @@ function loadEngagement(){
 
     let saved=0;
 
-    let views=0;
+    let impressions = 0;
+
+let reach = 0;
 
 
 
@@ -2674,8 +3015,11 @@ function loadEngagement(){
 
 
 
-        views +=
-        Number(content.views)||0;
+        impressions +=
+    Number(content.impressions) || 0;
+
+    reach +=
+    Number(content.reach) || 0;
 
 
 
@@ -2732,22 +3076,24 @@ function loadEngagement(){
 
 
         let score =
-        Number(content.views||0)
-        +
-        (engagement*10);
+    Number(content.impressions || 0) > 0
+    ?
+    (
+        engagement /
+        Number(content.impressions) *
+        100
+    )
+    :
+    0;
 
 
+if(score > topScore){
 
+    topScore = score;
 
-        if(score > topScore){
+    topContent = content;
 
-
-            topScore=score;
-
-            topContent=content;
-
-
-        }
+}
 
 
 
@@ -2769,11 +3115,12 @@ function loadEngagement(){
 
     let rate = "0.0";
 
-if(Number(views) > 0){
+if(Number(impressions) > 0){
 
     rate = (
-        (Number(totalEngagement) /
-        Number(views)) * 100
+        Number(totalEngagement) /
+        Number(impressions) *
+        100
     ).toFixed(1);
 
 }
@@ -2812,6 +3159,8 @@ Object.keys(platformEngagement).forEach(platform=>{
         totalEngagement:
         totalEngagement,
 
+        totalReach:
+        reach,
 
         engagementRate:
         rate+"%",
@@ -2893,7 +3242,6 @@ Object.keys(platformEngagement).forEach(platform=>{
     );
 
 
-
     if(topResult){
 
 
@@ -2924,8 +3272,8 @@ ${topContent.platform}
 
 <p>
 
-👁 Views:
-${formatNumber(topContent.views)}
+👁 Impressions:
+${formatNumber(topContent.impressions)}
 
 </p>
 
@@ -2957,13 +3305,27 @@ ${formatNumber(
 
         else{
 
+    topResult.innerHTML = `
 
-            topResult.innerHTML =
-            "No content data yet.";
+        <div class="top-content-empty">
 
+            <div class="top-content-empty-icon">
+                📊
+            </div>
 
-        }
+            <h3>
+                No Content Yet
+            </h3>
 
+            <p>
+                Add content to see your top performing post.
+            </p>
+
+        </div>
+
+    `;
+
+}
 
     }
 
@@ -3186,11 +3548,13 @@ now.getFullYear();
 
 
 
-let views=0;
+let impressions = 0;
 
-let posts=0;
+let reach = 0;
 
-let engagement=0;
+let posts = 0;
+
+let engagement = 0;
 
 
 
@@ -3217,8 +3581,11 @@ date.getFullYear()===year
 posts++;
 
 
-views +=
-Number(content.views)||0;
+impressions +=
+Number(content.impressions)||0;
+
+reach +=
+Number(content.reach)||0;
 
 
 
@@ -3248,13 +3615,13 @@ engagement +=
 
 
     let rate =
-    views > 0
-    ?
-    (
-        engagement / views * 100
-    ).toFixed(1)
-    :
-    0;
+impressions > 0
+?
+(
+    engagement / impressions * 100
+).toFixed(1)
+:
+0;
 
 
     summary.innerHTML = `
@@ -3262,106 +3629,105 @@ engagement +=
 
 <div class="monthly-card">
 
+    <div class="monthly-card-icon">
+        👁
+    </div>
 
-<div class="monthly-card-icon">
-👁
-</div>
+    <div class="monthly-card-info">
 
+        <span>
+            Impressions
+        </span>
 
-<div class="monthly-card-info">
+        <h2>
+            ${formatNumber(impressions)}
+        </h2>
 
-<span>
-Views
-</span>
-
-
-<h2>
-${formatNumber(views)}
-</h2>
-
-
-</div>
-
+    </div>
 
 </div>
 
 
 <div class="monthly-card">
 
+    <div class="monthly-card-icon">
+        👥
+    </div>
 
-<div class="monthly-card-icon">
-📝
-</div>
+    <div class="monthly-card-info">
 
+        <span>
+            Reach
+        </span>
 
-<div class="monthly-card-info">
+        <h2>
+            ${formatNumber(reach)}
+        </h2>
 
-<span>
-Posts
-</span>
-
-
-<h2>
-${posts}
-</h2>
-
+    </div>
 
 </div>
-
-
-</div>
-
 
 
 <div class="monthly-card">
 
+    <div class="monthly-card-icon">
+        📝
+    </div>
 
-<div class="monthly-card-icon">
-🔥
-</div>
+    <div class="monthly-card-info">
 
+        <span>
+            Posts
+        </span>
 
-<div class="monthly-card-info">
+        <h2>
+            ${posts}
+        </h2>
 
-<span>
-Engagement
-</span>
-
-
-<h2>
-${formatNumber(engagement)}
-</h2>
-
+    </div>
 
 </div>
-
-
-</div>
-
 
 
 <div class="monthly-card">
 
+    <div class="monthly-card-icon">
+        🔥
+    </div>
 
-<div class="monthly-card-icon">
-📊
-</div>
+    <div class="monthly-card-info">
 
+        <span>
+            Engagement
+        </span>
 
-<div class="monthly-card-info">
+        <h2>
+            ${formatNumber(engagement)}
+        </h2>
 
-<span>
-Rate
-</span>
-
-
-<h2>
-${rate}%
-</h2>
-
+    </div>
 
 </div>
 
+
+<div class="monthly-card">
+
+    <div class="monthly-card-icon">
+        📊
+    </div>
+
+    <div class="monthly-card-info">
+
+        <span>
+            Rate
+        </span>
+
+        <h2>
+            ${rate}%
+        </h2>
+
+    </div>
 
 </div>
 
@@ -3477,26 +3843,29 @@ function renderMonthlyPlatformReport(){
 
         if(!platforms[platform]){
 
+    platforms[platform]={
 
-            platforms[platform]={
+        impressions:0,
 
-                views:0,
+        reach:0,
 
-                engagement:0,
+        engagement:0,
 
-                posts:0
+        posts:0
 
-            };
+    };
 
-
-        }
-
-
+}
 
 
 
-        platforms[platform].views +=
-        Number(content.views) || 0;
+
+
+        platforms[platform].impressions +=
+Number(content.impressions) || 0;
+
+platforms[platform].reach +=
+Number(content.reach) || 0;
 
 
 
@@ -3591,9 +3960,9 @@ let highestEngagement = -1;
 
 
         <strong>
-            ${formatNumber(data.views)}
-            views
-        </strong>
+    ${formatNumber(data.impressions)}
+    impressions
+</strong>
 
 
     </div>
@@ -3602,19 +3971,26 @@ let highestEngagement = -1;
 
     <div class="platform-performance-detail">
 
+    <span>
+        ${data.posts} posts
+    </span>
 
-        <span>
-            ${data.posts} posts
-        </span>
+    <span>
+        ${formatNumber(data.impressions)}
+        impressions
+    </span>
 
+    <span>
+        ${formatNumber(data.reach)}
+        reach
+    </span>
 
-        <span>
-            ${formatNumber(data.engagement)}
-            engagement
-        </span>
+    <span>
+        ${formatNumber(data.engagement)}
+        engagement
+    </span>
 
-
-    </div>
+</div>
 
 
 
@@ -3799,11 +4175,20 @@ function renderWeeklyReport(){
 
 
     // =====================================
-    // YEAR
-    // =====================================
+// YEAR
+// =====================================
 
-    const selectedYear =
-        new Date().getFullYear();
+const yearSelect =
+    document.getElementById(
+        "weeklyYearFilter"
+    );
+
+const selectedYear =
+    yearSelect && yearSelect.value
+    ?
+    Number(yearSelect.value)
+    :
+    new Date().getFullYear();
 
 
     // =====================================
@@ -3872,7 +4257,7 @@ function renderWeeklyReport(){
 
 
             const contentDate =
-                new Date(content.date);
+                new Date(content.date + "T00:00:00");
 
 
             return (
@@ -3895,7 +4280,9 @@ function renderWeeklyReport(){
 
     let weeklyPosts = 0;
 
-    let weeklyViews = 0;
+    let weeklyImpressions = 0;
+
+    let weeklyReach = 0;
 
     let weeklyLikes = 0;
 
@@ -3911,8 +4298,11 @@ function renderWeeklyReport(){
         weeklyPosts++;
 
 
-        weeklyViews +=
-            Number(content.views) || 0;
+        weeklyImpressions +=
+    Number(content.impressions) || 0;
+
+weeklyReach +=
+    Number(content.reach) || 0;
 
 
         weeklyLikes +=
@@ -3941,15 +4331,15 @@ function renderWeeklyReport(){
 
 
     const weeklyRate =
-        weeklyViews > 0
-        ?
-        (
-            weeklyEngagement /
-            weeklyViews *
-            100
-        ).toFixed(1)
-        :
-        "0.0";
+    weeklyImpressions > 0
+    ?
+    (
+        weeklyEngagement /
+        weeklyImpressions *
+        100
+    ).toFixed(1)
+    :
+    "0.0";
 
 
     // =====================================
@@ -3968,23 +4358,44 @@ function renderWeeklyReport(){
 
         <div class="monthly-card">
 
-            <div class="monthly-card-icon">
-                👁
-            </div>
+    <div class="monthly-card-icon">
+        👁
+    </div>
 
-            <div class="monthly-card-info">
+    <div class="monthly-card-info">
 
-                <span>
-                    Views
-                </span>
+        <span>
+            Impressions
+        </span>
 
-                <h2>
-                    ${formatNumber(weeklyViews)}
-                </h2>
+        <h2>
+            ${formatNumber(weeklyImpressions)}
+        </h2>
 
-            </div>
+    </div>
 
-        </div>
+</div>
+
+
+<div class="monthly-card">
+
+    <div class="monthly-card-icon">
+        👥
+    </div>
+
+    <div class="monthly-card-info">
+
+        <span>
+            Reach
+        </span>
+
+        <h2>
+            ${formatNumber(weeklyReach)}
+        </h2>
+
+    </div>
+
+</div>
 
 
         <div class="monthly-card">
@@ -4156,19 +4567,24 @@ function renderWeeklyPlatformReport(
 
             platforms[platform] = {
 
-                views:0,
+    impressions:0,
 
-                engagement:0,
+    reach:0,
 
-                posts:0
+    engagement:0,
 
-            };
+    posts:0
+
+};
 
         }
 
 
-        platforms[platform].views +=
-            Number(content.views) || 0;
+        platforms[platform].impressions +=
+    Number(content.impressions) || 0;
+
+platforms[platform].reach +=
+    Number(content.reach) || 0;
 
 
         platforms[platform].engagement +=
@@ -4207,25 +4623,35 @@ function renderWeeklyPlatformReport(
                 </span>
 
                 <strong>
-                    ${formatNumber(data.views)}
-                    views
-                </strong>
+    ${formatNumber(data.impressions)}
+    impressions
+</strong>
 
             </div>
 
 
             <div class="platform-performance-detail">
 
-                <span>
-                    ${data.posts} posts
-                </span>
+    <span>
+        ${data.posts} posts
+    </span>
 
-                <span>
-                    ${formatNumber(data.engagement)}
-                    engagement
-                </span>
+    <span>
+        ${formatNumber(data.impressions)}
+        impressions
+    </span>
 
-            </div>
+    <span>
+        ${formatNumber(data.reach)}
+        reach
+    </span>
+
+    <span>
+        ${formatNumber(data.engagement)}
+        engagement
+    </span>
+
+</div>
 
         </div>
 
@@ -4284,19 +4710,24 @@ function renderWeeklyBestPlatform(
 
             platforms[platform] = {
 
-                views: 0,
+    impressions: 0,
 
-                engagement: 0,
+    reach: 0,
 
-                posts: 0
+    engagement: 0,
 
-            };
+    posts: 0
+
+};
 
         }
 
 
-        platforms[platform].views +=
-            Number(content.views) || 0;
+        platforms[platform].impressions +=
+    Number(content.impressions) || 0;
+
+platforms[platform].reach +=
+    Number(content.reach) || 0;
 
 
         platforms[platform].engagement +=
@@ -4380,15 +4811,15 @@ function renderWeeklyBestPlatform(
 
 
     const engagementRate =
-        data.views > 0
-        ?
-        (
-            data.engagement /
-            data.views *
-            100
-        ).toFixed(1)
-        :
-        "0.0";
+    data.impressions > 0
+    ?
+    (
+        data.engagement /
+        data.impressions *
+        100
+    ).toFixed(1)
+    :
+    "0.0";
 
 
     // =====================================
@@ -4479,15 +4910,27 @@ function renderWeeklyBestPlatform(
 
             <div class="weekly-best-stat">
 
-                <span>
-                    Views
-                </span>
+    <span>
+        Impressions
+    </span>
 
-                <strong>
-                    ${formatNumber(data.views)}
-                </strong>
+    <strong>
+        ${formatNumber(data.impressions)}
+    </strong>
 
-            </div>
+</div>
+
+<div class="weekly-best-stat">
+
+    <span>
+        Reach
+    </span>
+
+    <strong>
+        ${formatNumber(data.reach)}
+    </strong>
+
+</div>
 
 
             <div class="weekly-best-stat">
@@ -4570,12 +5013,29 @@ function renderWeeklyTopContent(
 
     if(weeklyContents.length === 0){
 
-        box.innerHTML =
-            "No content data this week.";
+    box.innerHTML = `
 
-        return;
+        <div class="top-content-empty">
 
-    }
+            <div class="top-content-empty-icon">
+                📊
+            </div>
+
+            <h3>
+                No Content This Week
+            </h3>
+
+            <p>
+                Add content to see your top performing post.
+            </p>
+
+        </div>
+
+    `;
+
+    return;
+
+}
 
 
     const sorted =
@@ -4604,21 +5064,41 @@ function renderWeeklyTopContent(
                     (Number(b.saved) || 0);
 
 
-                const scoreA =
+                const rateA =
 
-                    (Number(a.views) || 0) +
+    Number(a.impressions) > 0
 
-                    engagementA * 10;
+    ?
+
+    (
+        engagementA /
+        Number(a.impressions) *
+        100
+    )
+
+    :
+
+    0;
 
 
-                const scoreB =
+const rateB =
 
-                    (Number(b.views) || 0) +
+    Number(b.impressions) > 0
 
-                    engagementB * 10;
+    ?
+
+    (
+        engagementB /
+        Number(b.impressions) *
+        100
+    )
+
+    :
+
+    0;
 
 
-                return scoreB - scoreA;
+return rateB - rateA;
 
             }
         );
@@ -4653,9 +5133,14 @@ function renderWeeklyTopContent(
         </p>
 
         <p>
-            👁 ${formatNumber(top.views || 0)}
-            views
-        </p>
+    👁 ${formatNumber(top.impressions || 0)}
+    impressions
+</p>
+
+<p>
+    👥 ${formatNumber(top.reach || 0)}
+    reach
+</p>
 
         <p>
             🔥 ${formatNumber(engagement)}
@@ -4694,11 +5179,11 @@ function renderWeeklyContentTable(
 
         <tr>
 
-            <td colspan="5">
+            <td colspan="6">
 
-                No content data this week.
+    No content data this week.
 
-            </td>
+</td>
 
         </tr>
 
@@ -4742,8 +5227,12 @@ function renderWeeklyContentTable(
             </td>
 
             <td>
-                ${formatNumber(content.views || 0)}
-            </td>
+    ${formatNumber(content.impressions || 0)}
+</td>
+
+<td>
+    ${formatNumber(content.reach || 0)}
+</td>
 
             <td>
                 ${formatNumber(engagement)}
@@ -4762,292 +5251,184 @@ function renderWeeklyContentTable(
 }
 
 
-
 // =====================================
 // MONTHLY TOP CONTENT
 // =====================================
 
 function renderMonthlyTopContent(month, year){
 
+    const box =
+        document.getElementById(
+            "monthlyTopContent"
+        );
 
-const box =
-document.getElementById(
-"monthlyTopContent"
-);
-
-
-if(!box)
-return;
+    if(!box)
+        return;
 
 
+    let contents =
+        account.contents.filter(content=>{
 
-let contents =
-account.contents.filter(content=>{
+            if(!content.date)
+                return false;
 
+            let date =
+                new Date(content.date);
 
-if(!content.date)
-return false;
+            return (
+                date.getMonth() === month &&
+                date.getFullYear() === year
+            );
 
-
-let date =
-new Date(content.date);
-
-
-return (
-date.getMonth() === month &&
-date.getFullYear() === year
-);
+        });
 
 
-});
+    if(contents.length === 0){
 
+    box.innerHTML = `
 
+        <div class="top-content-empty">
 
-if(contents.length===0){
+            <div class="top-content-empty-icon">
+                📊
+            </div>
 
+            <h3>
+                No Content This Month
+            </h3>
 
-box.innerHTML =
-"No content data this month.";
+            <p>
+                Add content to see your top performing post.
+            </p>
 
-return;
+        </div>
 
+    `;
 
-}
-
-
-
-contents.sort((a,b)=>{
-
-
-let scoreA =
-(Number(a.views)||0)
-+
-(
-(Number(a.likes)||0)
-+
-(Number(a.comments)||0)
-+
-(Number(a.shares)||0)
-+
-(Number(a.saved)||0)
-)*10;
-
-
-
-let scoreB =
-(Number(b.views)||0)
-+
-(
-(Number(b.likes)||0)
-+
-(Number(b.comments)||0)
-+
-(Number(b.shares)||0)
-+
-(Number(b.saved)||0)
-)*10;
-
-
-
-return scoreB-scoreA;
-
-
-});
-
-
-
-let top =
-contents[0];
-
-
-
-box.innerHTML = `
-
-
-<div class="top-monthly-item">
-
-
-<h3>
-${top.caption || "Untitled Content"}
-</h3>
-
-
-<p>
-Platform:
-${top.platform || "-"}
-</p>
-
-
-<p>
-👁 ${formatNumber(top.views)} views
-</p>
-
-
-<p>
-🔥 ${
-(Number(top.likes)||0)
-+
-(Number(top.comments)||0)
-+
-(Number(top.shares)||0)
-+
-(Number(top.saved)||0)
-}
- engagement
-</p>
-
-
-</div>
-
-
-`;
-
+    return;
 
 }
 
-// =====================================
-// MONTHLY TOP CONTENT
-// =====================================
 
-function renderMonthlyTopContent(month, year){
+    // =====================================
+    // CALCULATE TOP CONTENT SCORE
+    // =====================================
 
+    contents.sort((a,b)=>{
 
-const box =
-document.getElementById(
-"monthlyTopContent"
-);
+        const engagementA =
 
+            (Number(a.likes) || 0) +
 
-if(!box)
-return;
+            (Number(a.comments) || 0) +
 
+            (Number(a.shares) || 0) +
 
-
-let contents =
-account.contents.filter(content=>{
+            (Number(a.saved) || 0);
 
 
-if(!content.date)
-return false;
+        const engagementB =
+
+            (Number(b.likes) || 0) +
+
+            (Number(b.comments) || 0) +
+
+            (Number(b.shares) || 0) +
+
+            (Number(b.saved) || 0);
 
 
-let date =
-new Date(content.date);
+        const rateA =
+
+    Number(a.impressions) > 0
+
+    ?
+
+    (
+        engagementA /
+        Number(a.impressions) *
+        100
+    )
+
+    :
+
+    0;
 
 
-return (
-date.getMonth() === month &&
-date.getFullYear() === year
-);
+const rateB =
+
+    Number(b.impressions) > 0
+
+    ?
+
+    (
+        engagementB /
+        Number(b.impressions) *
+        100
+    )
+
+    :
+
+    0;
 
 
-});
+return rateB - rateA;
+
+    });
 
 
-
-if(contents.length===0){
-
-
-box.innerHTML =
-"No content data this month.";
-
-return;
+    const top =
+        contents[0];
 
 
-}
+    const engagement =
+
+        (Number(top.likes) || 0) +
+
+        (Number(top.comments) || 0) +
+
+        (Number(top.shares) || 0) +
+
+        (Number(top.saved) || 0);
 
 
+    box.innerHTML = `
 
-contents.sort((a,b)=>{
+    <div class="top-monthly-item">
 
-
-let scoreA =
-(Number(a.views)||0)
-+
-(
-(Number(a.likes)||0)
-+
-(Number(a.comments)||0)
-+
-(Number(a.shares)||0)
-+
-(Number(a.saved)||0)
-)*10;
+        <h3>
+            ${top.caption || "Untitled Content"}
+        </h3>
 
 
-
-let scoreB =
-(Number(b.views)||0)
-+
-(
-(Number(b.likes)||0)
-+
-(Number(b.comments)||0)
-+
-(Number(b.shares)||0)
-+
-(Number(b.saved)||0)
-)*10;
+        <p>
+            Platform:
+            ${top.platform || "-"}
+        </p>
 
 
-
-return scoreB-scoreA;
-
-
-});
-
+        <p>
+            👁 ${formatNumber(top.impressions || 0)}
+            impressions
+        </p>
 
 
-let top =
-contents[0];
+        <p>
+            👥 ${formatNumber(top.reach || 0)}
+            reach
+        </p>
 
 
+        <p>
+            🔥 ${formatNumber(engagement)}
+            engagement
+        </p>
 
-box.innerHTML = `
+    </div>
 
-
-<div class="top-monthly-item">
-
-
-<h3>
-${top.caption || "Untitled Content"}
-</h3>
-
-
-<p>
-Platform:
-${top.platform || "-"}
-</p>
-
-
-<p>
-👁 ${formatNumber(top.views)} views
-</p>
-
-
-<p>
-🔥 ${
-(Number(top.likes)||0)
-+
-(Number(top.comments)||0)
-+
-(Number(top.shares)||0)
-+
-(Number(top.saved)||0)
-}
- engagement
-</p>
-
-
-</div>
-
-
-`;
-
+    `;
 
 }
-
-
 
 
 // =====================================
@@ -5100,7 +5481,7 @@ table.innerHTML = `
 
 <tr>
 
-<td colspan="5">
+<td colspan="6">
 
 No content data this month.
 
@@ -5160,7 +5541,11 @@ ${content.caption || "-"}
 
 
 <td>
-${formatNumber(content.views)}
+${formatNumber(content.impressions || 0)}
+</td>
+
+<td>
+${formatNumber(content.reach || 0)}
 </td>
 
 
@@ -5186,7 +5571,44 @@ html;
 }
 
 
+// =====================================
+// BUILD WEEKLY YEAR FILTER
+// =====================================
 
+function buildWeeklyYearFilter(){
+
+    const year =
+        document.getElementById(
+            "weeklyYearFilter"
+        );
+
+    if(!year)
+        return;
+
+    const current =
+        new Date().getFullYear();
+
+    year.innerHTML = "";
+
+    for(
+        let y = current - 5;
+        y <= current + 1;
+        y++
+    ){
+
+        year.innerHTML += `
+
+        <option value="${y}">
+            ${y}
+        </option>
+
+        `;
+
+    }
+
+    year.value = current;
+
+}
 
 
 // =====================================
@@ -5431,6 +5853,8 @@ saveDatabase();
 // =====================================
 
 
+syncPlatformAnalytics();
+
 renderContents();
 
 loadAnalytics();
@@ -5445,10 +5869,21 @@ renderPlatformComparison();
 
 buildMonthlyFilters();
 
+buildWeeklyYearFilter();
+
+const weeklyMonthFilter =
+    document.getElementById("weeklyMonthFilter");
+
+if(weeklyMonthFilter){
+
+    weeklyMonthFilter.value =
+        new Date().getMonth();
+
+}
+
 document
 .getElementById("monthlyFilter")
 ?.addEventListener("change", renderMonthlyReport);
-
 
 document
 .getElementById("monthlyYearFilter")
@@ -5459,14 +5894,33 @@ document
 .getElementById("weeklyMonthFilter")
 ?.addEventListener("change", renderWeeklyReport);
 
-
 document
 .getElementById("weeklyFilter")
 ?.addEventListener("change", renderWeeklyReport);
 
+
+document
+.getElementById("weeklyYearFilter")
+?.addEventListener("change", renderWeeklyReport);
+
+
+document
+.getElementById("weeklyFilter")
+?.addEventListener(
+    "change",
+    renderWeeklyReport
+);
+
 renderMonthlyReport();
 
-renderWeeklyReport();
+if(
+    document.getElementById("weeklyFilter") &&
+    document.getElementById("weeklyMonthFilter")
+){
+
+    renderWeeklyReport();
+
+}
 
 
 

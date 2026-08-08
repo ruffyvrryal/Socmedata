@@ -159,11 +159,11 @@ data-tab="hashtag">
                 👁
             </div>
 
-            <p>Total Views</p>
+            <p>Total Impressions</p>
 
-            <h3 id="totalViews">
-                0
-            </h3>
+<h3 id="totalImpressions">
+    0
+</h3>
 
         </div>
 
@@ -364,7 +364,9 @@ data-tab="hashtag">
 
 <th>Status</th>
 
-<th>Views</th>
+<th>Impressions</th>
+
+<th>Reach</th>
 
 <th>Engagement</th>
 
@@ -658,7 +660,9 @@ No content data yet.
 
                     <th>Used</th>
 
-                    <th>Views</th>
+                    <th>Impressions</th>
+
+                    <th>Reach</th>
 
                     <th>Likes</th>
 
@@ -739,7 +743,8 @@ class="platform-hashtag-analytics">
                         <th>Date</th>
                         <th>Platform</th>
                         <th>Caption</th>
-                        <th>Views</th>
+                        <th>Impressions</th>
+                        <th>Reach</th>
                         <th>Engagement</th>
                     </tr>
                 </thead>
@@ -916,7 +921,9 @@ class="platform-hashtag-analytics">
 
                         <th>Caption</th>
 
-                        <th>Views</th>
+                        <th>Impressions</th>
+
+                        <th>Reach</th>
 
                         <th>Engagement</th>
 
@@ -1180,14 +1187,22 @@ id="contentType"
 placeholder="Example: Tutorial, Review, Meme, Promo">
 
 <label>
-Views
+Impressions
 </label>
 
 <input
 type="number"
-id="contentViews">
+id="contentImpressions"
+placeholder="Total times viewed">
 
+<label>
+Reach
+</label>
 
+<input
+type="number"
+id="contentReach"
+placeholder="Number of unique viewers">
 
 <label>
 Likes
@@ -1349,8 +1364,13 @@ class="close">
 
 
 <p>
-👁 Views:
+👁 Impressions:
 <span id="detailViews"></span>
+</p>
+
+<p>
+👥 Reach:
+<span id="detailReach"></span>
 </p>
 
 
