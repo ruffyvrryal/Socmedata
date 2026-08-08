@@ -123,6 +123,14 @@ data-tab="hashtag">
 
 </button>
 
+<button 
+class="account-tab"
+data-tab="subject">
+
+    Subject
+
+</button>
+
 
     <button 
     class="account-tab"
@@ -693,6 +701,274 @@ class="platform-hashtag-analytics">
 
 </section>
 
+<section class="tab-content" id="subject">
+
+    <div class="subject-dashboard">
+
+        <div class="subject-header">
+
+            <div>
+
+                <h2>
+                    Subject Analytics
+                </h2>
+
+                <p>
+                    Track people featured across your social media content.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUBJECT SUMMARY -->
+
+        <div class="subject-summary">
+
+            <div class="subject-summary-card">
+
+                <span>
+                    👤
+                </span>
+
+                <p>
+                    Total Subjects
+                </p>
+
+                <h3 id="totalSubjects">
+                    0
+                </h3>
+
+            </div>
+
+
+            <div class="subject-summary-card">
+
+                <span>
+                    📝
+                </span>
+
+                <p>
+                    Subject Content
+                </p>
+
+                <h3 id="subjectContentCount">
+                    0
+                </h3>
+
+            </div>
+
+
+            <div class="subject-summary-card">
+
+                <span>
+                    👁
+                </span>
+
+                <p>
+                    Subject Impressions
+                </p>
+
+                <h3 id="subjectImpressions">
+                    0
+                </h3>
+
+            </div>
+
+
+            <div class="subject-summary-card">
+
+                <span>
+                    👥
+                </span>
+
+                <p>
+                    Subject Reach
+                </p>
+
+                <h3 id="subjectReach">
+                    0
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUBJECT PERFORMANCE -->
+
+        <div class="subject-panel">
+
+            <div class="subject-panel-header">
+
+                <div>
+
+                    <h3>
+                        Subject Performance
+                    </h3>
+
+                    <p>
+                        Performance of people featured in your content.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="subject-table-container">
+
+                <table class="subject-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Subject
+                            </th>
+
+                            <th>
+                                Posts
+                            </th>
+
+                            <th>
+                                Impressions
+                            </th>
+
+                            <th>
+                                Reach
+                            </th>
+
+                            <th>
+                                Likes
+                            </th>
+
+                            <th>
+                                Comments
+                            </th>
+
+                            <th>
+                                Shares
+                            </th>
+
+                            <th>
+                                Saves
+                            </th>
+
+                            <th>
+                                Engagement
+                            </th>
+
+                            <th>
+                                Rate
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="subjectTableBody">
+
+<tr>
+    <td colspan="10">
+        No subject data yet.
+    </td>
+</tr>
+
+</tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- SUBJECT CONTENT -->
+
+        <div class="subject-panel">
+
+            <div class="subject-panel-header">
+
+                <div>
+
+                    <h3>
+                        Content by Subject
+                    </h3>
+
+                    <p>
+                        See which posts feature each subject.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="subject-content-table-container">
+
+                <table class="subject-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Subject
+                            </th>
+
+                            <th>
+                                Platform
+                            </th>
+
+                            <th>
+                                Caption
+                            </th>
+
+                            <th>
+                                Impressions
+                            </th>
+
+                            <th>
+                                Reach
+                            </th>
+
+                            <th>
+                                Engagement
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="subjectContentTableBody">
+
+<tr>
+    <td colspan="7">
+        No subject content data yet.
+    </td>
+</tr>
+
+</tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
 <section class="tab-content" id="monthly">
 
     <div class="monthly-dashboard">
@@ -1150,7 +1426,6 @@ id="contentCaption"
 placeholder="Write caption..."></textarea>
 
 
-
 <label>
 Hashtag
 </label>
@@ -1168,6 +1443,15 @@ Content Type
 type="text"
 id="contentType"
 placeholder="Example: Tutorial, Review, Meme, Promo">
+
+<label>
+Subject / Person
+</label>
+
+<input
+type="text"
+id="contentSubject"
+placeholder="Example: John Doe, Sarah Smith">
 
 <label>
 Impressions

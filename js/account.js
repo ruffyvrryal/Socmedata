@@ -111,6 +111,18 @@ account.contents.forEach(content => {
 
     }
 
+
+    // Subject
+    if(
+        content.subject === undefined ||
+        content.subject === null ||
+        content.subject.trim() === ""
+    ){
+
+        content.subject = "Unassigned";
+
+    }
+
 });
 
 // =====================================
@@ -321,6 +333,421 @@ function formatNumber(number){
 }
 
 
+// =====================================
+// SUBJECT NAME NORMALIZER
+// =====================================
+
+function normalizeSubjectName(subject){
+
+    return String(subject || "")
+        .trim()
+        .replace(/\s+/g, " ");
+
+}
+
+
+function renderSubjectTable(){
+
+    const tableBody =
+        document.getElementById("subjectTableBody");
+
+    if(!tableBody)
+        return;
+
+    const subjects = {};
+
+    // =====================================
+    // GROUP CONTENT BY SUBJECT
+    // =====================================
+
+    account.contents.forEach(content => {
+
+        const subject =
+            normalizeSubjectName(content.subject);
+
+        if(!subject)
+            return;
+
+        if(!subjects[subject]){
+
+            subjects[subject] = {
+
+                posts: 0,
+                impressions: 0,
+                reach: 0,
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                saves: 0,
+                engagement: 0
+
+            };
+
+        }
+
+        const data = subjects[subject];
+
+        data.posts++;
+
+        data.impressions +=
+            Number(content.impressions) || 0;
+
+        data.reach +=
+            Number(content.reach) || 0;
+
+        data.likes +=
+            Number(content.likes) || 0;
+
+        data.comments +=
+            Number(content.comments) || 0;
+
+        data.shares +=
+            Number(content.shares) || 0;
+
+        data.saves +=
+            Number(content.saved) || 0;
+
+        data.engagement =
+            data.likes +
+            data.comments +
+            data.shares +
+            data.saves;
+
+    });
+
+
+    // =====================================
+    // SORT BY ENGAGEMENT
+    // =====================================
+
+    const sortedSubjects =
+        Object.entries(subjects)
+        .sort(
+            (a,b) =>
+                b[1].engagement -
+                a[1].engagement
+        );
+
+
+    // =====================================
+    // SUBJECT SUMMARY
+    // =====================================
+
+    let totalSubjects =
+        sortedSubjects.length;
+
+    let subjectContentCount = 0;
+
+    let subjectImpressions = 0;
+
+    let subjectReach = 0;
+
+
+    sortedSubjects.forEach(
+        ([subject, data]) => {
+
+            subjectContentCount +=
+                data.posts;
+
+            subjectImpressions +=
+                data.impressions;
+
+            subjectReach +=
+                data.reach;
+
+        }
+    );
+
+
+    // =====================================
+    // UPDATE SUMMARY CARDS
+    // =====================================
+
+    const totalSubjectsElement =
+        document.getElementById("totalSubjects");
+
+    const subjectContentElement =
+        document.getElementById("subjectContentCount");
+
+    const subjectImpressionsElement =
+        document.getElementById("subjectImpressions");
+
+    const subjectReachElement =
+        document.getElementById("subjectReach");
+
+
+    if(totalSubjectsElement){
+
+        totalSubjectsElement.textContent =
+            formatNumber(totalSubjects);
+
+    }
+
+
+    if(subjectContentElement){
+
+        subjectContentElement.textContent =
+            formatNumber(subjectContentCount);
+
+    }
+
+
+    if(subjectImpressionsElement){
+
+        subjectImpressionsElement.textContent =
+            formatNumber(subjectImpressions);
+
+    }
+
+
+    if(subjectReachElement){
+
+        subjectReachElement.textContent =
+            formatNumber(subjectReach);
+
+    }
+
+
+    // =====================================
+    // EMPTY STATE
+    // =====================================
+
+    if(sortedSubjects.length === 0){
+
+        tableBody.innerHTML = `
+
+            <tr>
+
+                <td colspan="10">
+
+                    No subject data available.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    // =====================================
+    // RENDER SUBJECT ROWS
+    // =====================================
+
+    tableBody.innerHTML =
+
+        sortedSubjects.map(
+            ([subject, data]) => {
+
+                const rate =
+                    data.impressions > 0
+                    ?
+                    (
+                        data.engagement /
+                        data.impressions *
+                        100
+                    ).toFixed(1)
+                    :
+                    "0.0";
+
+
+                return `
+
+                <tr>
+
+                    <td>
+                        ${subject}
+                    </td>
+
+                    <td>
+                        ${data.posts}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.impressions
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.reach
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.likes
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.comments
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.shares
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.saves
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            data.engagement
+                        )}
+                    </td>
+
+                    <td>
+                        ${rate}%
+                    </td>
+
+                </tr>
+
+                `;
+
+            }
+        ).join("");
+
+}
+
+// =====================================
+// CONTENT BY SUBJECT TABLE
+// =====================================
+
+function renderSubjectContentTable(){
+
+    const tableBody =
+        document.getElementById(
+            "subjectContentTableBody"
+        );
+
+    if(!tableBody)
+        return;
+
+
+    const contents =
+        (account.contents || [])
+        .filter(content => {
+
+            return (
+                content.subject &&
+                content.subject.trim() !== ""
+            );
+
+        })
+        .sort(
+            (a,b) =>
+                new Date(b.date) -
+                new Date(a.date)
+        );
+
+
+    // =====================================
+    // EMPTY STATE
+    // =====================================
+
+    if(contents.length === 0){
+
+        tableBody.innerHTML = `
+
+            <tr>
+
+                <td colspan="7">
+
+                    No subject content available.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    // =====================================
+    // RENDER CONTENT
+    // =====================================
+
+    tableBody.innerHTML =
+
+        contents.map(content => {
+
+            const engagement =
+
+                (Number(content.likes) || 0) +
+
+                (Number(content.comments) || 0) +
+
+                (Number(content.shares) || 0) +
+
+                (Number(content.saved) || 0);
+
+
+            const subject =
+                normalizeSubjectName(
+                    content.subject
+                );
+
+
+            return `
+
+                <tr>
+
+                    <td>
+                        ${content.date || "-"}
+                    </td>
+
+                    <td>
+                        ${subject || "-"}
+                    </td>
+
+                    <td>
+                        ${content.platform || "-"}
+                    </td>
+
+                    <td>
+                        ${content.caption || "-"}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            content.impressions || 0
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            content.reach || 0
+                        )}
+                    </td>
+
+                    <td>
+                        ${formatNumber(
+                            engagement
+                        )}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }).join("");
+
+}
 
 // =====================================
 // CALCULATE ANALYTICS
@@ -328,131 +755,216 @@ function formatNumber(number){
 
 function calculateAnalytics(){
 
-
     let analytics = {
 
+        totalImpressions: 0,
 
-        totalImpressions:0,
+        totalReach: 0,
 
+        totalContents: 0,
 
-        totalReach:0,
+        totalGrowth: 0,
 
+        totalFollowers: 0,
 
-        totalContents:0,
-
-
-        totalGrowth:0,
-
-
-        totalFollowers:0,
-
-
-        platforms:{}
-
+        platforms: {}
 
     };
 
 
+    const now = new Date();
+
+    const currentMonth =
+        now.getMonth();
+
+    const currentYear =
+        now.getFullYear();
+
+
+    const previousMonth =
+        currentMonth === 0
+        ? 11
+        : currentMonth - 1;
+
+    const previousYear =
+        currentMonth === 0
+        ? currentYear - 1
+        : currentYear;
+
+
+    // =====================================
+    // CONTENT ANALYTICS
+    // =====================================
 
     account.contents.forEach(content=>{
 
-
-        // =====================================
-        // IMPRESSIONS
-        // =====================================
-
-        let impressions =
+        const impressions =
             Number(content.impressions) || 0;
 
-
-
-        // =====================================
-        // REACH
-        // =====================================
-
-        let reach =
+        const reach =
             Number(content.reach) || 0;
-
 
 
         analytics.totalImpressions +=
             impressions;
 
 
-
         analytics.totalReach +=
             reach;
 
 
-
         analytics.totalContents++;
-
 
 
         // =====================================
         // PLATFORM
         // =====================================
 
-        let platform =
+        const platform =
             content.platform || "Unknown";
-
 
 
         if(!analytics.platforms[platform]){
 
+            analytics.platforms[platform] = {
 
-            analytics.platforms[platform]={
+                impressions: 0,
 
-                impressions:0,
+                reach: 0,
 
-                reach:0,
+                contents: 0,
 
-                contents:0
+                currentImpressions: 0,
+
+                previousImpressions: 0,
+
+                growth: 0
 
             };
 
-
         }
-
 
 
         analytics.platforms[platform].impressions +=
             impressions;
 
 
-
         analytics.platforms[platform].reach +=
             reach;
-
 
 
         analytics.platforms[platform].contents++;
 
 
+        // =====================================
+        // CURRENT / PREVIOUS MONTH
+        // =====================================
+
+        if(content.date){
+
+            const date =
+                new Date(content.date);
+
+
+            const month =
+                date.getMonth();
+
+
+            const year =
+                date.getFullYear();
+
+
+            if(
+                month === currentMonth &&
+                year === currentYear
+            ){
+
+                analytics.platforms[platform]
+                    .currentImpressions += impressions;
+
+            }
+
+
+            if(
+                month === previousMonth &&
+                year === previousYear
+            ){
+
+                analytics.platforms[platform]
+                    .previousImpressions += impressions;
+
+            }
+
+        }
+
     });
 
 
+    // =====================================
+    // PLATFORM GROWTH
+    // =====================================
+
+    Object.keys(analytics.platforms)
+    .forEach(platform=>{
+
+        const data =
+            analytics.platforms[platform];
+
+
+        data.growth =
+            calculateGrowth(
+                data.currentImpressions,
+                data.previousImpressions
+            );
+
+    });
+
 
     // =====================================
-    // ACCOUNT GROWTH
+    // ACCOUNT FOLLOWERS + GROWTH
     // =====================================
+
+    let totalCurrentImpressions = 0;
+
+    let totalPreviousImpressions = 0;
+
 
     account.platforms.forEach(platform=>{
-
 
         analytics.totalFollowers +=
             Number(platform.followers) || 0;
 
-        analytics.totalGrowth +=
-    Number(platform.analytics?.growth) || 0;
 
+        const platformData =
+            analytics.platforms[platform.platform];
+
+
+        if(platformData){
+
+            totalCurrentImpressions +=
+                platformData.currentImpressions;
+
+
+            totalPreviousImpressions +=
+                platformData.previousImpressions;
+
+        }
 
     });
 
 
+    // =====================================
+    // TOTAL ACCOUNT GROWTH
+    // =====================================
+
+    analytics.totalGrowth =
+        calculateGrowth(
+            totalCurrentImpressions,
+            totalPreviousImpressions
+        );
+
 
     return analytics;
-
 
 }
 
@@ -517,26 +1029,21 @@ if(followers){
 
     if(growth){
 
-        growth.textContent =
+    const growthValue =
+        Number(analytics.totalGrowth) || 0;
 
+    growth.textContent =
         (
-            analytics.totalGrowth >=0
-            ?
-            "+"
-            :
-            ""
+            growthValue >= 0
+            ? "+"
+            : ""
         )
-
         +
-
-        analytics.totalGrowth
-
+        growthValue.toFixed(1)
         +
-
         "%";
 
-
-    }
+}
 
 
 }
@@ -859,10 +1366,15 @@ function renderPlatforms(){
 
             <strong class="positive-growth">
 
-            +
-            ${platform.analytics?.growth || 0}%
+    ${
+        Number(platform.analytics?.growth || 0) >= 0
+        ? "+"
+        : ""
+    }${Number(
+        platform.analytics?.growth || 0
+    ).toFixed(1)}%
 
-            </strong>
+</strong>
 
 
         </div>
@@ -934,7 +1446,7 @@ function syncPlatformAnalytics(){
         calculateAnalytics();
 
 
-    account.platforms.forEach(platform => {
+    account.platforms.forEach(platform=>{
 
         const stats =
             analytics.platforms[platform.platform]
@@ -942,7 +1454,8 @@ function syncPlatformAnalytics(){
             {
                 impressions: 0,
                 reach: 0,
-                contents: 0
+                contents: 0,
+                growth: 0
             };
 
 
@@ -967,6 +1480,10 @@ function syncPlatformAnalytics(){
 
         platform.analytics.followers =
             Number(platform.followers) || 0;
+
+
+        platform.analytics.growth =
+            Number(stats.growth) || 0;
 
     });
 
@@ -1298,11 +1815,18 @@ if(addContent){
 
 
         if(type)
-            type.value = "";
+    type.value = "";
 
+const subject =
+    document.getElementById(
+        "contentSubject"
+    );
 
-        if(impressions)
-            impressions.value = 0;
+if(subject)
+    subject.value = "";
+
+if(impressions)
+    impressions.value = 0;
 
 
         if(reach)
@@ -1413,7 +1937,10 @@ if(saveContent){
                 document.getElementById("contentHashtag");
 
             const contentType =
-                document.getElementById("contentType");
+    document.getElementById("contentType");
+
+const subject =
+    document.getElementById("contentSubject");
 
             const impressions =
                 document.getElementById("contentImpressions");
@@ -1450,10 +1977,11 @@ if(saveContent){
             if(!caption) missing.push("contentCaption");
             if(!hashtag) missing.push("contentHashtag");
             if(!contentType) missing.push("contentType");
-            if(!impressions) missing.push("contentImpressions");
-            if(!reach) missing.push("contentReach");
-            if(!likes) missing.push("contentLikes");
-            if(!comments) missing.push("contentComments");
+if(!subject) missing.push("contentSubject");
+if(!impressions) missing.push("contentImpressions");
+if(!reach) missing.push("contentReach");
+if(!likes) missing.push("contentLikes");
+if(!comments) missing.push("contentComments");
             if(!shares) missing.push("contentShares");
             if(!saved) missing.push("contentSaved");
             if(!platform) missing.push("contentPlatform");
@@ -1503,10 +2031,13 @@ if(saveContent){
                     hashtag.value.trim(),
 
                 contentType:
-                    contentType.value,
+    contentType.value,
 
-                impressions:
-                    Number(impressions.value) || 0,
+subject:
+    document.getElementById("contentSubject").value.trim(),
+
+impressions:
+    Number(impressions.value) || 0,
 
                 reach:
                     Number(reach.value) || 0,
@@ -1600,19 +2131,23 @@ if(saveContent){
 
             renderContents();
 
-            loadAnalytics();
+loadAnalytics();
 
-            renderPlatforms();
+renderSubjectTable();
 
-            loadEngagement();
+renderSubjectContentTable();
 
-            renderHashtags();
+renderPlatforms();
 
-            renderPlatformComparison();
+loadEngagement();
 
-            renderMonthlyReport();
+renderHashtags();
 
-            renderWeeklyReport();
+renderPlatformComparison();
+
+renderMonthlyReport();
+
+renderWeeklyReport();
 
 
             // =====================================
@@ -1936,11 +2471,12 @@ Delete
 
 
             document.getElementById("contentType").value =
-            content.contentType || "";
+content.contentType || "";
 
+document.getElementById("contentSubject").value =
+content.subject || "";
 
-
-            const impressionsField =
+const impressionsField =
 document.getElementById(
     "contentImpressions"
 );
@@ -2129,11 +2665,13 @@ if(reachField){
 
             renderContents();
 
+loadAnalytics();
 
-            loadAnalytics();
+renderSubjectTable();
 
+renderSubjectContentTable();
 
-            renderPlatforms();
+renderPlatforms();
 
 
 
@@ -3567,7 +4105,7 @@ return;
 
 
 let date =
-new Date(content.date);
+    new Date(content.date + "T00:00:00");
 
 
 
@@ -3817,7 +4355,7 @@ function renderMonthlyPlatformReport(){
 
 
         let date =
-        new Date(content.date);
+    new Date(content.date + "T00:00:00");
 
 
 
@@ -5437,136 +5975,204 @@ return rateB - rateA;
 
 function renderMonthlyContentTable(month, year){
 
+    const table =
+        document.getElementById(
+            "monthlyContentTable"
+        );
 
-const table =
-document.getElementById(
-"monthlyContentTable"
-);
-
-
-if(!table)
-return;
+    if(!table)
+        return;
 
 
+    const contents =
+        (account.contents || []).filter(content => {
 
-let contents =
-account.contents.filter(content=>{
-
-
-if(!content.date)
-return false;
+            if(!content.date)
+                return false;
 
 
-
-let date =
-new Date(content.date);
-
-
-
-return(
-date.getMonth()===month &&
-date.getFullYear()===year
-);
+            const date =
+                new Date(
+                    content.date + "T00:00:00"
+                );
 
 
-});
+            return (
+                date.getMonth() === month &&
+                date.getFullYear() === year
+            );
+
+        });
 
 
+    if(contents.length === 0){
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="6">
+                    No content data this month.
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
 
 
-if(contents.length===0){
+    let html = "";
 
 
-table.innerHTML = `
+    contents.forEach(content => {
 
-<tr>
+        const engagement =
 
-<td colspan="6">
-
-No content data this month.
-
-</td>
-
-</tr>
-
-`;
+            (Number(content.likes) || 0) +
+            (Number(content.comments) || 0) +
+            (Number(content.shares) || 0) +
+            (Number(content.saved) || 0);
 
 
-return;
+        html += `
 
+            <tr>
+
+                <td>
+                    ${content.date || "-"}
+                </td>
+
+                <td>
+                    ${content.platform || "-"}
+                </td>
+
+                <td>
+                    ${content.caption || "-"}
+                </td>
+
+                <td>
+                    ${formatNumber(
+                        Number(content.impressions) || 0
+                    )}
+                </td>
+
+                <td>
+                    ${formatNumber(
+                        Number(content.reach) || 0
+                    )}
+                </td>
+
+                <td>
+                    ${formatNumber(engagement)}
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+
+    table.innerHTML =
+        html;
 
 }
 
 
+// =====================================
+// WEEKLY CONTENT TABLE
+// =====================================
+
+function renderWeeklyContentTable(weeklyContents){
+
+    const table =
+        document.getElementById(
+            "weeklyContentTable"
+        );
+
+    if(!table)
+        return;
 
 
-let html="";
+    if(
+        !weeklyContents ||
+        weeklyContents.length === 0
+    ){
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="6">
+                    No content data this week.
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
 
 
-
-contents.forEach(content=>{
-
-
-let engagement =
-
-(Number(content.likes)||0)
-+
-(Number(content.comments)||0)
-+
-(Number(content.shares)||0)
-+
-(Number(content.saved)||0);
+    let html = "";
 
 
+    weeklyContents.forEach(content => {
 
-html += `
+        const engagement =
 
-
-<tr>
-
-
-<td>
-${content.date}
-</td>
+            (Number(content.likes) || 0) +
+            (Number(content.comments) || 0) +
+            (Number(content.shares) || 0) +
+            (Number(content.saved) || 0);
 
 
-<td>
-${content.platform || "-"}
-</td>
+        html += `
+
+            <tr>
+
+                <td>
+                    ${content.date || "-"}
+                </td>
+
+                <td>
+                    ${content.platform || "-"}
+                </td>
+
+                <td>
+                    ${content.caption || "-"}
+                </td>
+
+                <td>
+                    ${formatNumber(
+                        Number(content.impressions) || 0
+                    )}
+                </td>
+
+                <td>
+                    ${formatNumber(
+                        Number(content.reach) || 0
+                    )}
+                </td>
+
+                <td>
+                    ${formatNumber(engagement)}
+                </td>
+
+            </tr>
+
+        `;
+
+    });
 
 
-<td>
-${content.caption || "-"}
-</td>
-
-
-<td>
-${formatNumber(content.impressions || 0)}
-</td>
-
-<td>
-${formatNumber(content.reach || 0)}
-</td>
-
-
-<td>
-${formatNumber(engagement)}
-</td>
-
-
-</tr>
-
-
-`;
-
-
-});
-
-
-
-table.innerHTML =
-html;
-
+    table.innerHTML =
+        html;
 
 }
 
@@ -5825,7 +6431,23 @@ logoModal.style.display="none";
 
 
 
+// =====================================
+// BACK TO ACCOUNT VAULT
+// =====================================
 
+const backButton =
+    document.getElementById("backButton");
+
+if(backButton){
+
+    backButton.onclick = function(){
+
+        window.location.href =
+            "dashboard.html";
+
+    };
+
+}
 
 // =====================================
 // AUTO SAVE
@@ -5858,6 +6480,10 @@ syncPlatformAnalytics();
 renderContents();
 
 loadAnalytics();
+
+renderSubjectTable();
+
+renderSubjectContentTable();
 
 renderPlatforms();
 
@@ -5924,14 +6550,3 @@ account;
 
 window.profile =
 profile;
-
-
-
-window.goBack=function(){
-
-
-window.location.href=
-"dashboard.html";
-
-
-};

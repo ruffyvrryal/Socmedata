@@ -25,11 +25,15 @@ let currentDate = new Date();
 
 function getContentsByDate(date){
 
-    if(!window.account){
+    if (!window.account) {
         return [];
     }
 
-    return (window.account.contents || []).filter(function(content){
+    const contents = Array.isArray(window.account.contents)
+        ? window.account.contents
+        : [];
+
+    return contents.filter(function(content){
 
         return content.date === date;
 
@@ -239,7 +243,18 @@ if (nextBtn) {
 
 }
 
-renderCalendar();
+function initializeCalendar(){
+
+    if (!window.account) {
+        console.log("Calendar waiting for account data...");
+        return;
+    }
+
+    renderCalendar();
+
+}
+
+initializeCalendar();
 
 function openCalendarDay(date){
 
