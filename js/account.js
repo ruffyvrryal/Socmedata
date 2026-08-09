@@ -6,19 +6,34 @@
 
 
 // =====================================
-// LOAD DATABASE
+// FIRESTORE DATABASE
 // =====================================
 
-let profiles =
-JSON.parse(localStorage.getItem("profiles")) || [];
+import {
+    getProfile,
+    saveProfile
+} from "./firebase-db.js";
 
+
+// =====================================
+// ACTIVE IDs
+// =====================================
 
 let activeProfileId =
-localStorage.getItem("activeProfileId");
+    localStorage.getItem("activeProfileId");
 
 
 let activeAccountId =
-localStorage.getItem("activeAccountId");
+    localStorage.getItem("activeAccountId");
+
+
+// =====================================
+// ACTIVE DATA
+// =====================================
+
+let activeProfile = null;
+
+let account = null;
 
 
 // =====================================
@@ -29,229 +44,156 @@ let editingContentId = null;
 
 
 // =====================================
-// FIND ACTIVE PROFILE
+// LOAD ACTIVE VAULT FROM FIRESTORE
 // =====================================
 
-let profile =
-profiles.find(
-    p => p.id == activeProfileId
-);
+async function loadActiveProfile(){
+
+    try{
+
+        console.log(
+            "Loading active vault from Firestore..."
+        );
 
 
-if(!profile){
+        if(!activeProfileId){
 
-    alert("Vault not found.");
+            alert("No vault selected.");
 
-    window.location.href="../index.html";
+            window.location.href =
+                "../index.html";
+
+            return;
+
+        }
+
+
+        activeProfile =
+            await getProfile(
+                activeProfileId
+            );
+
+
+        if(!activeProfile){
+
+            alert(
+                "Vault not found in Firestore."
+            );
+
+
+            window.location.href =
+                "../index.html";
+
+            return;
+
+        }
+
+
+        console.log(
+            "Active vault loaded:",
+            activeProfile
+        );
+
+
+        // =================================
+        // FIND ACCOUNT
+        // =================================
+
+        if(!Array.isArray(
+            activeProfile.accounts
+        )){
+
+            activeProfile.accounts = [];
+
+        }
+
+
+        account =
+            activeProfile.accounts.find(
+                a =>
+                    String(a.id) ===
+                    String(activeAccountId)
+            );
+
+
+        if(!account){
+
+            alert(
+                "Account not found."
+            );
+
+
+            window.location.href =
+                "dashboard.html";
+
+            return;
+
+        }
+
+
+        // =================================
+        // DATABASE CHECK
+        // =================================
+
+        if(!Array.isArray(
+            account.contents
+        )){
+
+            account.contents = [];
+
+        }
+
+
+        if(!Array.isArray(
+            account.platforms
+        )){
+
+            account.platforms = [];
+
+        }
+
+
+        console.log(
+            "Active account loaded:",
+            account
+        );
+
+
+        // =================================
+// UPDATE ACCOUNT NAME
+// =================================
+
+if(accountTitle){
+
+    accountTitle.textContent =
+        account.name || "Account Name";
 
 }
 
 
-// =====================================
-// FIND ACTIVE ACCOUNT
-// =====================================
+// =================================
+// START ACCOUNT PAGE
+// =================================
 
-let account =
-profile.accounts.find(
-    a => a.id == activeAccountId
-);
+initializeAccountPage();
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Failed to load account from Firestore:",
+            error
+        );
 
 
-if(!account){
+        alert(
+            "Failed to load account data."
+        );
 
-    alert("Account not found.");
-
-    window.location.href="dashboard.html";
+    }
 
 }
-
-
-// =====================================
-// DATABASE CHECK
-// =====================================
-
-if(!account.contents){
-
-    account.contents = [];
-
-}
-
-
-if(!account.platforms){
-
-    account.platforms = [];
-
-}
-
-// =====================================
-// IMPRESSION + REACH MIGRATION
-// =====================================
-
-account.contents.forEach(content => {
-
-    // Old "views" become "impressions"
-    if(
-        content.impressions === undefined ||
-        content.impressions === null
-    ){
-
-        content.impressions =
-            Number(content.views) || 0;
-
-    }
-
-
-    // New metric
-    if(
-        content.reach === undefined ||
-        content.reach === null
-    ){
-
-        content.reach = 0;
-
-    }
-
-
-    // Subject
-    if(
-        content.subject === undefined ||
-        content.subject === null ||
-        content.subject.trim() === ""
-    ){
-
-        content.subject = "Unassigned";
-
-    }
-
-});
-
-// =====================================
-// PLATFORM MIGRATION
-// =====================================
-
-account.platforms.forEach(platform => {
-
-    // Create analytics object if missing
-    if(!platform.analytics){
-
-        platform.analytics = {};
-
-    }
-
-
-    // -------------------------------------
-    // MIGRATE OLD VIEWS → IMPRESSIONS
-    // -------------------------------------
-
-    if(
-        platform.analytics.impressions === undefined ||
-        platform.analytics.impressions === null
-    ){
-
-        platform.analytics.impressions =
-            Number(platform.analytics.views) || 0;
-
-    }
-
-
-    // -------------------------------------
-    // REACH
-    // -------------------------------------
-
-    if(
-        platform.analytics.reach === undefined ||
-        platform.analytics.reach === null
-    ){
-
-        platform.analytics.reach = 0;
-
-    }
-
-
-    // -------------------------------------
-    // FOLLOWERS
-    // -------------------------------------
-
-    platform.analytics.followers =
-        Number(platform.followers) || 0;
-
-
-    // -------------------------------------
-    // CONTENT COUNT
-    // -------------------------------------
-
-    if(
-        platform.analytics.contents === undefined ||
-        platform.analytics.contents === null
-    ){
-
-        platform.analytics.contents = 0;
-
-    }
-
-
-    // -------------------------------------
-    // GROWTH
-    // -------------------------------------
-
-    if(
-        platform.analytics.growth === undefined ||
-        platform.analytics.growth === null
-    ){
-
-        platform.analytics.growth = 0;
-
-    }
-
-
-    // -------------------------------------
-    // PLATFORM CONTENT ARRAY
-    // -------------------------------------
-
-    if(!platform.contents){
-
-        platform.contents = [];
-
-    }
-
-});
-
-
-
-// =====================================
-// ACCOUNT ANALYTICS
-// =====================================
-
-if(!account.analytics){
-
-    account.analytics={
-
-    impressions:0,
-
-    reach:0,
-
-    followers:0,
-
-    contents:0,
-
-    growth:0
-
-};
-
-}
-
-
-
-// SAVE MIGRATION
-
-localStorage.setItem(
-
-    "profiles",
-
-    JSON.stringify(profiles)
-
-);
-
 
 
 
@@ -395,37 +337,6 @@ if(platformFilterDropdown){
     );
 
 }
-
-
-// =====================================
-// ACCOUNT NAME
-// =====================================
-
-if(accountTitle){
-
-    accountTitle.textContent =
-    account.name;
-
-}
-
-
-
-// =====================================
-// SAVE DATABASE
-// =====================================
-
-function saveDatabase(){
-
-    localStorage.setItem(
-
-        "profiles",
-
-        JSON.stringify(profiles)
-
-    );
-
-}
-
 
 
 // =====================================
@@ -6368,20 +6279,6 @@ document.getElementById(
 );
 
 
-
-if(account.logoButtonImage && logoButton){
-
-
-logoButton.innerHTML=`
-
-<img src="${account.logoButtonImage}">
-
-`;
-
-}
-
-
-
 if(logoButton){
 
 
@@ -6459,105 +6356,3 @@ if(backButton){
     };
 
 }
-
-// =====================================
-// AUTO SAVE
-// =====================================
-
-window.addEventListener(
-
-"beforeunload",
-
-()=>{
-
-saveDatabase();
-
-}
-
-);
-
-
-
-
-
-
-// =====================================
-// FINAL LOAD
-// =====================================
-
-
-syncPlatformAnalytics();
-
-renderContents();
-
-loadAnalytics();
-
-renderSubjectTable();
-
-renderSubjectContentTable();
-
-renderPlatforms();
-
-loadEngagement();
-
-renderHashtags();
-
-renderPlatformComparison();
-
-buildMonthlyFilters();
-
-buildWeeklyYearFilter();
-
-const weeklyMonthFilter =
-    document.getElementById("weeklyMonthFilter");
-
-if(weeklyMonthFilter){
-
-    weeklyMonthFilter.value =
-        new Date().getMonth();
-
-}
-
-document
-.getElementById("monthlyFilter")
-?.addEventListener("change", renderMonthlyReport);
-
-document
-.getElementById("monthlyYearFilter")
-?.addEventListener("change", renderMonthlyReport);
-
-
-document
-.getElementById("weeklyMonthFilter")
-?.addEventListener("change", renderWeeklyReport);
-
-document
-.getElementById("weeklyFilter")
-?.addEventListener("change", renderWeeklyReport);
-
-document
-.getElementById("weeklyYearFilter")
-?.addEventListener("change", renderWeeklyReport);
-
-renderMonthlyReport();
-
-if(
-    document.getElementById("weeklyFilter") &&
-    document.getElementById("weeklyMonthFilter")
-){
-
-    renderWeeklyReport();
-
-}
-
-
-
-
-// GLOBAL ACCESS
-
-window.account =
-account;
-
-
-window.profile =
-profile;
