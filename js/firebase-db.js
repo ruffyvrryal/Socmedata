@@ -19,17 +19,40 @@ import {
 // =====================================
 
 import {
-    db
+    db,
+    auth
 } from "./firebase.js";
+
+// =====================================
+// CURRENT AUTHENTICATED USER
+// =====================================
+
+export function getCurrentUser(){
+
+    return auth.currentUser || null;
+
+}
 
 
 // =====================================
-// GET ALL PROFILES
+// GET PROFILES FOR CURRENT USER
 // =====================================
 
 export async function getProfiles(){
 
     try{
+
+        const user = getCurrentUser();
+
+        if(!user){
+
+            console.warn(
+                "No authenticated user. Cannot load Vaults."
+            );
+
+            return [];
+
+        }
 
         const snapshot =
             await getDocs(
@@ -39,37 +62,46 @@ export async function getProfiles(){
                 )
             );
 
-
         const profiles = [];
 
-
         snapshot.forEach(
-            document => {
+            (docSnapshot) => {
 
-                profiles.push({
+                const data =
+                    docSnapshot.data();
 
-                    id:
-                        document.id,
+                if(
+                    data.ownerId === user.uid
+                ){
 
-                    ...document.data()
+                    profiles.push({
 
-                });
+                        ...data,
+
+                        firestoreId:
+                            docSnapshot.id
+
+                    });
+
+                }
 
             }
         );
 
+        console.log(
+            "User Vaults loaded:",
+            profiles
+        );
 
         return profiles;
 
     }
-
     catch(error){
 
         console.error(
-            "Error loading profiles:",
+            "Failed to load user Vaults:",
             error
         );
-
 
         return [];
 
@@ -79,7 +111,7 @@ export async function getProfiles(){
 
 
 // =====================================
-// GET ONE PROFILE
+// GET ONE PROFILE FOR CURRENT USER
 // =====================================
 
 export async function getProfile(
@@ -88,37 +120,74 @@ export async function getProfile(
 
     try{
 
+        const user =
+            getCurrentUser();
+
+        if(!user){
+
+            console.warn(
+                "No authenticated user. Cannot load Vault."
+            );
+
+            return null;
+
+        }
+
         const profileRef =
             doc(
                 db,
                 "profiles",
-                String(
-                    profileId
-                )
+                String(profileId)
             );
-
 
         const snapshot =
             await getDoc(
                 profileRef
             );
 
-
         if(
             !snapshot.exists()
         ){
+
+            console.warn(
+                "Profile document does not exist:",
+                String(profileId)
+            );
 
             return null;
 
         }
 
+        const data =
+            snapshot.data();
+
+        // =================================
+        // SECURITY / OWNERSHIP CHECK
+        // =================================
+
+        if(
+            data.ownerId !== user.uid
+        ){
+
+            console.warn(
+                "Profile does not belong to current user:",
+                String(profileId)
+            );
+
+            return null;
+
+        }
 
         return {
 
+            ...data,
+
             id:
+                data.id ??
                 snapshot.id,
 
-            ...snapshot.data()
+            firestoreId:
+                snapshot.id
 
         };
 
@@ -130,7 +199,6 @@ export async function getProfile(
             "Error loading profile:",
             error
         );
-
 
         return null;
 

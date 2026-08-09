@@ -14,6 +14,9 @@ import {
     getProfile
 } from "./firebase-db.js";
 
+import {
+    auth
+} from "./firebase.js";
 
 // =====================================
 // MONTH NAMES
@@ -678,7 +681,27 @@ async function initializeCalendar() {
 }
 
 
-initializeCalendar();
+auth.onAuthStateChanged(
+    (user) => {
+
+        if (user) {
+
+            console.log(
+                "Calendar: Authentication ready."
+            );
+
+            initializeCalendar();
+
+        } else {
+
+            console.log(
+                "Calendar: No authenticated user."
+            );
+
+        }
+
+    }
+);
 
 
 // =====================================

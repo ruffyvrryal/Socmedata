@@ -8,6 +8,10 @@ import {
     saveProfile
 } from "./firebase-db.js";
 
+import {
+    auth
+} from "./firebase.js";
+
 
 // =============================
 // APPLICATION DATA
@@ -1723,7 +1727,27 @@ async function initializeDashboard() {
 }
 
 
-initializeDashboard();
+auth.onAuthStateChanged(
+    (user) => {
+
+        if (user) {
+
+            console.log(
+                "Dashboard: Authentication ready."
+            );
+
+            initializeDashboard();
+
+        } else {
+
+            console.log(
+                "Dashboard: No authenticated user."
+            );
+
+        }
+
+    }
+);
 
 
 // =============================

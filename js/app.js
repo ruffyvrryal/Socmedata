@@ -6,8 +6,13 @@
 import {
     getProfiles,
     saveProfile,
-    deleteProfile
+    deleteProfile,
+    getCurrentUser
 } from "./firebase-db.js";
+
+import {
+    auth
+} from "./firebase.js";
 
 
 // =====================================
@@ -435,24 +440,17 @@ saveCreateVault.onclick =
 
 
         const newProfile = {
-
-            id: Date.now(),
-
-            name: name,
-
-            description:
-                description ||
-                "New profile",
-
-            accounts: [],
-
-            contents: [],
-
-            schedules: [],
-
-            activities: []
-
-        };
+    id: Date.now(),
+    name: name,
+    description:
+        description ||
+        "New profile",
+    accounts: [],
+    contents: [],
+    schedules: [],
+    activities: [],
+    ownerId: getCurrentUser()?.uid || null
+};
 
 
         try{
@@ -844,4 +842,24 @@ if(searchVault){
 // INITIALIZE
 // =====================================
 
-loadProfiles();
+auth.onAuthStateChanged(
+    (user) => {
+
+        if(user){
+
+            console.log(
+                "Authentication ready. Loading Vaults..."
+            );
+
+            loadProfiles();
+
+        }else{
+
+            console.log(
+                "No authenticated user."
+            );
+
+        }
+
+    }
+);

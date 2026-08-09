@@ -15,6 +15,10 @@ import {
     saveProfile
 } from "./firebase-db.js";
 
+import {
+    auth
+} from "./firebase.js";
+
 
 // =====================================
 // ACTIVE IDS
@@ -3350,7 +3354,27 @@ function initializeAccountPage(){
 // START
 // =====================================
 
-loadActiveProfile();
+auth.onAuthStateChanged(
+    (user) => {
+
+        if (user) {
+
+            console.log(
+                "Account: Authentication ready."
+            );
+
+            loadActiveProfile();
+
+        } else {
+
+            console.log(
+                "Account: No authenticated user."
+            );
+
+        }
+
+    }
+);
 
 
 // =====================================
