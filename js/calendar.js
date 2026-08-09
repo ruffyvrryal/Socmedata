@@ -1,5 +1,22 @@
 // =====================================
 // SOCMEDATA CALENDAR
+// FIRESTORE VERSION
+// =====================================
+
+console.log("CALENDAR.JS LOADED - FIRESTORE VERSION");
+
+
+// =====================================
+// FIREBASE
+// =====================================
+
+import {
+    getProfile
+} from "./firebase-db.js";
+
+
+// =====================================
+// MONTH NAMES
 // =====================================
 
 const monthNames = [
@@ -17,57 +34,273 @@ const monthNames = [
     "December"
 ];
 
+
+// =====================================
+// APPLICATION STATE
+// =====================================
+
 let currentDate = new Date();
 
+let profile = null;
+let account = null;
+
+let activeProfileId =
+    localStorage.getItem("activeProfileId");
+
+let activeAccountId =
+    localStorage.getItem("activeAccountId");
+
+
 // =====================================
-// CALENDAR ENGINE
+// LOAD FIRESTORE DATA
 // =====================================
 
-function getContentsByDate(date){
+async function loadCalendarData() {
 
-    if (!window.account) {
-        return [];
+    try {
+
+        if (!activeProfileId) {
+
+            console.warn(
+                "Calendar: No active profile ID."
+            );
+
+            return false;
+        }
+
+        profile =
+            await getProfile(activeProfileId);
+
+        if (!profile) {
+
+            console.warn(
+                "Calendar: Profile not found."
+            );
+
+            return false;
+        }
+
+
+        // =====================================
+        // GET ACCOUNTS
+        // =====================================
+
+        const accounts =
+            Array.isArray(profile.accounts)
+                ? profile.accounts
+                : [];
+
+
+        // =====================================
+        // FIND ACTIVE ACCOUNT
+        // =====================================
+
+        account =
+            accounts.find(function(acc) {
+
+                return String(acc.id) ===
+                    String(activeAccountId);
+
+            });
+
+
+        // =====================================
+        // FALLBACK
+        // =====================================
+
+        if (!account && accounts.length > 0) {
+
+            account = accounts[0];
+
+            activeAccountId =
+                account.id;
+
+            localStorage.setItem(
+                "activeAccountId",
+                activeAccountId
+            );
+
+        }
+
+
+        // =====================================
+        // NO ACCOUNT
+        // =====================================
+
+        if (!account) {
+
+            console.warn(
+                "Calendar: No account found."
+            );
+
+            return false;
+        }
+
+
+        // =====================================
+        // GLOBAL DATA
+        // =====================================
+
+        window.profile = profile;
+        window.account = account;
+
+
+        console.log(
+            "Calendar Firebase data loaded:",
+            account
+        );
+
+
+        return true;
+
     }
 
-    const contents = Array.isArray(window.account.contents)
-        ? window.account.contents
-        : [];
+    catch (error) {
 
-    return contents.filter(function(content){
+        console.error(
+            "Calendar: Firebase loading failed.",
+            error
+        );
 
-        return content.date === date;
+        return false;
+
+    }
+
+}
+
+
+// =====================================
+// GET ACCOUNT CONTENTS
+// =====================================
+
+function getAccountContents() {
+
+    if (!account) {
+
+        return [];
+
+    }
+
+
+    if (!Array.isArray(account.contents)) {
+
+        return [];
+
+    }
+
+
+    return account.contents;
+
+}
+
+
+// =====================================
+// GET CONTENTS BY DATE
+// =====================================
+
+function getContentsByDate(date) {
+
+    const contents =
+        getAccountContents();
+
+
+    return contents.filter(function(content) {
+
+        return String(content.date || "") ===
+            String(date);
 
     });
 
 }
 
 
+// =====================================
+// RENDER CALENDAR
+// =====================================
+
 function renderCalendar() {
 
-    const month = currentDate.getMonth();
-    const year = currentDate.getFullYear();
+    const month =
+        currentDate.getMonth();
 
-    const monthTitle = document.getElementById("calendarMonth");
-    const calendarGrid = document.getElementById("calendarGrid");
+    const year =
+        currentDate.getFullYear();
 
-    if (!monthTitle || !calendarGrid) return;
 
-    monthTitle.textContent = `${monthNames[month]} ${year}`;
+    const monthTitle =
+        document.getElementById(
+            "calendarMonth"
+        );
+
+    const calendarGrid =
+        document.getElementById(
+            "calendarGrid"
+        );
+
+
+    if (!monthTitle || !calendarGrid) {
+
+        return;
+
+    }
+
+
+    // =====================================
+    // MONTH TITLE
+    // =====================================
+
+    monthTitle.textContent =
+        `${monthNames[month]} ${year}`;
+
 
     calendarGrid.innerHTML = "";
 
-    const firstDay = new Date(year, month, 1).getDay();
 
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    // =====================================
+    // CALENDAR INFORMATION
+    // =====================================
 
-    const daysInPrevMonth = new Date(year, month, 0).getDate();
+    const firstDay =
+        new Date(
+            year,
+            month,
+            1
+        ).getDay();
 
-    // Previous month days
-    for (let i = firstDay; i > 0; i--) {
 
-        const cell = document.createElement("div");
+    const daysInMonth =
+        new Date(
+            year,
+            month + 1,
+            0
+        ).getDate();
 
-        cell.className = "calendar-day other-month";
+
+    const daysInPrevMonth =
+        new Date(
+            year,
+            month,
+            0
+        ).getDate();
+
+
+    // =====================================
+    // PREVIOUS MONTH DAYS
+    // =====================================
+
+    for (
+        let i = firstDay;
+        i > 0;
+        i--
+    ) {
+
+        const cell =
+            document.createElement("div");
+
+
+        cell.className =
+            "calendar-day other-month";
+
 
         cell.innerHTML = `
             <div class="day-number">
@@ -75,140 +308,234 @@ function renderCalendar() {
             </div>
         `;
 
+
         calendarGrid.appendChild(cell);
 
     }
 
-    // Current month days
-    const today = new Date();
 
-    for (let day = 1; day <= daysInMonth; day++) {
+    // =====================================
+    // TODAY
+    // =====================================
 
-        const cell = document.createElement("div");
+    const today =
+        new Date();
 
-        cell.className = "calendar-day";
+
+    // =====================================
+    // CURRENT MONTH DAYS
+    // =====================================
+
+    for (
+        let day = 1;
+        day <= daysInMonth;
+        day++
+    ) {
+
+        const cell =
+            document.createElement("div");
+
+
+        cell.className =
+            "calendar-day";
+
+
+        // =====================================
+        // DATE STRING
+        // =====================================
 
         const dateString =
-    `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-cell.dataset.date = dateString;
+
+        cell.dataset.date =
+            dateString;
+
+
+        // =====================================
+        // TODAY CLASS
+        // =====================================
 
         if (
             day === today.getDate() &&
             month === today.getMonth() &&
             year === today.getFullYear()
         ) {
+
             cell.classList.add("today");
+
         }
 
+
+        // =====================================
+        // DAY HTML
+        // =====================================
+
         cell.innerHTML = `
-    <div class="day-number">${day}</div>
-    <div class="calendar-events"></div>
-`;
+            <div class="day-number">
+                ${day}
+            </div>
 
-const dayContents =
-getContentsByDate(dateString);
-
-if(dayContents.length > 0){
-
-    const eventContainer =
-    cell.querySelector(".calendar-events");
-
-eventContainer.innerHTML = "";
-
-dayContents.slice(0, 2).forEach(function(post){
-
-    let shortCaption =
-    (post.caption || "Untitled")
-    .substring(0,25);
+            <div class="calendar-events"></div>
+        `;
 
 
-    let statusClass = 
-post.status.toLowerCase();
+        // =====================================
+        // CONTENT FOR DATE
+        // =====================================
+
+        const dayContents =
+            getContentsByDate(
+                dateString
+            );
 
 
-if(post.status === "Published"){
+        // =====================================
+        // RENDER EVENTS
+        // =====================================
 
-    statusClass = "published";
+        if (dayContents.length > 0) {
 
-}
-
-
-else if(post.status === "Scheduled"){
-
-    statusClass = "scheduled";
-
-}
+            const eventContainer =
+                cell.querySelector(
+                    ".calendar-events"
+                );
 
 
-else if(post.status === "Private"){
+            if (eventContainer) {
 
-    statusClass = "private";
-
-}
-
-
-eventContainer.innerHTML += `
-
-<div class="calendar-event ${statusClass}">
+                eventContainer.innerHTML =
+                    "";
 
 
-    <span class="event-platform">
+                dayContents
+                    .slice(0, 2)
+                    .forEach(function(post) {
 
-        ${getPlatformEmoji(post.platform)}
-
-    </span>
-
-
-    <span class="event-title">
-
-        ${shortCaption}
-
-    </span>
+                        const shortCaption =
+                            String(
+                                post.caption ||
+                                "Untitled"
+                            ).substring(
+                                0,
+                                25
+                            );
 
 
-</div>
+                        const statusClass =
+                            getStatusClass(
+                                post.status
+                            );
 
-`;
 
-});
+                        const event =
+                            document.createElement(
+                                "div"
+                            );
 
-if(dayContents.length > 2){
 
-    eventContainer.innerHTML += `
-        <div class="calendar-more">
-            +${dayContents.length - 2} more
-        </div>
-    `;
+                        event.className =
+                            `calendar-event ${statusClass}`;
 
-}
 
-}
+                        event.innerHTML = `
+                            <span class="event-platform">
+                                ${getPlatformEmoji(post.platform)}
+                            </span>
 
-cell.addEventListener("click", function () {
+                            <span class="event-title">
+                                ${escapeHTML(shortCaption)}
+                            </span>
+                        `;
 
-    openCalendarDay(cell.dataset.date);
 
-});
+                        eventContainer.appendChild(
+                            event
+                        );
 
-calendarGrid.appendChild(cell);
+                    });
+
+
+                // =====================================
+                // MORE CONTENT
+                // =====================================
+
+                if (dayContents.length > 2) {
+
+                    const more =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    more.className =
+                        "calendar-more";
+
+
+                    more.textContent =
+                        `+${dayContents.length - 2} more`;
+
+
+                    eventContainer.appendChild(
+                        more
+                    );
+
+                }
+
+            }
+
+        }
+
+
+        // =====================================
+        // DAY CLICK
+        // =====================================
+
+        cell.addEventListener(
+            "click",
+            function() {
+
+                openCalendarDay(
+                    dateString
+                );
+
+            }
+        );
+
+
+        calendarGrid.appendChild(cell);
 
     }
 
-    // Fill remaining cells to make 42
-    while (calendarGrid.children.length < 42) {
+
+    // =====================================
+    // COMPLETE 42 CELLS
+    // =====================================
+
+    while (
+        calendarGrid.children.length < 42
+    ) {
 
         const nextDay =
             calendarGrid.children.length -
-            (firstDay + daysInMonth) + 1;
+            (firstDay + daysInMonth) +
+            1;
 
-        const cell = document.createElement("div");
 
-        cell.className = "calendar-day other-month";
+        const cell =
+            document.createElement("div");
+
+
+        cell.className =
+            "calendar-day other-month";
+
 
         cell.innerHTML = `
-            <div class="day-number">${nextDay}</div>
+            <div class="day-number">
+                ${nextDay}
+            </div>
         `;
+
 
         calendarGrid.appendChild(cell);
 
@@ -216,159 +543,385 @@ calendarGrid.appendChild(cell);
 
 }
 
-const prevBtn = document.getElementById("prevMonth");
-const nextBtn = document.getElementById("nextMonth");
+
+// =====================================
+// STATUS CLASS
+// =====================================
+
+function getStatusClass(status) {
+
+    const normalized =
+        String(
+            status || "Scheduled"
+        ).toLowerCase();
+
+
+    if (normalized === "published") {
+
+        return "published";
+
+    }
+
+
+    if (normalized === "scheduled") {
+
+        return "scheduled";
+
+    }
+
+
+    if (normalized === "private") {
+
+        return "private";
+
+    }
+
+
+    if (normalized === "draft") {
+
+        return "draft";
+
+    }
+
+
+    return "scheduled";
+
+}
+
+
+// =====================================
+// PREVIOUS MONTH
+// =====================================
+
+const prevBtn =
+    document.getElementById(
+        "prevMonth"
+    );
+
 
 if (prevBtn) {
 
-    prevBtn.addEventListener("click", () => {
+    prevBtn.addEventListener(
+        "click",
+        function() {
 
-        currentDate.setMonth(currentDate.getMonth() - 1);
+            currentDate.setMonth(
+                currentDate.getMonth() - 1
+            );
 
-        renderCalendar();
 
-    });
+            renderCalendar();
+
+        }
+    );
 
 }
+
+
+// =====================================
+// NEXT MONTH
+// =====================================
+
+const nextBtn =
+    document.getElementById(
+        "nextMonth"
+    );
+
 
 if (nextBtn) {
 
-    nextBtn.addEventListener("click", () => {
+    nextBtn.addEventListener(
+        "click",
+        function() {
 
-        currentDate.setMonth(currentDate.getMonth() + 1);
+            currentDate.setMonth(
+                currentDate.getMonth() + 1
+            );
 
-        renderCalendar();
 
-    });
+            renderCalendar();
+
+        }
+    );
 
 }
 
-function initializeCalendar(){
 
-    if (!window.account) {
-        console.log("Calendar waiting for account data...");
+// =====================================
+// INITIALIZE CALENDAR
+// =====================================
+
+async function initializeCalendar() {
+
+    console.log(
+        "Calendar: Initializing..."
+    );
+
+
+    const loaded =
+        await loadCalendarData();
+
+
+    if (!loaded) {
+
+        console.warn(
+            "Calendar: Firebase account data unavailable."
+        );
+
         return;
+
     }
+
 
     renderCalendar();
 
 }
 
+
 initializeCalendar();
 
-function openCalendarDay(date){
+
+// =====================================
+// OPEN CALENDAR DAY
+// =====================================
+
+function openCalendarDay(date) {
 
     const modal =
-        document.getElementById("calendarModal");
+        document.getElementById(
+            "calendarModal"
+        );
+
 
     const title =
-        document.getElementById("calendarModalTitle");
+        document.getElementById(
+            "calendarModalTitle"
+        );
+
 
     const content =
-        document.getElementById("calendarModalContent");
+        document.getElementById(
+            "calendarModalContent"
+        );
 
-    title.textContent = date;
+
+    if (!modal || !title || !content) {
+
+        return;
+
+    }
+
+
+    // =====================================
+    // MODAL TITLE
+    // =====================================
+
+    title.textContent =
+        date;
+
+
+    // =====================================
+    // GET CONTENT
+    // =====================================
 
     const dayContents =
-getContentsByDate(date);
+        getContentsByDate(date);
 
-    if(dayContents.length === 0){
+
+    // =====================================
+    // NO CONTENT
+    // =====================================
+
+    if (dayContents.length === 0) {
 
         content.innerHTML = `
-            <p>No content scheduled for this day.</p>
+            <p>
+                No content scheduled for this day.
+            </p>
         `;
 
-    }else{
+    }
 
-        content.innerHTML = "";
 
-        dayContents.forEach(function(post){
+    // =====================================
+    // CONTENT EXISTS
+    // =====================================
 
-            content.innerHTML += `
+    else {
 
-                <div class="calendar-post-card">
+        content.innerHTML =
+            "";
 
+
+        dayContents.forEach(
+            function(post) {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                card.className =
+                    "calendar-post-card";
+
+
+                card.innerHTML = `
                     <h3>
                         ${getPlatformEmoji(post.platform)}
-                        ${post.platform}
+                        ${escapeHTML(
+                            post.platform || "-"
+                        )}
                     </h3>
 
                     <p>
                         <strong>Caption:</strong><br>
-                        ${post.caption || "-"}
-                    </p>
-
-<p>
-    📌 Status:
-    ${post.status || "Scheduled"}
-</p>
-
-                    <p>
-    👁 ${formatNumber(post.impressions || 0)} Impressions
-</p>
-
-<p>
-    👥 ${formatNumber(post.reach || 0)} Reach
-</p>
-
-                    <p>
-                        ❤️ ${formatNumber(post.likes || 0)} Likes
+                        ${escapeHTML(
+                            post.caption || "-"
+                        )}
                     </p>
 
                     <p>
-                        💬 ${formatNumber(post.comments || 0)} Comments
+                        📌 Status:
+                        ${escapeHTML(
+                            post.status || "Scheduled"
+                        )}
                     </p>
 
                     <p>
-                        🔄 ${formatNumber(post.shares || 0)} Shares
+                        👁
+                        ${formatNumber(
+                            post.impressions || 0
+                        )}
+                        Impressions
                     </p>
 
                     <p>
-                        🔖 ${formatNumber(post.saved || 0)} Saved
+                        👥
+                        ${formatNumber(
+                            post.reach || 0
+                        )}
+                        Reach
                     </p>
 
-                </div>
+                    <p>
+                        ❤️
+                        ${formatNumber(
+                            post.likes || 0
+                        )}
+                        Likes
+                    </p>
 
-            `;
+                    <p>
+                        💬
+                        ${formatNumber(
+                            post.comments || 0
+                        )}
+                        Comments
+                    </p>
 
-        });
+                    <p>
+                        🔄
+                        ${formatNumber(
+                            post.shares || 0
+                        )}
+                        Shares
+                    </p>
+
+                    <p>
+                        🔖
+                        ${formatNumber(
+                            post.saved || 0
+                        )}
+                        Saved
+                    </p>
+                `;
+
+
+                content.appendChild(
+                    card
+                );
+
+            }
+        );
 
     }
 
-    modal.style.display = "flex";
+
+    // =====================================
+    // SHOW MODAL
+    // =====================================
+
+    modal.style.display =
+        "flex";
 
 }
 
+
+// =====================================
+// CLOSE CALENDAR MODAL
+// =====================================
+
 const calendarModal =
-    document.getElementById("calendarModal");
+    document.getElementById(
+        "calendarModal"
+    );
+
 
 const closeCalendarModal =
-    document.getElementById("closeCalendarModal");
+    document.getElementById(
+        "closeCalendarModal"
+    );
+
 
 if (closeCalendarModal) {
 
-    closeCalendarModal.addEventListener("click", function(){
+    closeCalendarModal.addEventListener(
+        "click",
+        function() {
 
-        calendarModal.style.display = "none";
+            if (calendarModal) {
 
-    });
+                calendarModal.style.display =
+                    "none";
+
+            }
+
+        }
+    );
 
 }
 
-window.addEventListener("click", function(e){
 
-    if(e.target === calendarModal){
+// =====================================
+// CLOSE MODAL ON BACKDROP
+// =====================================
 
-        calendarModal.style.display = "none";
+window.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            calendarModal &&
+            event.target === calendarModal
+        ) {
+
+            calendarModal.style.display =
+                "none";
+
+        }
 
     }
+);
 
-});
 
+// =====================================
+// PLATFORM EMOJI
+// =====================================
 
-function getPlatformEmoji(platform){
+function getPlatformEmoji(platform) {
 
-    switch(platform){
+    switch (platform) {
 
         case "Instagram":
             return "📸";
@@ -394,3 +947,52 @@ function getPlatformEmoji(platform){
     }
 
 }
+
+
+// =====================================
+// NUMBER FORMAT
+// =====================================
+
+function formatNumber(value) {
+
+    const number =
+        Number(value) || 0;
+
+
+    return number.toLocaleString(
+        "en-US"
+    );
+
+}
+
+
+// =====================================
+// HTML ESCAPE
+// =====================================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// =====================================
+// GLOBAL FUNCTIONS
+// =====================================
+
+window.renderCalendar =
+    renderCalendar;
+
+
+window.openCalendarDay =
+    openCalendarDay;
+
+
+window.getContentsByDate =
+    getContentsByDate;

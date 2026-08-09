@@ -18,7 +18,139 @@ let profiles = [];
 let profile = null;
 
 const activeProfileId =
-localStorage.getItem("activeProfileId");
+    localStorage.getItem("activeProfileId");
+
+
+// =============================
+// ELEMENTS
+// =============================
+
+const vaultTitle =
+    document.getElementById("vaultTitle");
+
+const currentVault =
+    document.getElementById("currentVault");
+
+const backToVaults =
+    document.getElementById("backToVaults");
+
+const searchAccount =
+    document.getElementById("searchAccount");
+
+const addAccount =
+    document.getElementById("addAccount");
+
+const accountList =
+    document.getElementById("accountList");
+
+
+// =============================
+// ADD ACCOUNT MODAL
+// =============================
+
+const accountModal =
+    document.getElementById("accountModal");
+
+const closeAccountModal =
+    document.getElementById("closeAccountModal");
+
+const cancelAccount =
+    document.getElementById("cancelAccount");
+
+const saveAccount =
+    document.getElementById("saveAccount");
+
+const accountName =
+    document.getElementById("accountName");
+
+const accountDescription =
+    document.getElementById("accountDescription");
+
+const accountIconUpload =
+    document.getElementById("accountIconUpload");
+
+const iconPreview =
+    document.getElementById("iconPreview");
+
+const iconPreviewBox =
+    document.getElementById("iconPreviewBox");
+
+const accountIconURL =
+    document.getElementById("accountIconURL");
+
+
+// =============================
+// EDIT ACCOUNT MODAL
+// =============================
+
+const editAccountModal =
+    document.getElementById("editAccountModal");
+
+const closeEditAccountModal =
+    document.getElementById("closeEditAccountModal");
+
+const cancelEditAccount =
+    document.getElementById("cancelEditAccount");
+
+const saveEditAccount =
+    document.getElementById("saveEditAccount");
+
+const editAccountName =
+    document.getElementById("editAccountName");
+
+const editAccountDescription =
+    document.getElementById("editAccountDescription");
+
+const editAccountIconUpload =
+    document.getElementById("editAccountIconUpload");
+
+const editAccountIconURL =
+    document.getElementById("editAccountIconURL");
+
+const editIconPreview =
+    document.getElementById("editIconPreview");
+
+const editIconPreviewBox =
+    document.getElementById("editIconPreviewBox");
+
+
+// =============================
+// DELETE ACCOUNT MODAL
+// =============================
+
+const deleteAccountModal =
+    document.getElementById(
+        "deleteAccountModal"
+    );
+
+const closeDeleteAccountModal =
+    document.getElementById(
+        "closeDeleteAccountModal"
+    );
+
+const cancelDeleteAccount =
+    document.getElementById(
+        "cancelDeleteAccount"
+    );
+
+const confirmDeleteAccount =
+    document.getElementById(
+        "confirmDeleteAccount"
+    );
+
+const deleteAccountText =
+    document.getElementById(
+        "deleteAccountText"
+    );
+
+
+// =============================
+// SELECTED ACCOUNT STATE
+// =============================
+
+let selectedEditAccount = null;
+
+let selectedDeleteAccount = null;
 
 
 // =============================
@@ -37,7 +169,9 @@ async function loadActiveVault() {
     );
 
 
-    // No active vault ID
+    // =================================
+    // NO ACTIVE VAULT
+    // =================================
 
     if (
         activeProfileId === null ||
@@ -62,7 +196,9 @@ async function loadActiveVault() {
 
     try {
 
-        // Load vaults from Firestore
+        // =================================
+        // LOAD FROM FIRESTORE
+        // =================================
 
         profiles =
             await getProfiles();
@@ -74,7 +210,9 @@ async function loadActiveVault() {
         );
 
 
-        // Find selected vault
+        // =================================
+        // FIND ACTIVE VAULT
+        // =================================
 
         profile =
             profiles.find(
@@ -83,8 +221,6 @@ async function loadActiveVault() {
                     String(activeProfileId)
             );
 
-
-        // Vault does not exist
 
         if (!profile) {
 
@@ -105,7 +241,9 @@ async function loadActiveVault() {
         }
 
 
-        // Make sure arrays exist
+        // =================================
+        // MAKE SURE DATA ARRAYS EXIST
+        // =================================
 
         if (
             !Array.isArray(
@@ -168,7 +306,6 @@ async function loadActiveVault() {
             error
         );
 
-
         alert(
             "Unable to load vault."
         );
@@ -182,874 +319,358 @@ async function loadActiveVault() {
 
 }
 
-// =============================
-// ELEMENTS
-// =============================
-
-const vaultTitle =
-document.getElementById("vaultTitle");
-
-const currentVault =
-document.getElementById("currentVault");
-
-const backToVaults =
-document.getElementById("backToVaults");
-
-const searchAccount =
-document.getElementById("searchAccount");
-
-const addAccount =
-document.getElementById("addAccount");
-
-const accountList =
-document.getElementById("accountList");
-
-// Add Account Modal
-
-const accountModal =
-document.getElementById("accountModal");
-
-const closeAccountModal =
-document.getElementById("closeAccountModal");
-
-const cancelAccount =
-document.getElementById("cancelAccount");
-
-const saveAccount =
-document.getElementById("saveAccount");
-
-const accountName =
-document.getElementById("accountName");
-
-const accountDescription =
-document.getElementById("accountDescription");
-
-const accountIconUpload =
-document.getElementById("accountIconUpload");
-
-const iconPreview =
-document.getElementById("iconPreview");
-
-const iconPreviewBox =
-document.getElementById("iconPreviewBox");
-
-const accountIconURL =
-document.getElementById("accountIconURL");
-
-// =============================
-// EDIT ACCOUNT MODAL ELEMENTS
-// =============================
-
-const editAccountModal =
-document.getElementById("editAccountModal");
-
-
-const closeEditAccountModal =
-document.getElementById("closeEditAccountModal");
-
-
-const cancelEditAccount =
-document.getElementById("cancelEditAccount");
-
-
-const saveEditAccount =
-document.getElementById("saveEditAccount");
-
-
-const editAccountName =
-document.getElementById("editAccountName");
-
-
-const editAccountDescription =
-document.getElementById("editAccountDescription");
-
-
-const editAccountIconUpload =
-document.getElementById("editAccountIconUpload");
-
-
-const editAccountIconURL =
-document.getElementById("editAccountIconURL");
-
-
-// store account being edited
-
-let selectedEditAccount = null;
-
-// store account being deleted
-
-let selectedDeleteAccount = null;
-
-// =============================
-// DELETE MODAL ACTIONS
-// =============================
-
-
-closeDeleteAccountModal.onclick=function(){
-
-    deleteAccountModal.style.display="none";
-
-};
-
-
-
-cancelDeleteAccount.onclick=function(){
-
-    deleteAccountModal.style.display="none";
-
-};
-
-
-
-confirmDeleteAccount.onclick=function(){
-
-
-    if(!selectedDeleteAccount)
-    return;
-
-
-
-    profile.accounts =
-    profile.accounts.filter(
-
-        item =>
-        item.id !== selectedDeleteAccount.id
-
-    );
-
-
-
-    localStorage.setItem(
-
-        "profiles",
-
-        JSON.stringify(profiles)
-
-    );
-
-
-
-    deleteAccountModal.style.display="none";
-
-
-
-    selectedDeleteAccount=null;
-
-
-
-    showAccounts();
-
-
-};
-
-// =============================
-// IMAGE PREVIEW
-// =============================
-
-
-accountIconUpload.onchange=function(){
-
-
-    let file =
-    accountIconUpload.files[0];
-
-
-    if(!file){
-
-        return;
-
-    }
-
-
-    let reader =
-    new FileReader();
-
-
-    reader.onload=function(e){
-
-
-        iconPreview.src =
-        e.target.result;
-
-
-        iconPreviewBox.style.display =
-        "flex";
-
-
-    };
-
-
-    reader.readAsDataURL(file);
-
-
-};
-
-accountIconURL.oninput=function(){
-
-
-    if(accountIconURL.value){
-
-
-        iconPreview.src =
-        accountIconURL.value;
-
-
-        iconPreviewBox.style.display =
-        "flex";
-
-
-    }
-
-
-};
-
-const editIconPreview =
-document.getElementById("editIconPreview");
-
-
-const editIconPreviewBox =
-document.getElementById("editIconPreviewBox");
-
-
-
-editAccountIconUpload.onchange=function(){
-
-
-let file =
-editAccountIconUpload.files[0];
-
-
-if(!file)
-return;
-
-
-let reader =
-new FileReader();
-
-
-reader.onload=function(e){
-
-
-editIconPreview.src =
-e.target.result;
-
-
-editIconPreviewBox.style.display="flex";
-
-
-};
-
-
-reader.readAsDataURL(file);
-
-
-};
-
-
-
-editAccountIconURL.oninput=function(){
-
-
-    if(
-        editIconPreview &&
-        editIconPreviewBox &&
-        editAccountIconURL.value
-    ){
-
-        editIconPreview.src =
-        editAccountIconURL.value;
-
-
-        editIconPreviewBox.style.display="flex";
-
-    }
-
-
-};
 
 // =============================
 // NAVIGATION
 // =============================
 
-backToVaults.onclick=function(){
+if (backToVaults) {
 
-    window.location.href="../index.html";
+    backToVaults.onclick =
+        function () {
 
-};
+            window.location.href =
+                "../index.html";
 
-addAccount.onclick=function(){
+        };
 
-    iconPreview.src="";
-
-iconPreviewBox.style.display="none";
-
-    accountName.value="";
-
-    accountDescription.value="";
+}
 
 
-    accountIconUpload.value="";
+// =============================
+// OPEN ADD ACCOUNT MODAL
+// =============================
+
+if (addAccount) {
+
+    addAccount.onclick =
+        function () {
+
+            if (iconPreview) {
+
+                iconPreview.src = "";
+
+            }
+
+            if (iconPreviewBox) {
+
+                iconPreviewBox.style.display =
+                    "none";
+
+            }
+
+            accountName.value = "";
+
+            accountDescription.value = "";
+
+            accountIconUpload.value = "";
+
+            accountIconURL.value = "";
+
+            accountModal.style.display =
+                "flex";
+
+        };
+
+}
 
 
-    accountIconURL.value="";
+// =============================
+// CLOSE ADD ACCOUNT MODAL
+// =============================
+
+if (closeAccountModal) {
+
+    closeAccountModal.onclick =
+        function () {
+
+            accountModal.style.display =
+                "none";
+
+        };
+
+}
 
 
-    accountModal.style.display="flex";
+if (cancelAccount) {
 
-};
+    cancelAccount.onclick =
+        function () {
 
-closeAccountModal.onclick=function(){
+            accountModal.style.display =
+                "none";
 
-    accountModal.style.display="none";
+        };
 
-};
+}
 
-cancelAccount.onclick=function(){
 
-    accountModal.style.display="none";
+// =============================
+// IMAGE PREVIEW
+// =============================
 
-};
+if (accountIconUpload) {
+
+    accountIconUpload.onchange =
+        function () {
+
+            const file =
+                accountIconUpload.files[0];
+
+
+            if (!file) {
+
+                return;
+
+            }
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function (event) {
+
+                    iconPreview.src =
+                        event.target.result;
+
+                    iconPreviewBox.style.display =
+                        "flex";
+
+                };
+
+
+            reader.readAsDataURL(file);
+
+        };
+
+}
+
+
+if (accountIconURL) {
+
+    accountIconURL.oninput =
+        function () {
+
+            if (
+                accountIconURL.value
+            ) {
+
+                iconPreview.src =
+                    accountIconURL.value;
+
+                iconPreviewBox.style.display =
+                    "flex";
+
+            }
+
+        };
+
+}
+
+
+// =============================
+// EDIT IMAGE PREVIEW
+// =============================
+
+if (editAccountIconUpload) {
+
+    editAccountIconUpload.onchange =
+        function () {
+
+            const file =
+                editAccountIconUpload.files[0];
+
+
+            if (!file) {
+
+                return;
+
+            }
+
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function (event) {
+
+                    editIconPreview.src =
+                        event.target.result;
+
+                    editIconPreviewBox.style.display =
+                        "flex";
+
+                };
+
+
+            reader.readAsDataURL(file);
+
+        };
+
+}
+
+
+if (editAccountIconURL) {
+
+    editAccountIconURL.oninput =
+        function () {
+
+            if (
+                editIconPreview &&
+                editIconPreviewBox &&
+                editAccountIconURL.value
+            ) {
+
+                editIconPreview.src =
+                    editAccountIconURL.value;
+
+                editIconPreviewBox.style.display =
+                    "flex";
+
+            }
+
+        };
+
+}
+
 
 // =============================
 // CLOSE EDIT ACCOUNT MODAL
 // =============================
 
+if (closeEditAccountModal) {
 
-closeEditAccountModal.onclick=function(){
+    closeEditAccountModal.onclick =
+        function () {
 
-    editAccountModal.style.display="none";
-
-
-    editIconPreview.src="";
-
-    editIconPreviewBox.style.display="none";
-
-};
-
-
-
-cancelEditAccount.onclick=function(){
-
-    editAccountModal.style.display="none";
-
-
-    editIconPreview.src="";
-
-    editIconPreviewBox.style.display="none";
-
-};
-
-// =============================
-// SAVE EDIT ACCOUNT
-// =============================
-
-
-saveEditAccount.onclick=function(){
-
-
-    if(!selectedEditAccount){
-
-        return;
-
-    }
-
-
-
-    if(editAccountName.value.trim()===""){
-
-
-        alert(
-            "Account name cannot be empty."
-        );
-
-
-        return;
-
-    }
-
-
-
-    let icon =
-    selectedEditAccount.icon || "";
-
-
-
-    // If new image uploaded
-
-    if(editAccountIconUpload.files[0]){
-
-
-        let reader =
-        new FileReader();
-
-
-
-        reader.onload=function(e){
-
-
-            updateAccount(
-                e.target.result
-            );
-
+            closeEditAccount();
 
         };
 
+}
 
 
-        reader.readAsDataURL(
-            editAccountIconUpload.files[0]
-        );
+if (cancelEditAccount) {
 
+    cancelEditAccount.onclick =
+        function () {
 
+            closeEditAccount();
 
-    }else{
-
-
-        // If URL changed
-
-        icon =
-        editAccountIconURL.value;
-
-
-
-        updateAccount(icon);
-
-
-    }
-
-
-};
-
-saveAccount.onclick=function(){
-
-    if(accountName.value.trim()===""){
-
-        alert("Please enter an account name.");
-
-        return;
-
-    }
-
-    let icon = "";
-
-// if user uploads image
-if(accountIconUpload.files[0]){
-
-    let reader = new FileReader();
-
-
-    reader.onload=function(e){
-
-        icon = e.target.result;
-
-
-        createAccount(icon);
-
-    };
-
-
-    reader.readAsDataURL(
-        accountIconUpload.files[0]
-    );
-
-
-}else{
-
-
-    icon = accountIconURL.value;
-
-
-    createAccount(icon);
+        };
 
 }
 
 
-    localStorage.setItem(
+function closeEditAccount() {
 
-        "profiles",
-
-        JSON.stringify(profiles)
-
-    );
-
-    accountModal.style.display="none";
-
-    showAccounts();
-
-};
-
-// =============================
-// SHOW ACCOUNTS
-// =============================
-
-function showAccounts(){
-
-    console.log("showAccounts()");
-
-    accountList.innerHTML="";
-
-    if(profile.accounts.length===0){
-
-        accountList.innerHTML=`
-
-        <div class="empty-state">
-
-            <h2>Welcome to your Vault</h2>
-
-            <p>
-
-This vault doesn't contain any social media accounts yet.
-
-<br><br>
-
-Create your first account to start organizing your platforms.
-
-</p>
-
-        </div>
-
-        `;
-
-        return;
-
-    }
-
-    let accounts = profile.accounts || [];
-
-if(searchAccount){
-
-    let keyword =
-    searchAccount.value
-    .toLowerCase();
-
-    accounts = accounts.filter(account=>{
-
-        return (account.name || "")
-    .toLowerCase()
-    .includes(keyword);
-
-    });
-
-}
-
-accounts.forEach(account=>{
-
-    const card = document.createElement("div");
-
-    card.className = "account-card";
-
-    card.innerHTML = `
-
-    <div class="account-top">
-
-        <div class="account-icon">
-
-${
-account.icon
-
-?
-
-`<img src="${account.icon}">`
-
-:
-
-"🏢"
-
-}
-
-</div>
-
-        <button class="account-menu">
-    ⋮
-</button>
-
-<div class="account-dropdown">
-
-    <button class="edit-account">
-        ✏️ Edit Account
-    </button>
-
-
-    <button class="delete-account">
-        🗑 Delete Account
-    </button>
-
-</div>
-
-
-    </div>
-
-    <h3>
-        ${account.name}
-    </h3>
-
-    <p>
-        ${account.description || "No description"}
-    </p>
-
-    <div class="account-footer">
-
-        <span class="platform-count">
-            ${(account.platforms || []).length} Connected
-        </span>
-
-        <span class="open-account">
-            Open →
-        </span>
-
-    </div>
-
-    `;
-
-    // =============================
-    // OPEN ACCOUNT
-    // =============================
-
-    const openButton =
-card.querySelector(".open-account");
-
-
-openButton.onclick=function(event){
-
-    console.log("OPEN BUTTON CLICKED");
-
-    console.log(account);
-
-
-    event.stopPropagation();
-
-
-    localStorage.setItem(
-        "activeAccountId",
-        account.id
-    );
-
-
-    window.location.href =
-    "account.html";
-
-};
-
-    // =============================
-    // MENU BUTTON
-    // =============================
-
-    const menuButton =
-card.querySelector(".account-menu");
-
-
-menuButton.onclick=function(event){
-
-    event.stopPropagation();
-
-
-    const dropdown =
-    card.querySelector(".account-dropdown");
-
-    dropdown.onclick=function(event){
-
-    event.stopPropagation();
-
-};
-
-    // close other dropdowns
-    document
-    .querySelectorAll(".account-dropdown")
-    .forEach(menu=>{
-
-        if(menu !== dropdown){
-
-            menu.style.display="none";
-
-        }
-
-    });
-
-
-    dropdown.style.display =
-    dropdown.style.display==="flex"
-    ? "none"
-    : "flex";
-
-};
-
-// =============================
-// EDIT ACCOUNT
-// =============================
-
-const editButton =
-card.querySelector(".edit-account");
-
-
-editButton.onclick=function(event){
-
-    event.stopPropagation();
-
-
-    // save selected account
-
-    selectedEditAccount = account;
-
-
-
-    // load account information
-
-    editAccountName.value =
-    account.name;
-
-
-    editAccountDescription.value =
-    account.description || "";
-
-
-
-    editAccountIconURL.value =
-    account.icon || "";
-
-
-
-    editAccountIconUpload.value = "";
-
-
-
-    // SHOW CURRENT ICON
-
-    if(account.icon){
-
-
-        editIconPreview.src =
-        account.icon;
-
-
-        editIconPreviewBox.style.display =
-        "flex";
-
-
-    }else{
-
-
-        editIconPreview.src = "";
-
-
-        editIconPreviewBox.style.display =
+    editAccountModal.style.display =
         "none";
 
 
-    }
+    selectedEditAccount = null;
 
 
+    if (editAccountIconUpload) {
 
-    // open modal
-
-    editAccountModal.style.display =
-    "flex";
-
-
-};
-
-// =============================
-// DELETE ACCOUNT
-// =============================
-
-const deleteButton =
-card.querySelector(".delete-account");
-
-
-deleteButton.onclick=function(event){
-
-    event.stopPropagation();
-
-
-    // Save account that user wants to delete
-
-    selectedDeleteAccount = account;
-
-
-    // Change modal text
-
-    deleteAccountText.textContent =
-    "Are you sure you want to delete "
-    + account.name
-    + "?";
-
-
-    // Open delete modal
-
-    deleteAccountModal.style.display =
-    "flex";
-
-
-};
-
-    accountList.appendChild(card);
-
-});   // end forEach
-
-// =============================
-// CLOSE DROPDOWN WHEN CLICK OUTSIDE
-// =============================
-
-document.addEventListener("click", function(){
-
-    document
-    .querySelectorAll(".account-dropdown")
-    .forEach(menu=>{
-
-        menu.style.display="none";
-
-    });
-
-});
-
-}      // <-- CLOSE showAccounts()
-
-// =============================
-// SEARCH
-// =============================
-
-if(searchAccount){
-
-    searchAccount.addEventListener(
-        "input",
-        showAccounts
-    );
-
-}
-
-// =============================
-// INITIAL LOAD
-// =============================
-
-async function initializeDashboard() {
-
-    const loaded =
-        await loadActiveVault();
-
-
-    if (!loaded) {
-
-        return;
+        editAccountIconUpload.value =
+            "";
 
     }
 
 
-    // Set vault information
+    if (editAccountIconURL) {
 
-    vaultTitle.textContent =
-        profile.name;
+        editAccountIconURL.value =
+            "";
 
-    currentVault.textContent =
-        profile.name;
+    }
 
 
-    // Render accounts
+    if (editIconPreview) {
 
-    showAccounts();
+        editIconPreview.src =
+            "";
+
+    }
+
+
+    if (editIconPreviewBox) {
+
+        editIconPreviewBox.style.display =
+            "none";
+
+    }
 
 }
 
 
-initializeDashboard();
+// =============================
+// SAVE NEW ACCOUNT
+// =============================
+
+if (saveAccount) {
+
+    saveAccount.onclick =
+        async function () {
+
+            if (
+                accountName.value
+                    .trim() === ""
+            ) {
+
+                alert(
+                    "Please enter an account name."
+                );
+
+                return;
+
+            }
+
+
+            // =================================
+            // HANDLE IMAGE UPLOAD
+            // =================================
+
+            if (
+                accountIconUpload.files[0]
+            ) {
+
+                const reader =
+                    new FileReader();
+
+
+                reader.onload =
+                    async function (event) {
+
+                        await createAccount(
+                            event.target.result
+                        );
+
+                    };
+
+
+                reader.readAsDataURL(
+                    accountIconUpload.files[0]
+                );
+
+            }
+
+            else {
+
+                await createAccount(
+                    accountIconURL.value.trim()
+                );
+
+            }
+
+        };
+
+}
+
 
 // =============================
 // CREATE ACCOUNT
@@ -1069,14 +690,18 @@ async function createAccount(icon) {
             accountDescription.value.trim(),
 
         icon:
-            icon,
+            icon || "",
 
-        platforms: []
+        platforms: [],
+
+        contents: []
 
     };
 
 
-    // Add account to active vault
+    // =================================
+    // ADD LOCALLY
+    // =================================
 
     profile.accounts.push(
         newAccount
@@ -1091,7 +716,9 @@ async function createAccount(icon) {
         );
 
 
-        // Save updated vault
+        // =================================
+        // SAVE ENTIRE VAULT
+        // =================================
 
         const success =
             await saveProfile(profile);
@@ -1099,8 +726,7 @@ async function createAccount(icon) {
 
         if (!success) {
 
-            // Roll back if Firestore failed
-
+            // Roll back
             profile.accounts =
                 profile.accounts.filter(
                     account =>
@@ -1118,13 +744,9 @@ async function createAccount(icon) {
         }
 
 
-        // Close modal
-
-        accountModal.style.display =
-            "none";
-
-
-        // Clear form
+        // =================================
+        // CLEAR FORM
+        // =================================
 
         accountName.value = "";
 
@@ -1140,7 +762,17 @@ async function createAccount(icon) {
             "none";
 
 
-        // Refresh account list
+        // =================================
+        // CLOSE MODAL
+        // =================================
+
+        accountModal.style.display =
+            "none";
+
+
+        // =================================
+        // REFRESH
+        // =================================
 
         showAccounts();
 
@@ -1159,8 +791,7 @@ async function createAccount(icon) {
         );
 
 
-        // Roll back local change
-
+        // Roll back
         profile.accounts =
             profile.accounts.filter(
                 account =>
@@ -1177,67 +808,567 @@ async function createAccount(icon) {
 
 }
 
+
 // =============================
-// UPDATE ACCOUNT
-// =============================
-
-
-function updateAccount(icon){
-
-
-
-    selectedEditAccount.name =
-    editAccountName.value;
-
-
-
-    selectedEditAccount.description =
-    editAccountDescription.value;
-
-
-
-    selectedEditAccount.icon =
-    icon;
-
-
-
-    // =============================
-// DELETE ACCOUNT
-// FIRESTORE
+// SHOW ACCOUNTS
 // =============================
 
-confirmDeleteAccount.onclick = async function () {
+function showAccounts() {
 
-    if (!selectedDeleteAccount) {
+    console.log(
+        "showAccounts()"
+    );
+
+
+    accountList.innerHTML = "";
+
+
+    // =================================
+    // NO ACCOUNTS
+    // =================================
+
+    if (
+        profile.accounts.length === 0
+    ) {
+
+        accountList.innerHTML = `
+
+            <div class="empty-state">
+
+                <h2>
+                    Welcome to your Vault
+                </h2>
+
+                <p>
+
+                    This vault doesn't contain
+                    any social media accounts yet.
+
+                    <br><br>
+
+                    Create your first account
+                    to start organizing your
+                    platforms.
+
+                </p>
+
+            </div>
+
+        `;
 
         return;
 
     }
 
 
-    const deletedAccountId =
-        selectedDeleteAccount.id;
+    let accounts =
+        profile.accounts || [];
 
 
-    // Remove account locally first
+    // =================================
+    // SEARCH
+    // =================================
 
-    profile.accounts =
-        profile.accounts.filter(
-            account =>
-                account.id !==
-                deletedAccountId
-        );
+    if (searchAccount) {
+
+        const keyword =
+            searchAccount.value
+                .toLowerCase()
+                .trim();
+
+
+        accounts =
+            accounts.filter(
+                account => {
+
+                    return (
+                        account.name || ""
+                    )
+                    .toLowerCase()
+                    .includes(keyword);
+
+                }
+            );
+
+    }
+
+
+    // =================================
+    // RENDER ACCOUNTS
+    // =================================
+
+    accounts.forEach(
+        account => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "account-card";
+
+
+            card.innerHTML = `
+
+                <div class="account-top">
+
+                    <div class="account-icon">
+
+                        ${
+                            account.icon
+
+                            ?
+
+                            `<img
+                                src="${account.icon}"
+                            >`
+
+                            :
+
+                            "🏢"
+                        }
+
+                    </div>
+
+
+                    <button
+                        class="account-menu"
+                    >
+                        ⋮
+                    </button>
+
+
+                    <div
+                        class="account-dropdown"
+                    >
+
+                        <button
+                            class="edit-account"
+                        >
+                            ✏️ Edit Account
+                        </button>
+
+
+                        <button
+                            class="delete-account"
+                        >
+                            🗑 Delete Account
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <h3>
+                    ${account.name || ""}
+                </h3>
+
+
+                <p>
+                    ${
+                        account.description ||
+                        "No description"
+                    }
+                </p>
+
+
+                <div class="account-footer">
+
+                    <span class="platform-count">
+
+                        ${
+                            (
+                                account.platforms ||
+                                []
+                            ).length
+                        }
+
+                        Connected
+
+                    </span>
+
+
+                    <span class="open-account">
+
+                        Open →
+
+                    </span>
+
+                </div>
+
+            `;
+
+
+            // =================================
+            // OPEN ACCOUNT
+            // =================================
+
+            const openButton =
+                card.querySelector(
+                    ".open-account"
+                );
+
+
+            openButton.onclick =
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    console.log(
+                        "Opening account:",
+                        account
+                    );
+
+
+                    // =================================
+                    // SAVE ACTIVE ACCOUNT ID
+                    // =================================
+
+                    localStorage.setItem(
+                        "activeAccountId",
+                        String(account.id)
+                    );
+
+
+                    // =================================
+                    // SAVE ACTIVE VAULT ID AGAIN
+                    // =================================
+
+                    localStorage.setItem(
+                        "activeProfileId",
+                        String(profile.id)
+                    );
+
+
+                    window.location.href =
+                        "account.html";
+
+                };
+
+
+            // =================================
+            // ACCOUNT MENU
+            // =================================
+
+            const menuButton =
+                card.querySelector(
+                    ".account-menu"
+                );
+
+
+            const dropdown =
+                card.querySelector(
+                    ".account-dropdown"
+                );
+
+
+            menuButton.onclick =
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    document
+                        .querySelectorAll(
+                            ".account-dropdown"
+                        )
+                        .forEach(
+                            menu => {
+
+                                if (
+                                    menu !==
+                                    dropdown
+                                ) {
+
+                                    menu.style.display =
+                                        "none";
+
+                                }
+
+                            }
+                        );
+
+
+                    dropdown.style.display =
+                        dropdown.style.display ===
+                        "flex"
+
+                        ?
+
+                        "none"
+
+                        :
+
+                        "flex";
+
+                };
+
+
+            dropdown.onclick =
+                function (event) {
+
+                    event.stopPropagation();
+
+                };
+
+
+            // =================================
+            // EDIT ACCOUNT
+            // =================================
+
+            const editButton =
+                card.querySelector(
+                    ".edit-account"
+                );
+
+
+            editButton.onclick =
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    selectedEditAccount =
+                        account;
+
+
+                    editAccountName.value =
+                        account.name || "";
+
+
+                    editAccountDescription.value =
+                        account.description || "";
+
+
+                    editAccountIconURL.value =
+                        account.icon || "";
+
+
+                    editAccountIconUpload.value =
+                        "";
+
+
+                    if (account.icon) {
+
+                        editIconPreview.src =
+                            account.icon;
+
+                        editIconPreviewBox.style.display =
+                            "flex";
+
+                    }
+
+                    else {
+
+                        editIconPreview.src =
+                            "";
+
+                        editIconPreviewBox.style.display =
+                            "none";
+
+                    }
+
+
+                    editAccountModal.style.display =
+                        "flex";
+
+                };
+
+
+            // =================================
+            // DELETE ACCOUNT
+            // =================================
+
+            const deleteButton =
+                card.querySelector(
+                    ".delete-account"
+                );
+
+
+            deleteButton.onclick =
+                function (event) {
+
+                    event.stopPropagation();
+
+
+                    selectedDeleteAccount =
+                        account;
+
+
+                    if (deleteAccountText) {
+
+                        deleteAccountText.textContent =
+                            "Are you sure you want to delete "
+                            +
+                            account.name
+                            +
+                            "?";
+
+                    }
+
+
+                    deleteAccountModal.style.display =
+                        "flex";
+
+                };
+
+
+            accountList.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+// =============================
+// SEARCH
+// =============================
+
+if (searchAccount) {
+
+    searchAccount.addEventListener(
+        "input",
+        showAccounts
+    );
+
+}
+
+
+// =============================
+// SAVE EDITED ACCOUNT
+// =============================
+
+if (saveEditAccount) {
+
+    saveEditAccount.onclick =
+        async function () {
+
+            if (!selectedEditAccount) {
+
+                return;
+
+            }
+
+
+            if (
+                editAccountName.value
+                    .trim() === ""
+            ) {
+
+                alert(
+                    "Account name cannot be empty."
+                );
+
+                return;
+
+            }
+
+
+            // =================================
+            // HANDLE NEW IMAGE
+            // =================================
+
+            if (
+                editAccountIconUpload.files[0]
+            ) {
+
+                const reader =
+                    new FileReader();
+
+
+                reader.onload =
+                    async function (event) {
+
+                        await updateAccount(
+                            event.target.result
+                        );
+
+                    };
+
+
+                reader.readAsDataURL(
+                    editAccountIconUpload.files[0]
+                );
+
+            }
+
+            else {
+
+                await updateAccount(
+                    editAccountIconURL.value.trim()
+                );
+
+            }
+
+        };
+
+}
+
+
+// =============================
+// UPDATE ACCOUNT
+// FIRESTORE
+// =============================
+
+async function updateAccount(icon) {
+
+    if (!selectedEditAccount) {
+
+        return;
+
+    }
+
+
+    // =================================
+    // SAVE ORIGINAL VALUES
+    // =================================
+
+    const oldAccount = {
+        name:
+            selectedEditAccount.name,
+
+        description:
+            selectedEditAccount.description,
+
+        icon:
+            selectedEditAccount.icon
+    };
+
+
+    // =================================
+    // UPDATE ACCOUNT
+    // =================================
+
+    selectedEditAccount.name =
+        editAccountName.value.trim();
+
+
+    selectedEditAccount.description =
+        editAccountDescription.value.trim();
+
+
+    selectedEditAccount.icon =
+        icon || "";
 
 
     try {
 
         console.log(
-            "Deleting account from Firestore:",
-            deletedAccountId
+            "Updating account in Firestore:",
+            selectedEditAccount
         );
 
 
-        // Save updated vault
+        // =================================
+        // SAVE VAULT
+        // =================================
 
         const success =
             await saveProfile(profile);
@@ -1245,8 +1376,19 @@ confirmDeleteAccount.onclick = async function () {
 
         if (!success) {
 
+            // Roll back
+            selectedEditAccount.name =
+                oldAccount.name;
+
+            selectedEditAccount.description =
+                oldAccount.description;
+
+            selectedEditAccount.icon =
+                oldAccount.icon;
+
+
             alert(
-                "Failed to delete account."
+                "Failed to update account."
             );
 
             return;
@@ -1254,25 +1396,22 @@ confirmDeleteAccount.onclick = async function () {
         }
 
 
-        // Close modal
+        // =================================
+        // CLOSE MODAL
+        // =================================
 
-        deleteAccountModal.style.display =
-            "none";
-
-
-        // Clear selected account
-
-        selectedDeleteAccount =
-            null;
+        closeEditAccount();
 
 
-        // Refresh account list
+        // =================================
+        // REFRESH
+        // =================================
 
         showAccounts();
 
 
         console.log(
-            "Account deleted successfully."
+            "Account updated successfully."
         );
 
     }
@@ -1280,133 +1419,322 @@ confirmDeleteAccount.onclick = async function () {
     catch (error) {
 
         console.error(
-            "Delete account error:",
+            "Update account error:",
             error
         );
 
 
+        // Roll back
+        selectedEditAccount.name =
+            oldAccount.name;
+
+        selectedEditAccount.description =
+            oldAccount.description;
+
+        selectedEditAccount.icon =
+            oldAccount.icon;
+
+
         alert(
-            "Failed to delete account."
+            "Failed to update account."
         );
 
     }
 
-};
+}
 
 
+// =============================
+// DELETE ACCOUNT
+// FIRESTORE
+// =============================
 
-    editAccountModal.style.display =
-    "none";
+if (confirmDeleteAccount) {
+
+    confirmDeleteAccount.onclick =
+        async function () {
+
+            if (!selectedDeleteAccount) {
+
+                return;
+
+            }
 
 
+            const deletedAccount =
+                selectedDeleteAccount;
 
-    selectedEditAccount = null;
 
-editAccountIconUpload.value="";
+            const deletedAccountId =
+                deletedAccount.id;
 
-editAccountIconURL.value="";
 
-editIconPreview.src="";
+            // =================================
+            // SAVE ORIGINAL ARRAY
+            // =================================
 
-editIconPreviewBox.style.display="none";
+            const originalAccounts =
+                [...profile.accounts];
 
-    showAccounts();
 
+            // =================================
+            // REMOVE LOCALLY
+            // =================================
+
+            profile.accounts =
+                profile.accounts.filter(
+                    account =>
+                        account.id !==
+                        deletedAccountId
+                );
+
+
+            try {
+
+                console.log(
+                    "Deleting account from Firestore:",
+                    deletedAccountId
+                );
+
+
+                // =================================
+                // SAVE UPDATED VAULT
+                // =================================
+
+                const success =
+                    await saveProfile(
+                        profile
+                    );
+
+
+                if (!success) {
+
+                    // Restore
+                    profile.accounts =
+                        originalAccounts;
+
+
+                    alert(
+                        "Failed to delete account."
+                    );
+
+                    return;
+
+                }
+
+
+                // =================================
+                // CLOSE MODAL
+                // =================================
+
+                deleteAccountModal.style.display =
+                    "none";
+
+
+                selectedDeleteAccount =
+                    null;
+
+
+                // =================================
+                // REFRESH
+                // =================================
+
+                showAccounts();
+
+
+                console.log(
+                    "Account deleted successfully."
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Delete account error:",
+                    error
+                );
+
+
+                // Restore
+                profile.accounts =
+                    originalAccounts;
+
+
+                alert(
+                    "Failed to delete account."
+                );
+
+            }
+
+        };
 
 }
 
-window.onclick=function(event){
-
-
-    if(event.target === accountModal){
-
-        accountModal.style.display="none";
-
-    }
-
-
-    if(event.target === editAccountModal){
-
-        editAccountModal.style.display="none";
-
-    }
-
-
-    if(event.target === deleteAccountModal){
-
-        deleteAccountModal.style.display="none";
-
-    }
-
-
-};
 
 // =============================
-// DELETE ACCOUNT CONFIRMATION
+// DELETE MODAL CLOSE
 // =============================
 
+if (closeDeleteAccountModal) {
 
-closeDeleteAccountModal.onclick=function(){
+    closeDeleteAccountModal.onclick =
+        function () {
 
-    deleteAccountModal.style.display =
-    "none";
+            deleteAccountModal.style.display =
+                "none";
 
-};
+            selectedDeleteAccount =
+                null;
 
+        };
 
-
-cancelDeleteAccount.onclick=function(){
-
-    deleteAccountModal.style.display =
-    "none";
-
-};
+}
 
 
+if (cancelDeleteAccount) {
 
-confirmDeleteAccount.onclick=function(){
+    cancelDeleteAccount.onclick =
+        function () {
+
+            deleteAccountModal.style.display =
+                "none";
+
+            selectedDeleteAccount =
+                null;
+
+        };
+
+}
 
 
-    if(!selectedDeleteAccount){
+// =============================
+// CLOSE MODALS WHEN CLICKING OUTSIDE
+// =============================
+
+window.onclick =
+    function (event) {
+
+        if (
+            event.target ===
+            accountModal
+        ) {
+
+            accountModal.style.display =
+                "none";
+
+        }
+
+
+        if (
+            event.target ===
+            editAccountModal
+        ) {
+
+            closeEditAccount();
+
+        }
+
+
+        if (
+            event.target ===
+            deleteAccountModal
+        ) {
+
+            deleteAccountModal.style.display =
+                "none";
+
+            selectedDeleteAccount =
+                null;
+
+        }
+
+    };
+
+
+// =============================
+// CLOSE DROPDOWNS
+// =============================
+
+document.addEventListener(
+    "click",
+    function () {
+
+        document
+            .querySelectorAll(
+                ".account-dropdown"
+            )
+            .forEach(
+                menu => {
+
+                    menu.style.display =
+                        "none";
+
+                }
+            );
+
+    }
+);
+
+
+// =============================
+// INITIALIZE DASHBOARD
+// =============================
+
+async function initializeDashboard() {
+
+    const loaded =
+        await loadActiveVault();
+
+
+    if (!loaded) {
 
         return;
 
     }
 
 
+    // =================================
+    // VAULT INFORMATION
+    // =================================
 
-    profile.accounts =
-    profile.accounts.filter(
+    if (vaultTitle) {
 
-        item =>
-        item.id !== selectedDeleteAccount.id
+        vaultTitle.textContent =
+            profile.name;
 
-    );
-
-
-
-    localStorage.setItem(
-
-        "profiles",
-
-        JSON.stringify(profiles)
-
-    );
+    }
 
 
+    if (currentVault) {
 
-    deleteAccountModal.style.display =
-    "none";
+        currentVault.textContent =
+            profile.name;
+
+    }
 
 
-
-    selectedDeleteAccount = null;
-
-
+    // =================================
+    // RENDER ACCOUNTS
+    // =================================
 
     showAccounts();
 
+}
 
-};
 
-console.log("Back Button:", backToVaults);
+initializeDashboard();
+
+
+// =============================
+// DEBUG
+// =============================
+
+console.log(
+    "Dashboard Firestore version loaded."
+);
+
+console.log(
+    "Active Profile ID:",
+    activeProfileId
+);

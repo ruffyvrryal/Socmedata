@@ -1,7 +1,8 @@
 // =====================================
 // SOCMEDATA ACCOUNT DASHBOARD
-// PART 1
-// DATABASE + ANALYTICS CORE
+// PART 1 OF 3
+// FIREBASE + ACCOUNT + ANALYTICS
+// + PLATFORM SYSTEM + CONTENT MODAL
 // =====================================
 
 
@@ -16,12 +17,11 @@ import {
 
 
 // =====================================
-// ACTIVE IDs
+// ACTIVE IDS
 // =====================================
 
 let activeProfileId =
     localStorage.getItem("activeProfileId");
-
 
 let activeAccountId =
     localStorage.getItem("activeAccountId");
@@ -44,7 +44,397 @@ let editingContentId = null;
 
 
 // =====================================
-// LOAD ACTIVE VAULT FROM FIRESTORE
+// PLATFORM FILTER
+// =====================================
+
+let selectedPlatformValue = "all";
+
+
+// =====================================
+// FIRESTORE SAVE QUEUE
+// =====================================
+// Firestore is the source of truth.
+// Saves are queued so rapid changes do not
+// overwrite one another.
+
+let saveQueue = Promise.resolve();
+
+function saveDatabase(){
+
+    if(!activeProfile || !activeProfileId){
+
+        console.warn(
+            "Firestore save skipped: no active profile."
+        );
+
+        return Promise.resolve(false);
+    }
+
+
+    saveQueue =
+        saveQueue.then(
+            async () => {
+
+                try{
+
+                    await saveProfile(
+                        activeProfile
+                    );
+
+                    console.log(
+                        "Socmedata data saved to Firestore."
+                    );
+
+                    return true;
+
+                }
+
+                catch(error){
+
+                    console.error(
+                        "Firestore save failed:",
+                        error
+                    );
+
+                    showToast(
+                        "Unable to save data to Firebase.",
+                        "error"
+                    );
+
+                    return false;
+                }
+
+            }
+        );
+
+
+    return saveQueue;
+}
+
+
+// =====================================
+// ELEMENTS
+// =====================================
+
+const accountTitle =
+    document.getElementById(
+        "accountTitle"
+    );
+
+const totalImpressions =
+    document.getElementById(
+        "totalImpressions"
+    );
+
+const contentCount =
+    document.getElementById(
+        "contentCount"
+    );
+
+const growth =
+    document.getElementById(
+        "growth"
+    );
+
+const platformGrid =
+    document.getElementById(
+        "platformGrid"
+    );
+
+const addContent =
+    document.getElementById(
+        "addContentBtn"
+    );
+
+
+// =====================================
+// PLATFORM FILTER ELEMENTS
+// =====================================
+
+const platformFilterDropdown =
+    document.getElementById(
+        "platformFilter"
+    );
+
+const selectedPlatform =
+    document.getElementById(
+        "selectedPlatform"
+    );
+
+const platformOptions =
+    document.querySelectorAll(
+        "#platformFilter .custom-option"
+    );
+
+
+// =====================================
+// NUMBER FORMAT
+// =====================================
+
+function formatNumber(
+    number
+){
+
+    const value =
+        Number(number);
+
+    return (
+        Number.isFinite(value)
+            ? value
+            : 0
+    ).toLocaleString(
+        "id-ID"
+    );
+
+}
+
+
+// =====================================
+// NORMALIZE SUBJECT
+// =====================================
+
+function normalizeSubjectName(
+    subject
+){
+
+    return String(
+        subject || ""
+    )
+    .trim()
+    .replace(
+        /\s+/g,
+        " "
+    );
+
+}
+
+
+// =====================================
+// ESCAPE HTML
+// =====================================
+
+function escapeHtml(
+    value
+){
+
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
+
+}
+
+
+// =====================================
+// NORMALIZE ACCOUNT DATA
+// =====================================
+
+function normalizeAccountData(){
+
+    if(!account){
+
+        return;
+    }
+
+
+    if(
+        !Array.isArray(
+            account.contents
+        )
+    ){
+
+        account.contents = [];
+    }
+
+
+    if(
+        !Array.isArray(
+            account.platforms
+        )
+    ){
+
+        account.platforms = [];
+    }
+
+
+    if(
+        !account.analytics ||
+        typeof account.analytics !== "object"
+    ){
+
+        account.analytics = {};
+    }
+
+
+    // =================================
+    // NORMALIZE CONTENT
+    // =================================
+
+    account.contents =
+        account.contents.map(
+            content => {
+
+                return {
+
+                    ...content,
+
+                    id:
+                        content.id ??
+                        Date.now(),
+
+                    accountId:
+                        content.accountId ??
+                        activeAccountId,
+
+                    date:
+                        content.date ?? "",
+
+                    caption:
+                        content.caption ?? "",
+
+                    hashtag:
+                        content.hashtag ?? "",
+
+                    contentType:
+                        content.contentType ?? "",
+
+                    subject:
+                        content.subject ?? "",
+
+                    impressions:
+                        Number(
+                            content.impressions
+                        ) || 0,
+
+                    reach:
+                        Number(
+                            content.reach
+                        ) || 0,
+
+                    likes:
+                        Number(
+                            content.likes
+                        ) || 0,
+
+                    comments:
+                        Number(
+                            content.comments
+                        ) || 0,
+
+                    shares:
+                        Number(
+                            content.shares
+                        ) || 0,
+
+                    saved:
+                        Number(
+                            content.saved
+                        ) || 0,
+
+                    platform:
+                        content.platform ?? "",
+
+                    status:
+                        content.status ||
+                        "Published"
+
+                };
+
+            }
+        );
+
+
+    // =================================
+    // NORMALIZE PLATFORMS
+    // =================================
+
+    account.platforms =
+        account.platforms.map(
+            platform => {
+
+                const followers =
+                    Number(
+                        platform.followers
+                    ) || 0;
+
+
+                return {
+
+                    ...platform,
+
+                    id:
+                        platform.id ??
+                        Date.now(),
+
+                    platform:
+                        platform.platform ||
+                        platform.name ||
+                        "",
+
+                    name:
+                        platform.name ||
+                        platform.platform ||
+                        "",
+
+                    username:
+                        platform.username ||
+                        "",
+
+                    followers,
+
+                    analytics:
+                        platform.analytics &&
+                        typeof platform.analytics === "object"
+
+                            ?
+
+                            platform.analytics
+
+                            :
+
+                            {
+
+                                impressions: 0,
+
+                                reach: 0,
+
+                                followers,
+
+                                contents: 0,
+
+                                growth: 0
+
+                            }
+
+                };
+
+            }
+        );
+
+}
+
+
+// =====================================
+// LOAD ACTIVE PROFILE
 // =====================================
 
 async function loadActiveProfile(){
@@ -56,17 +446,26 @@ async function loadActiveProfile(){
         );
 
 
+        // =================================
+        // CHECK PROFILE ID
+        // =================================
+
         if(!activeProfileId){
 
-            alert("No vault selected.");
+            alert(
+                "No vault selected."
+            );
 
             window.location.href =
                 "../index.html";
 
             return;
-
         }
 
+
+        // =================================
+        // LOAD PROFILE
+        // =================================
 
         activeProfile =
             await getProfile(
@@ -80,12 +479,10 @@ async function loadActiveProfile(){
                 "Vault not found in Firestore."
             );
 
-
             window.location.href =
                 "../index.html";
 
             return;
-
         }
 
 
@@ -96,22 +493,27 @@ async function loadActiveProfile(){
 
 
         // =================================
-        // FIND ACCOUNT
+        // ENSURE ACCOUNTS ARRAY
         // =================================
 
-        if(!Array.isArray(
-            activeProfile.accounts
-        )){
+        if(
+            !Array.isArray(
+                activeProfile.accounts
+            )
+        ){
 
             activeProfile.accounts = [];
-
         }
 
 
+        // =================================
+        // FIND ACTIVE ACCOUNT
+        // =================================
+
         account =
             activeProfile.accounts.find(
-                a =>
-                    String(a.id) ===
+                item =>
+                    String(item.id) ===
                     String(activeAccountId)
             );
 
@@ -122,60 +524,43 @@ async function loadActiveProfile(){
                 "Account not found."
             );
 
-
             window.location.href =
                 "dashboard.html";
 
             return;
+        }
+
+
+        // =================================
+        // NORMALIZE ACCOUNT
+        // =================================
+
+        normalizeAccountData();
+
+
+        // =================================
+        // UPDATE ACCOUNT NAME
+        // =================================
+
+        if(accountTitle){
+
+            accountTitle.textContent =
+                account.name ||
+                "Account Name";
 
         }
 
 
         // =================================
-        // DATABASE CHECK
+        // START ACCOUNT PAGE
         // =================================
 
-        if(!Array.isArray(
-            account.contents
-        )){
-
-            account.contents = [];
-
-        }
-
-
-        if(!Array.isArray(
-            account.platforms
-        )){
-
-            account.platforms = [];
-
-        }
+        initializeAccountPage();
 
 
         console.log(
-            "Active account loaded:",
-            account
+            "Socmedata account page initialized."
         );
-
-
-        // =================================
-// UPDATE ACCOUNT NAME
-// =================================
-
-if(accountTitle){
-
-    accountTitle.textContent =
-        account.name || "Account Name";
-
-}
-
-
-// =================================
-// START ACCOUNT PAGE
-// =================================
-
-initializeAccountPage();
 
     }
 
@@ -186,7 +571,6 @@ initializeAccountPage();
             error
         );
 
-
         alert(
             "Failed to load account data."
         );
@@ -196,56 +580,17 @@ initializeAccountPage();
 }
 
 
-
 // =====================================
-// ELEMENTS
-// =====================================
-
-const accountTitle =
-document.getElementById("accountTitle");
-
-
-const totalImpressions =
-document.getElementById("totalImpressions");
-
-
-const contentCount =
-document.getElementById("contentCount");
-
-
-const growth =
-document.getElementById("growth");
-
-
-const platformGrid =
-document.getElementById("platformGrid");
-
-const addContent =
-    document.getElementById(
-        "addContentBtn"
-    );
-
-
-
-let selectedPlatformValue = "all";
-
-// =====================================
-// ACCOUNT CENTER PLATFORM DROPDOWN
+// PLATFORM FILTER
 // =====================================
 
-const platformFilterDropdown =
-    document.getElementById("platformFilter");
+function initializePlatformFilter(){
 
-const selectedPlatform =
-    document.getElementById("selectedPlatform");
+    if(!platformFilterDropdown){
 
-const platformOptions =
-    document.querySelectorAll(
-        "#platformFilter .custom-option"
-    );
+        return;
+    }
 
-
-if(platformFilterDropdown){
 
     const trigger =
         platformFilterDropdown.querySelector(
@@ -253,85 +598,95 @@ if(platformFilterDropdown){
         );
 
 
-    // OPEN / CLOSE DROPDOWN
+    // =================================
+    // OPEN DROPDOWN
+    // =================================
 
     if(trigger){
 
-        trigger.onclick = function(event){
+        trigger.onclick =
+            function(event){
 
-            event.stopPropagation();
+                event.stopPropagation();
 
-            platformFilterDropdown.classList.toggle(
-                "open"
-            );
+                platformFilterDropdown
+                    .classList.toggle(
+                        "open"
+                    );
 
-        };
+            };
 
     }
 
 
+    // =================================
     // SELECT PLATFORM
+    // =================================
 
-    platformOptions.forEach(option => {
+    platformOptions.forEach(
+        option => {
 
-        option.onclick = function(event){
+            option.onclick =
+                function(event){
 
-            event.stopPropagation();
-
-
-            selectedPlatformValue =
-                this.dataset.value;
-
-
-            // Update displayed text
-
-            if(selectedPlatform){
-
-                selectedPlatform.textContent =
-                    this.textContent.trim();
-
-            }
+                    event.stopPropagation();
 
 
-            // Active option
-
-            platformOptions.forEach(item => {
-
-                item.classList.remove(
-                    "active"
-                );
-
-            });
+                    selectedPlatformValue =
+                        this.dataset.value ||
+                        "all";
 
 
-            this.classList.add("active");
+                    if(selectedPlatform){
+
+                        selectedPlatform.textContent =
+                            this.textContent.trim();
+
+                    }
 
 
-            // Close dropdown
+                    platformOptions.forEach(
+                        item => {
 
-            platformFilterDropdown.classList.remove(
-                "open"
-            );
+                            item.classList.remove(
+                                "active"
+                            );
 
-
-            // Refresh platform cards
-
-            renderPlatforms();
-
-        };
-
-    });
+                        }
+                    );
 
 
-    // CLOSE WHEN CLICKING OUTSIDE
+                    this.classList.add(
+                        "active"
+                    );
+
+
+                    platformFilterDropdown
+                        .classList.remove(
+                            "open"
+                        );
+
+
+                    renderPlatforms();
+
+                };
+
+        }
+    );
+
+
+    // =================================
+    // CLOSE OUTSIDE
+    // =================================
 
     document.addEventListener(
         "click",
         function(){
 
-            platformFilterDropdown.classList.remove(
-                "open"
-            );
+            platformFilterDropdown
+                .classList.remove(
+                    "open"
+                );
 
         }
     );
@@ -340,106 +695,145 @@ if(platformFilterDropdown){
 
 
 // =====================================
-// NUMBER FORMAT
+// SUBJECT TABLE
 // =====================================
-
-function formatNumber(number){
-
-    return Number(number)
-    .toLocaleString("id-ID");
-
-}
-
-
-// =====================================
-// SUBJECT NAME NORMALIZER
-// =====================================
-
-function normalizeSubjectName(subject){
-
-    return String(subject || "")
-        .trim()
-        .replace(/\s+/g, " ");
-
-}
-
 
 function renderSubjectTable(){
 
     const tableBody =
-        document.getElementById("subjectTableBody");
+        document.getElementById(
+            "subjectTableBody"
+        );
 
-    if(!tableBody)
+
+    if(!tableBody){
+
         return;
+    }
+
 
     const subjects = {};
 
-    // =====================================
-    // GROUP CONTENT BY SUBJECT
-    // =====================================
 
-    account.contents.forEach(content => {
+    const contents =
+        Array.isArray(
+            account?.contents
+        )
 
-        const subject =
-            normalizeSubjectName(content.subject);
+        ?
 
-        if(!subject)
-            return;
+        account.contents
 
-        if(!subjects[subject]){
+        :
 
-            subjects[subject] = {
+        [];
 
-                posts: 0,
-                impressions: 0,
-                reach: 0,
-                likes: 0,
-                comments: 0,
-                shares: 0,
-                saves: 0,
-                engagement: 0
 
-            };
+    // =================================
+    // GROUP BY SUBJECT
+    // =================================
+
+    contents.forEach(
+        content => {
+
+            const subject =
+                normalizeSubjectName(
+                    content.subject
+                );
+
+
+            if(!subject){
+
+                return;
+            }
+
+
+            if(!subjects[subject]){
+
+                subjects[subject] = {
+
+                    posts: 0,
+
+                    impressions: 0,
+
+                    reach: 0,
+
+                    likes: 0,
+
+                    comments: 0,
+
+                    shares: 0,
+
+                    saves: 0,
+
+                    engagement: 0
+
+                };
+
+            }
+
+
+            const data =
+                subjects[subject];
+
+
+            data.posts++;
+
+
+            data.impressions +=
+                Number(
+                    content.impressions
+                ) || 0;
+
+
+            data.reach +=
+                Number(
+                    content.reach
+                ) || 0;
+
+
+            data.likes +=
+                Number(
+                    content.likes
+                ) || 0;
+
+
+            data.comments +=
+                Number(
+                    content.comments
+                ) || 0;
+
+
+            data.shares +=
+                Number(
+                    content.shares
+                ) || 0;
+
+
+            data.saves +=
+                Number(
+                    content.saved
+                ) || 0;
+
+
+            data.engagement =
+                data.likes +
+                data.comments +
+                data.shares +
+                data.saves;
 
         }
-
-        const data = subjects[subject];
-
-        data.posts++;
-
-        data.impressions +=
-            Number(content.impressions) || 0;
-
-        data.reach +=
-            Number(content.reach) || 0;
-
-        data.likes +=
-            Number(content.likes) || 0;
-
-        data.comments +=
-            Number(content.comments) || 0;
-
-        data.shares +=
-            Number(content.shares) || 0;
-
-        data.saves +=
-            Number(content.saved) || 0;
-
-        data.engagement =
-            data.likes +
-            data.comments +
-            data.shares +
-            data.saves;
-
-    });
+    );
 
 
-    // =====================================
+    // =================================
     // SORT BY ENGAGEMENT
-    // =====================================
+    // =================================
 
     const sortedSubjects =
-        Object.entries(subjects)
+        Object.entries(
+            subjects
+        )
         .sort(
             (a,b) =>
                 b[1].engagement -
@@ -447,11 +841,11 @@ function renderSubjectTable(){
         );
 
 
-    // =====================================
+    // =================================
     // SUBJECT SUMMARY
-    // =====================================
+    // =================================
 
-    let totalSubjects =
+    const totalSubjects =
         sortedSubjects.length;
 
     let subjectContentCount = 0;
@@ -477,27 +871,37 @@ function renderSubjectTable(){
     );
 
 
-    // =====================================
-    // UPDATE SUMMARY CARDS
-    // =====================================
+    // =================================
+    // SUMMARY ELEMENTS
+    // =================================
 
     const totalSubjectsElement =
-        document.getElementById("totalSubjects");
+        document.getElementById(
+            "totalSubjects"
+        );
 
     const subjectContentElement =
-        document.getElementById("subjectContentCount");
+        document.getElementById(
+            "subjectContentCount"
+        );
 
     const subjectImpressionsElement =
-        document.getElementById("subjectImpressions");
+        document.getElementById(
+            "subjectImpressions"
+        );
 
     const subjectReachElement =
-        document.getElementById("subjectReach");
+        document.getElementById(
+            "subjectReach"
+        );
 
 
     if(totalSubjectsElement){
 
         totalSubjectsElement.textContent =
-            formatNumber(totalSubjects);
+            formatNumber(
+                totalSubjects
+            );
 
     }
 
@@ -505,7 +909,9 @@ function renderSubjectTable(){
     if(subjectContentElement){
 
         subjectContentElement.textContent =
-            formatNumber(subjectContentCount);
+            formatNumber(
+                subjectContentCount
+            );
 
     }
 
@@ -513,7 +919,9 @@ function renderSubjectTable(){
     if(subjectImpressionsElement){
 
         subjectImpressionsElement.textContent =
-            formatNumber(subjectImpressions);
+            formatNumber(
+                subjectImpressions
+            );
 
     }
 
@@ -521,16 +929,20 @@ function renderSubjectTable(){
     if(subjectReachElement){
 
         subjectReachElement.textContent =
-            formatNumber(subjectReach);
+            formatNumber(
+                subjectReach
+            );
 
     }
 
 
-    // =====================================
+    // =================================
     // EMPTY STATE
-    // =====================================
+    // =================================
 
-    if(sortedSubjects.length === 0){
+    if(
+        sortedSubjects.length === 0
+    ){
 
         tableBody.innerHTML = `
 
@@ -547,97 +959,103 @@ function renderSubjectTable(){
         `;
 
         return;
-
     }
 
 
-    // =====================================
-    // RENDER SUBJECT ROWS
-    // =====================================
+    // =================================
+    // RENDER ROWS
+    // =================================
 
     tableBody.innerHTML =
 
-        sortedSubjects.map(
+        sortedSubjects
+        .map(
             ([subject, data]) => {
 
                 const rate =
                     data.impressions > 0
-                    ?
-                    (
-                        data.engagement /
-                        data.impressions *
-                        100
-                    ).toFixed(1)
-                    :
-                    "0.0";
+
+                        ?
+
+                        (
+                            data.engagement /
+                            data.impressions *
+                            100
+                        ).toFixed(1)
+
+                        :
+
+                        "0.0";
 
 
                 return `
 
-                <tr>
+                    <tr>
 
-                    <td>
-                        ${subject}
-                    </td>
+                        <td>
+                            ${escapeHtml(subject)}
+                        </td>
 
-                    <td>
-                        ${data.posts}
-                    </td>
+                        <td>
+                            ${data.posts}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.impressions
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.impressions
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.reach
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.reach
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.likes
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.likes
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.comments
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.comments
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.shares
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.shares
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.saves
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.saves
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            data.engagement
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                data.engagement
+                            )}
+                        </td>
 
-                    <td>
-                        ${rate}%
-                    </td>
+                        <td>
+                            ${rate}%
+                        </td>
 
-                </tr>
+                    </tr>
 
                 `;
 
             }
-        ).join("");
+        )
+        .join("");
 
 }
+
 
 // =====================================
 // CONTENT BY SUBJECT TABLE
@@ -650,30 +1068,39 @@ function renderSubjectContentTable(){
             "subjectContentTableBody"
         );
 
-    if(!tableBody)
+
+    if(!tableBody){
+
         return;
+    }
 
 
     const contents =
-        (account.contents || [])
-        .filter(content => {
+        (
+            Array.isArray(
+                account?.contents
+            )
 
-            return (
-                content.subject &&
-                content.subject.trim() !== ""
-            );
+            ?
 
-        })
+            account.contents
+
+            :
+
+            []
+        )
+        .filter(
+    content =>
+        String(
+            content.subject || ""
+        ).trim() !== ""
+)
         .sort(
             (a,b) =>
                 new Date(b.date) -
                 new Date(a.date)
         );
 
-
-    // =====================================
-    // EMPTY STATE
-    // =====================================
 
     if(contents.length === 0){
 
@@ -692,80 +1119,109 @@ function renderSubjectContentTable(){
         `;
 
         return;
-
     }
 
 
-    // =====================================
-    // RENDER CONTENT
-    // =====================================
-
     tableBody.innerHTML =
 
-        contents.map(content => {
+        contents
+        .map(
+            content => {
 
-            const engagement =
+                const engagement =
+                    (
+                        Number(
+                            content.likes
+                        ) || 0
+                    )
+                    +
+                    (
+                        Number(
+                            content.comments
+                        ) || 0
+                    )
+                    +
+                    (
+                        Number(
+                            content.shares
+                        ) || 0
+                    )
+                    +
+                    (
+                        Number(
+                            content.saved
+                        ) || 0
+                    );
 
-                (Number(content.likes) || 0) +
 
-                (Number(content.comments) || 0) +
-
-                (Number(content.shares) || 0) +
-
-                (Number(content.saved) || 0);
+                const subject =
+                    normalizeSubjectName(
+                        content.subject
+                    );
 
 
-            const subject =
-                normalizeSubjectName(
-                    content.subject
-                );
+                return `
 
+                    <tr>
 
-            return `
+                        <td>
+                            ${escapeHtml(
+                                content.date ||
+                                "-"
+                            )}
+                        </td>
 
-                <tr>
+                        <td>
+                            ${escapeHtml(
+                                subject ||
+                                "-"
+                            )}
+                        </td>
 
-                    <td>
-                        ${content.date || "-"}
-                    </td>
+                        <td>
+                            ${escapeHtml(
+                                content.platform ||
+                                "-"
+                            )}
+                        </td>
 
-                    <td>
-                        ${subject || "-"}
-                    </td>
+                        <td>
+                            ${escapeHtml(
+                                content.caption ||
+                                "-"
+                            )}
+                        </td>
 
-                    <td>
-                        ${content.platform || "-"}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                content.impressions ||
+                                0
+                            )}
+                        </td>
 
-                    <td>
-                        ${content.caption || "-"}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                content.reach ||
+                                0
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            content.impressions || 0
-                        )}
-                    </td>
+                        <td>
+                            ${formatNumber(
+                                engagement
+                            )}
+                        </td>
 
-                    <td>
-                        ${formatNumber(
-                            content.reach || 0
-                        )}
-                    </td>
+                    </tr>
 
-                    <td>
-                        ${formatNumber(
-                            engagement
-                        )}
-                    </td>
+                `;
 
-                </tr>
-
-            `;
-
-        }).join("");
+            }
+        )
+        .join("");
 
 }
+
 
 // =====================================
 // CALCULATE ANALYTICS
@@ -773,7 +1229,7 @@ function renderSubjectContentTable(){
 
 function calculateAnalytics(){
 
-    let analytics = {
+    const analytics = {
 
         totalImpressions: 0,
 
@@ -790,10 +1246,47 @@ function calculateAnalytics(){
     };
 
 
-    const now = new Date();
+    if(!account){
+
+        return analytics;
+    }
+
+
+    const contents =
+        Array.isArray(
+            account.contents
+        )
+
+        ?
+
+        account.contents
+
+        :
+
+        [];
+
+
+    const platforms =
+        Array.isArray(
+            account.platforms
+        )
+
+        ?
+
+        account.platforms
+
+        :
+
+        [];
+
+
+    const now =
+        new Date();
+
 
     const currentMonth =
         now.getMonth();
+
 
     const currentYear =
         now.getFullYear();
@@ -801,179 +1294,237 @@ function calculateAnalytics(){
 
     const previousMonth =
         currentMonth === 0
-        ? 11
-        : currentMonth - 1;
+            ? 11
+            : currentMonth - 1;
+
 
     const previousYear =
         currentMonth === 0
-        ? currentYear - 1
-        : currentYear;
+            ? currentYear - 1
+            : currentYear;
 
 
-    // =====================================
+    // =================================
     // CONTENT ANALYTICS
-    // =====================================
+    // =================================
 
-    account.contents.forEach(content=>{
+    contents.forEach(
+        content => {
 
-        const impressions =
-            Number(content.impressions) || 0;
-
-        const reach =
-            Number(content.reach) || 0;
-
-
-        analytics.totalImpressions +=
-            impressions;
+            const impressions =
+                Number(
+                    content.impressions
+                ) || 0;
 
 
-        analytics.totalReach +=
-            reach;
+            const reach =
+                Number(
+                    content.reach
+                ) || 0;
 
 
-        analytics.totalContents++;
+            analytics.totalImpressions +=
+                impressions;
 
 
-        // =====================================
-        // PLATFORM
-        // =====================================
-
-        const platform =
-            content.platform || "Unknown";
+            analytics.totalReach +=
+                reach;
 
 
-        if(!analytics.platforms[platform]){
-
-            analytics.platforms[platform] = {
-
-                impressions: 0,
-
-                reach: 0,
-
-                contents: 0,
-
-                currentImpressions: 0,
-
-                previousImpressions: 0,
-
-                growth: 0
-
-            };
-
-        }
+            analytics.totalContents++;
 
 
-        analytics.platforms[platform].impressions +=
-            impressions;
-
-
-        analytics.platforms[platform].reach +=
-            reach;
-
-
-        analytics.platforms[platform].contents++;
-
-
-        // =====================================
-        // CURRENT / PREVIOUS MONTH
-        // =====================================
-
-        if(content.date){
-
-            const date =
-                new Date(content.date);
-
-
-            const month =
-                date.getMonth();
-
-
-            const year =
-                date.getFullYear();
+            const platform =
+                String(
+                    content.platform ||
+                    "Unknown"
+                );
 
 
             if(
-                month === currentMonth &&
-                year === currentYear
+                !analytics.platforms[
+                    platform
+                ]
             ){
 
-                analytics.platforms[platform]
-                    .currentImpressions += impressions;
+                analytics.platforms[
+                    platform
+                ] = {
+
+                    impressions: 0,
+
+                    reach: 0,
+
+                    contents: 0,
+
+                    currentImpressions: 0,
+
+                    previousImpressions: 0,
+
+                    growth: 0
+
+                };
 
             }
 
 
-            if(
-                month === previousMonth &&
-                year === previousYear
-            ){
+            const stats =
+                analytics.platforms[
+                    platform
+                ];
 
-                analytics.platforms[platform]
-                    .previousImpressions += impressions;
+
+            stats.impressions +=
+                impressions;
+
+
+            stats.reach +=
+                reach;
+
+
+            stats.contents++;
+
+
+            // =========================
+            // MONTHLY IMPRESSIONS
+            // =========================
+
+            if(content.date){
+
+                const date =
+                    new Date(
+                        content.date
+                    );
+
+
+                if(
+                    !Number.isNaN(
+                        date.getTime()
+                    )
+                ){
+
+                    const month =
+                        date.getMonth();
+
+                    const year =
+                        date.getFullYear();
+
+
+                    if(
+                        month ===
+                            currentMonth
+                        &&
+                        year ===
+                            currentYear
+                    ){
+
+                        stats.currentImpressions +=
+                            impressions;
+
+                    }
+
+
+                    if(
+                        month ===
+                            previousMonth
+                        &&
+                        year ===
+                            previousYear
+                    ){
+
+                        stats.previousImpressions +=
+                            impressions;
+
+                    }
+
+                }
 
             }
 
         }
-
-    });
-
-
-    // =====================================
-    // PLATFORM GROWTH
-    // =====================================
-
-    Object.keys(analytics.platforms)
-    .forEach(platform=>{
-
-        const data =
-            analytics.platforms[platform];
+    );
 
 
-        data.growth =
-            calculateGrowth(
-                data.currentImpressions,
-                data.previousImpressions
-            );
-
-    });
-
-
-    // =====================================
-    // ACCOUNT FOLLOWERS + GROWTH
-    // =====================================
+    // =================================
+    // PLATFORM FOLLOWERS
+    // =================================
 
     let totalCurrentImpressions = 0;
 
     let totalPreviousImpressions = 0;
 
 
-    account.platforms.forEach(platform=>{
+    platforms.forEach(
+        platform => {
 
-        analytics.totalFollowers +=
-            Number(platform.followers) || 0;
-
-
-        const platformData =
-            analytics.platforms[platform.platform];
-
-
-        if(platformData){
-
-            totalCurrentImpressions +=
-                platformData.currentImpressions;
+            const followers =
+                Number(
+                    platform.followers
+                ) || 0;
 
 
-            totalPreviousImpressions +=
-                platformData.previousImpressions;
+            analytics.totalFollowers +=
+                followers;
+
+
+            const platformName =
+                String(
+                    platform.platform ||
+                    platform.name ||
+                    ""
+                );
+
+
+            const platformData =
+                analytics.platforms[
+                    platformName
+                ];
+
+
+            if(platformData){
+
+                totalCurrentImpressions +=
+                    platformData.currentImpressions;
+
+
+                totalPreviousImpressions +=
+                    platformData.previousImpressions;
+
+            }
 
         }
+    );
 
-    });
+
+    // =================================
+    // PLATFORM GROWTH
+    // =================================
+
+    Object.keys(
+        analytics.platforms
+    )
+    .forEach(
+        platformName => {
+
+            const data =
+                analytics.platforms[
+                    platformName
+                ];
 
 
-    // =====================================
-    // TOTAL ACCOUNT GROWTH
-    // =====================================
+            data.growth =
+                calculateGrowth(
+                    data.currentImpressions,
+                    data.previousImpressions
+                );
+
+        }
+    );
+
+
+    // =================================
+    // ACCOUNT GROWTH
+    // =================================
 
     analytics.totalGrowth =
         calculateGrowth(
@@ -987,7 +1538,41 @@ function calculateAnalytics(){
 }
 
 
+// =====================================
+// CALCULATE GROWTH
+// =====================================
 
+function calculateGrowth(
+    current,
+    previous
+){
+
+    current =
+        Number(current) || 0;
+
+
+    previous =
+        Number(previous) || 0;
+
+
+    if(previous === 0){
+
+        return current > 0
+            ? 100
+            : 0;
+    }
+
+
+    return (
+        (
+            current -
+            previous
+        )
+        /
+        previous
+    ) * 100;
+
+}
 
 
 // =====================================
@@ -996,176 +1581,199 @@ function calculateAnalytics(){
 
 function loadAnalytics(){
 
+    if(!account){
 
-    let analytics =
-    calculateAnalytics();
+        return;
+    }
 
-account.analytics.impressions =
-    analytics.totalImpressions;
 
-account.analytics.reach =
-    analytics.totalReach;
+    if(
+        !account.analytics ||
+        typeof account.analytics !== "object"
+    ){
 
-account.analytics.contents =
-    analytics.totalContents;
+        account.analytics = {};
+    }
 
-account.analytics.followers =
-    analytics.totalFollowers;
 
-account.analytics.growth =
-    analytics.totalGrowth;
+    const analytics =
+        calculateAnalytics();
+
+
+    account.analytics.impressions =
+        analytics.totalImpressions;
+
+
+    account.analytics.reach =
+        analytics.totalReach;
+
+
+    account.analytics.contents =
+        analytics.totalContents;
+
+
+    account.analytics.followers =
+        analytics.totalFollowers;
+
+
+    account.analytics.growth =
+        analytics.totalGrowth;
+
+
+    // =================================
+    // IMPRESSIONS
+    // =================================
 
     if(totalImpressions){
 
-    totalImpressions.textContent =
-        formatNumber(
-            analytics.totalImpressions
-        );
-
-}
-
-const followers =
-    document.getElementById("followers");
-
-if(followers){
-
-    followers.textContent =
-        formatNumber(
-            analytics.totalFollowers
-        );
-
-}
-
-    if(contentCount){
-
-        contentCount.textContent =
-        analytics.totalContents;
+        totalImpressions.textContent =
+            formatNumber(
+                analytics.totalImpressions
+            );
 
     }
 
 
+    // =================================
+    // FOLLOWERS
+    // =================================
+
+    const followers =
+        document.getElementById(
+            "followers"
+        );
+
+
+    if(followers){
+
+        followers.textContent =
+            formatNumber(
+                analytics.totalFollowers
+            );
+
+    }
+
+
+    // =================================
+    // CONTENT COUNT
+    // =================================
+
+    if(contentCount){
+
+        contentCount.textContent =
+            formatNumber(
+                analytics.totalContents
+            );
+
+    }
+
+
+    // =================================
+    // GROWTH
+    // =================================
 
     if(growth){
 
-    const growthValue =
-        Number(analytics.totalGrowth) || 0;
+        const growthValue =
+            Number(
+                analytics.totalGrowth
+            ) || 0;
 
-    growth.textContent =
-        (
-            growthValue >= 0
-            ? "+"
-            : ""
-        )
-        +
-        growthValue.toFixed(1)
-        +
-        "%";
+
+        growth.textContent =
+
+            (
+                growthValue >= 0
+                    ? "+"
+                    : ""
+            )
+
+            +
+
+            growthValue.toFixed(1)
+
+            +
+
+            "%";
+
+    }
 
 }
-
-
-}
-
-
 
 
 // =====================================
 // PLATFORM ICON
 // =====================================
 
-function getPlatformIcon(platform){
+function getPlatformIcon(
+    platform
+){
 
-
-    const logos={
-
+    const logos = {
 
         Instagram:
-        "https://cdn.simpleicons.org/instagram",
-
+            "https://cdn.simpleicons.org/instagram",
 
         TikTok:
-        "https://cdn.simpleicons.org/tiktok",
-
+            "https://cdn.simpleicons.org/tiktok",
 
         Facebook:
-        "https://cdn.simpleicons.org/facebook",
-
+            "https://cdn.simpleicons.org/facebook",
 
         YouTube:
-        "https://cdn.simpleicons.org/youtube",
-
+            "https://cdn.simpleicons.org/youtube",
 
         X:
-        "https://cdn.simpleicons.org/x",
-
+            "https://cdn.simpleicons.org/x",
 
         Threads:
-        "https://cdn.simpleicons.org/threads"
-
+            "https://cdn.simpleicons.org/threads"
 
     };
 
 
-    return logos[platform]
-
-    ||
-
-    "https://cdn.simpleicons.org/internet";
-
+    return (
+        logos[platform] ||
+        "https://cdn.simpleicons.org/internet"
+    );
 
 }
-
-
 
 
 // =====================================
 // PLATFORM CLASS
 // =====================================
 
-function getPlatformClass(platform){
-
+function getPlatformClass(
+    platform
+){
 
     switch(platform){
-
 
         case "Instagram":
             return "instagram-card";
 
-
         case "TikTok":
             return "tiktok-card";
-
 
         case "Facebook":
             return "facebook-card";
 
-
         case "YouTube":
             return "youtube-card";
-
 
         case "X":
             return "x-card";
 
-
         case "Threads":
             return "threads-card";
-
 
         default:
             return "";
 
-
     }
 
-
 }
-
-
-// =====================================
-// PART 2
-// PLATFORM SYSTEM + CONTENT MODAL
-// =====================================
 
 
 // =====================================
@@ -1174,282 +1782,327 @@ function getPlatformClass(platform){
 
 function renderPlatforms(){
 
+    if(!platformGrid){
 
-    if(!platformGrid)
         return;
+    }
 
 
     platformGrid.innerHTML = "";
 
 
     let platforms =
-    account.platforms;
+        Array.isArray(
+            account?.platforms
+        )
+
+        ?
+
+        account.platforms
+
+        :
+
+        [];
 
 
+    // =================================
+    // APPLY FILTER
+    // =================================
 
-    if(selectedPlatformValue !== "all"){
-
+    if(
+        selectedPlatformValue !== "all"
+    ){
 
         platforms =
-        platforms.filter(platform=>
-            platform.platform === selectedPlatformValue
-        );
+            platforms.filter(
+                platform =>
 
+                    String(
+                        platform.platform ||
+                        platform.name ||
+                        ""
+                    ) ===
+                    selectedPlatformValue
+            );
 
     }
 
 
+    // =================================
+    // EMPTY STATE
+    // =================================
 
     if(platforms.length === 0){
 
-
         platformGrid.innerHTML = `
 
-        <div class="empty-state">
+            <div class="empty-state">
 
-            <h2>No Platform Connected</h2>
+                <h2>
+                    No Platform Connected
+                </h2>
 
-            <p>
-                Click Connect Platform to add your first platform.
-            </p>
+                <p>
+                    Click Connect Platform to add your first platform.
+                </p>
 
-        </div>
+            </div>
 
         `;
 
-
         return;
-
-
     }
 
 
+    const analytics =
+        calculateAnalytics();
 
 
-    let analytics =
-    calculateAnalytics();
+    // =================================
+    // RENDER PLATFORM CARDS
+    // =================================
 
+    platforms.forEach(
+        platform => {
 
+            const platformName =
+                String(
+                    platform.platform ||
+                    platform.name ||
+                    ""
+                );
 
-    platforms.forEach(platform=>{
 
+            const stats =
+                analytics.platforms[
+                    platformName
+                ]
 
-        let stats =
-    analytics.platforms[platform.platform]
-    ||
-    {
-        impressions:0,
-        reach:0,
-        contents:0
-    };
+                ||
 
+                {
 
+                    impressions: 0,
 
-        platformGrid.innerHTML += `
+                    reach: 0,
 
+                    contents: 0,
 
-<div class="platform-card ${getPlatformClass(platform.platform)}">
+                    growth: 0
 
+                };
 
-    <div class="platform-header">
 
+            const followers =
+                Number(
+                    platform.followers
+                ) || 0;
 
-        <div class="platform-brand">
 
+            const platformGrowth =
+                Number(
+                    stats.growth
+                ) || 0;
 
-            <div class="platform-icon">
 
-                <img src="${getPlatformIcon(platform.platform)}">
+            platformGrid.innerHTML += `
 
-            </div>
+                <div
+                    class="platform-card ${getPlatformClass(
+                        platformName
+                    )}"
+                >
 
+                    <div class="platform-header">
 
-            <div>
+                        <div class="platform-brand">
 
-                <h3>
-                    ${platform.platform}
-                </h3>
+                            <div class="platform-icon">
 
+                                <img
+                                    src="${getPlatformIcon(
+                                        platformName
+                                    )}"
+                                    alt="${platformName}"
+                                >
 
-                <p>
-                    ${platform.username}
-                </p>
+                            </div>
 
+                            <div>
 
-            </div>
+                                <h3>
+                                    ${escapeHtml(
+                                        platformName
+                                    )}
+                                </h3>
 
+                                <p>
+                                    ${escapeHtml(
+                                        platform.username ||
+                                        ""
+                                    )}
+                                </p>
 
-        </div>
+                            </div>
 
+                        </div>
 
 
-        <button
-        class="delete-platform"
-        data-id="${platform.id}">
+                        <button
+                            type="button"
+                            class="delete-platform"
+                            data-id="${String(
+                                platform.id
+                            )}"
+                            aria-label="Delete platform"
+                        >
+                            ✕
+                        </button>
 
-            ✕
+                    </div>
 
-        </button>
 
+                    <div class="platform-stats">
 
+                        <div class="stat-box">
 
-    </div>
+                            <span>
+                                Followers
+                            </span>
 
+                            <strong>
+                                ${formatNumber(
+                                    followers
+                                )}
+                            </strong>
 
+                        </div>
 
 
-    <div class="platform-stats">
+                        <div class="stat-box">
 
+                            <span>
+                                Impressions
+                            </span>
 
-        <div class="stat-box">
+                            <strong>
+                                ${formatNumber(
+                                    stats.impressions
+                                )}
+                            </strong>
 
-            <span>
-                Followers
-            </span>
+                        </div>
 
-            <strong>
 
-            ${formatNumber(
-                platform.analytics?.followers || 0
-            )}
+                        <div class="stat-box">
 
-            </strong>
+                            <span>
+                                Reach
+                            </span>
 
+                            <strong>
+                                ${formatNumber(
+                                    stats.reach
+                                )}
+                            </strong>
 
-        </div>
+                        </div>
 
 
+                        <div class="stat-box">
 
+                            <span>
+                                Content
+                            </span>
 
-        <div class="stat-box">
+                            <strong>
+                                ${formatNumber(
+                                    stats.contents
+                                )}
+                            </strong>
 
-    <span>
-        Impressions
-    </span>
+                        </div>
 
-    <strong>
 
-        ${formatNumber(stats.impressions)}
+                        <div class="stat-box">
 
-    </strong>
+                            <span>
+                                Growth
+                            </span>
 
-</div>
+                            <strong
+                                class="${
+                                    platformGrowth >= 0
+                                        ? "positive-growth"
+                                        : "negative-growth"
+                                }"
+                            >
 
-<div class="stat-box">
+                                ${
+                                    platformGrowth >= 0
+                                        ? "+"
+                                        : ""
+                                }${platformGrowth.toFixed(1)}%
 
-    <span>
-        Reach
-    </span>
+                            </strong>
 
-    <strong>
+                        </div>
 
-        ${formatNumber(stats.reach)}
+                    </div>
 
-    </strong>
+                </div>
 
-</div>
+            `;
 
+        }
+    );
 
 
-
-
-        <div class="stat-box">
-
-
-            <span>
-                Content
-            </span>
-
-
-            <strong>
-
-            ${stats.contents}
-
-            </strong>
-
-
-        </div>
-
-
-
-
-
-        <div class="stat-box">
-
-
-            <span>
-                Growth
-            </span>
-
-
-            <strong class="positive-growth">
-
-    ${
-        Number(platform.analytics?.growth || 0) >= 0
-        ? "+"
-        : ""
-    }${Number(
-        platform.analytics?.growth || 0
-    ).toFixed(1)}%
-
-</strong>
-
-
-        </div>
-
-
-    </div>
-
-
-</div>
-
-
-`;
-
-
-
-    });
-
-
-
-
+    // =================================
+    // DELETE PLATFORM
+    // =================================
 
     document
-    .querySelectorAll(".delete-platform")
-    .forEach(button=>{
+        .querySelectorAll(
+            ".delete-platform"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    function(){
+
+                        const id =
+                            String(
+                                this.dataset.id
+                            );
 
 
-        button.onclick=function(){
+                        account.platforms =
+                            account.platforms.filter(
+                                platform =>
+                                    String(
+                                        platform.id
+                                    ) !== id
+                            );
 
 
-            let id =
-            Number(this.dataset.id);
+                        syncPlatformAnalytics(
+                            false
+                        );
 
 
-
-            account.platforms =
-            account.platforms.filter(
-                platform =>
-                platform.id !== id
-            );
+                        saveDatabase();
 
 
+                        renderPlatforms();
 
-            saveDatabase();
+                        loadAnalytics();
 
-syncPlatformAnalytics();
+                    };
 
-renderPlatforms();
-
-loadAnalytics();
-
-
-        };
-
-
-    });
-
-
+            }
+        );
 
 }
 
@@ -1458,55 +2111,108 @@ loadAnalytics();
 // SYNC PLATFORM ANALYTICS
 // =====================================
 
-function syncPlatformAnalytics(){
+function syncPlatformAnalytics(
+    save = true
+){
+
+    if(!account){
+
+        return;
+    }
+
 
     const analytics =
         calculateAnalytics();
 
 
-    account.platforms.forEach(platform=>{
+    if(
+        !Array.isArray(
+            account.platforms
+        )
+    ){
 
-        const stats =
-            analytics.platforms[platform.platform]
-            ||
-            {
-                impressions: 0,
-                reach: 0,
-                contents: 0,
-                growth: 0
-            };
+        account.platforms = [];
+    }
 
 
-        if(!platform.analytics){
+    account.platforms.forEach(
+        platform => {
 
-            platform.analytics = {};
+            const platformName =
+                String(
+                    platform.platform ||
+                    platform.name ||
+                    ""
+                );
+
+
+            const stats =
+                analytics.platforms[
+                    platformName
+                ]
+
+                ||
+
+                {
+
+                    impressions: 0,
+
+                    reach: 0,
+
+                    contents: 0,
+
+                    growth: 0
+
+                };
+
+
+            if(
+                !platform.analytics ||
+                typeof platform.analytics !== "object"
+            ){
+
+                platform.analytics = {};
+            }
+
+
+            platform.analytics.impressions =
+                Number(
+                    stats.impressions
+                ) || 0;
+
+
+            platform.analytics.reach =
+                Number(
+                    stats.reach
+                ) || 0;
+
+
+            platform.analytics.contents =
+                Number(
+                    stats.contents
+                ) || 0;
+
+
+            platform.analytics.followers =
+                Number(
+                    platform.followers
+                ) || 0;
+
+
+            platform.analytics.growth =
+                Number(
+                    stats.growth
+                ) || 0;
 
         }
+    );
 
 
-        platform.analytics.impressions =
-            stats.impressions;
+    if(save){
 
+        saveDatabase();
 
-        platform.analytics.reach =
-            stats.reach;
-
-
-        platform.analytics.contents =
-            stats.contents;
-
-
-        platform.analytics.followers =
-            Number(platform.followers) || 0;
-
-
-        platform.analytics.growth =
-            Number(stats.growth) || 0;
-
-    });
-
-
-    saveDatabase();
+    }
 
 }
 
@@ -1515,686 +2221,480 @@ function syncPlatformAnalytics(){
 // PLATFORM MODAL
 // =====================================
 
-
 const platformModal =
-document.getElementById("platformModal");
-
+    document.getElementById(
+        "platformModal"
+    );
 
 const closePlatformModal =
-document.getElementById("closePlatformModal");
-
+    document.getElementById(
+        "closePlatformModal"
+    );
 
 const cancelPlatform =
-document.getElementById("cancelPlatform");
-
+    document.getElementById(
+        "cancelPlatform"
+    );
 
 const savePlatform =
-document.getElementById("savePlatform");
-
+    document.getElementById(
+        "savePlatform"
+    );
 
 const platformSelect =
-document.getElementById("platformSelect");
-
+    document.getElementById(
+        "platformSelect"
+    );
 
 const platformUsername =
-document.getElementById("platformUsername");
-
+    document.getElementById(
+        "platformUsername"
+    );
 
 const platformFollowers =
-document.getElementById("platformFollowers");
-
+    document.getElementById(
+        "platformFollowers"
+    );
 
 const connectPlatformBtn =
-document.getElementById(
-    "connectPlatformBtn"
-);
+    document.getElementById(
+        "connectPlatformBtn"
+    );
 
+
+// =====================================
+// OPEN PLATFORM MODAL
+// =====================================
 
 if(connectPlatformBtn){
 
+    connectPlatformBtn.onclick =
+        function(){
 
-connectPlatformBtn.onclick=function(){
+            if(platformModal){
 
+                platformModal.style.display =
+                    "flex";
 
-    platformModal.style.display="flex";
+            }
 
-
-};
-
+        };
 
 }
 
 
-
-
+// =====================================
+// CLOSE PLATFORM MODAL
+// =====================================
 
 if(closePlatformModal){
 
+    closePlatformModal.onclick =
+        function(){
 
-closePlatformModal.onclick=function(){
+            if(platformModal){
 
+                platformModal.style.display =
+                    "none";
 
-    platformModal.style.display="none";
+            }
 
-
-};
-
+        };
 
 }
-
-
-
 
 
 if(cancelPlatform){
 
+    cancelPlatform.onclick =
+        function(){
 
-cancelPlatform.onclick=function(){
+            if(platformModal){
 
+                platformModal.style.display =
+                    "none";
 
-    platformModal.style.display="none";
+            }
 
-
-};
-
+        };
 
 }
-
-
-
-
 
 
 // =====================================
 // SAVE PLATFORM
 // =====================================
 
-
 if(savePlatform){
 
+    savePlatform.onclick =
+        function(){
 
-savePlatform.onclick=function(){
+            if(!account){
 
+                return;
+            }
 
 
-    if(platformSelect.value===""){
+            const platformName =
+                platformSelect?.value ||
+                "";
 
 
-        alert("Select platform.");
+            const username =
+                platformUsername?.value
+                ?.trim() ||
+                "";
 
-        return;
 
-    }
+            const followers =
+                Number(
+                    platformFollowers?.value
+                ) || 0;
 
 
+            // =========================
+            // VALIDATION
+            // =========================
 
-    if(platformUsername.value===""){
+            if(!platformName){
 
+                alert(
+                    "Select platform."
+                );
 
-        alert("Enter username.");
+                return;
+            }
 
-        return;
 
-    }
+            if(!username){
 
+                alert(
+                    "Enter username."
+                );
 
+                return;
+            }
 
 
+            // =========================
+            // CREATE PLATFORM
+            // =========================
 
-    account.platforms.push({
+            const platform = {
 
+                id:
+                    Date.now(),
 
+                platform:
+                    platformName,
 
-        id:Date.now(),
+                username,
 
+                followers,
 
+                analytics: {
 
-        platform:
-        platformSelect.value,
+                    impressions: 0,
 
+                    reach: 0,
 
+                    followers,
 
-        username:
-        platformUsername.value,
+                    contents: 0,
 
+                    growth: 0
 
+                },
 
-        followers:
-        Number(platformFollowers.value)||0,
+                contents: []
 
+            };
 
 
-        analytics:{
+            account.platforms.push(
+                platform
+            );
 
-    impressions:0,
 
-    reach:0,
+            // =========================
+            // UPDATE ANALYTICS
+            // =========================
 
-    followers:
-        Number(platformFollowers.value) || 0,
+            syncPlatformAnalytics(
+                false
+            );
 
-    contents:0,
 
-    growth:0
+            // =========================
+            // SAVE
+            // =========================
 
-},
+            saveDatabase();
 
-contents:[]
 
+            // =========================
+            // REFRESH UI
+            // =========================
 
+            renderPlatforms();
 
-    });
+            loadAnalytics();
 
 
+            // =========================
+            // RESET FORM
+            // =========================
 
+            if(platformSelect){
 
+                platformSelect.value = "";
 
-    saveDatabase();
+            }
 
-syncPlatformAnalytics();
 
-renderPlatforms();
+            if(platformUsername){
 
-loadAnalytics();
+                platformUsername.value = "";
 
+            }
 
 
+            if(platformFollowers){
 
+                platformFollowers.value = "";
 
-    platformSelect.value="";
+            }
 
-    platformUsername.value="";
 
-    platformFollowers.value="";
+            // =========================
+            // CLOSE MODAL
+            // =========================
 
+            if(platformModal){
 
+                platformModal.style.display =
+                    "none";
 
-    platformModal.style.display="none";
+            }
 
 
+            showToast(
+                "Platform connected successfully!",
+                "success"
+            );
 
-};
-
-
+        };
 
 }
-
-
 
 
 // =====================================
 // CONTENT MODAL ELEMENTS
 // =====================================
 
-
 const contentModal =
-document.getElementById("contentModal");
-
+    document.getElementById(
+        "contentModal"
+    );
 
 const closeContentModal =
-document.getElementById("closeContentModal");
-
+    document.getElementById(
+        "closeContentModal"
+    );
 
 const cancelContentBtn =
-document.getElementById("cancelContent");
-
+    document.getElementById(
+        "cancelContent"
+    );
 
 const saveContent =
-document.getElementById("saveContent");
+    document.getElementById(
+        "saveContent"
+    );
+
 
 // =====================================
-// ADD CONTENT BUTTON
+// CONTENT FORM HELPERS
+// =====================================
+
+function resetContentForm(){
+
+    const fields = {
+
+        date:
+            document.getElementById(
+                "contentDate"
+            ),
+
+        caption:
+            document.getElementById(
+                "contentCaption"
+            ),
+
+        hashtag:
+            document.getElementById(
+                "contentHashtag"
+            ),
+
+        type:
+            document.getElementById(
+                "contentType"
+            ),
+
+        subject:
+            document.getElementById(
+                "contentSubject"
+            ),
+
+        impressions:
+            document.getElementById(
+                "contentImpressions"
+            ),
+
+        reach:
+            document.getElementById(
+                "contentReach"
+            ),
+
+        likes:
+            document.getElementById(
+                "contentLikes"
+            ),
+
+        comments:
+            document.getElementById(
+                "contentComments"
+            ),
+
+        shares:
+            document.getElementById(
+                "contentShares"
+            ),
+
+        saved:
+            document.getElementById(
+                "contentSaved"
+            ),
+
+        platform:
+            document.getElementById(
+                "contentPlatform"
+            ),
+
+        status:
+            document.getElementById(
+                "contentStatus"
+            )
+
+    };
+
+
+    Object.values(fields)
+        .forEach(
+            field => {
+
+                if(!field){
+
+                    return;
+                }
+
+
+                if(
+                    field.tagName === "SELECT"
+                ){
+
+                    field.value = "";
+
+                    return;
+                }
+
+
+                field.value = "";
+
+            }
+        );
+
+
+    if(fields.impressions){
+
+        fields.impressions.value =
+            0;
+
+    }
+
+
+    if(fields.reach){
+
+        fields.reach.value =
+            0;
+
+    }
+
+
+    if(fields.likes){
+
+        fields.likes.value =
+            0;
+
+    }
+
+
+    if(fields.comments){
+
+        fields.comments.value =
+            0;
+
+    }
+
+
+    if(fields.shares){
+
+        fields.shares.value =
+            0;
+
+    }
+
+
+    if(fields.saved){
+
+        fields.saved.value =
+            0;
+
+    }
+
+
+    if(fields.status){
+
+        fields.status.value =
+            "Published";
+
+    }
+
+}
+
+
+// =====================================
+// ADD CONTENT
 // =====================================
 
 if(addContent){
 
-    addContent.onclick=function(){
+    addContent.onclick =
+        function(){
 
-        // Reset edit mode
-        editingContentId = null;
+            editingContentId =
+                null;
 
 
-        // Reset modal title
+            resetContentForm();
 
-        const title =
-        document.getElementById(
-            "contentModalTitle"
-        );
-
-        if(title){
-
-            title.textContent =
-            "Add Content";
-
-        }
-
-
-        // Reset form
-
-        const form =
-        contentModal?.querySelector("form");
-
-        if(form){
-
-            form.reset();
-
-        }
-
-
-        // Reset individual fields
-
-        const date =
-        document.getElementById("contentDate");
-
-        const caption =
-        document.getElementById("contentCaption");
-
-        const hashtag =
-        document.getElementById("contentHashtag");
-
-        const type =
-        document.getElementById("contentType");
-
-        const impressions =
-        document.getElementById("contentImpressions");
-
-        const reach =
-        document.getElementById("contentReach");
-
-        const likes =
-        document.getElementById("contentLikes");
-
-        const comments =
-        document.getElementById("contentComments");
-
-        const shares =
-        document.getElementById("contentShares");
-
-        const saved =
-        document.getElementById("contentSaved");
-
-        const platform =
-        document.getElementById("contentPlatform");
-
-        const status =
-        document.getElementById("contentStatus");
-
-
-        if(date)
-            date.value = "";
-
-
-        if(caption)
-            caption.value = "";
-
-
-        if(hashtag)
-            hashtag.value = "";
-
-
-        if(type)
-    type.value = "";
-
-const subject =
-    document.getElementById(
-        "contentSubject"
-    );
-
-if(subject)
-    subject.value = "";
-
-if(impressions)
-    impressions.value = 0;
-
-
-        if(reach)
-            reach.value = 0;
-
-
-        if(likes)
-            likes.value = 0;
-
-
-        if(comments)
-            comments.value = 0;
-
-
-        if(shares)
-            shares.value = 0;
-
-
-        if(saved)
-            saved.value = 0;
-
-
-        if(platform)
-            platform.value = "";
-
-
-        if(status)
-            status.value = "Published";
-
-
-        // Open modal
-
-        if(contentModal){
-
-            contentModal.style.display =
-            "flex";
-
-        }
-
-    };
-
-}
-
-const contentStatus =
-document.getElementById("contentStatus");
-
-
-
-
-
-// =====================================
-// CLOSE CONTENT MODAL
-// =====================================
-
-
-if(cancelContentBtn){
-
-
-cancelContentBtn.onclick=function(){
-
-
-    contentModal.style.display="none";
-
-
-};
-
-
-}
-
-
-
-if(closeContentModal){
-
-
-closeContentModal.onclick=function(){
-
-
-    contentModal.style.display="none";
-
-
-};
-
-
-}
-
-
-
-
-
-// =====================================
-// SAVE CONTENT
-// =====================================
-
-
-if(saveContent){
-
-    saveContent.onclick=function(){
-
-        try{
-
-            const date =
-                document.getElementById("contentDate");
-
-            const caption =
-                document.getElementById("contentCaption");
-
-            const hashtag =
-                document.getElementById("contentHashtag");
-
-            const contentType =
-    document.getElementById("contentType");
-
-const subject =
-    document.getElementById("contentSubject");
-
-            const impressions =
-                document.getElementById("contentImpressions");
-
-            const reach =
-                document.getElementById("contentReach");
-
-            const likes =
-                document.getElementById("contentLikes");
-
-            const comments =
-                document.getElementById("contentComments");
-
-            const shares =
-                document.getElementById("contentShares");
-
-            const saved =
-                document.getElementById("contentSaved");
-
-            const platform =
-                document.getElementById("contentPlatform");
-
-            const status =
-                document.getElementById("contentStatus");
-
-
-            // =====================================
-            // CHECK REQUIRED ELEMENTS
-            // =====================================
-
-            const missing = [];
-
-            if(!date) missing.push("contentDate");
-            if(!caption) missing.push("contentCaption");
-            if(!hashtag) missing.push("contentHashtag");
-            if(!contentType) missing.push("contentType");
-if(!subject) missing.push("contentSubject");
-if(!impressions) missing.push("contentImpressions");
-if(!reach) missing.push("contentReach");
-if(!likes) missing.push("contentLikes");
-if(!comments) missing.push("contentComments");
-            if(!shares) missing.push("contentShares");
-            if(!saved) missing.push("contentSaved");
-            if(!platform) missing.push("contentPlatform");
-            if(!status) missing.push("contentStatus");
-
-
-            if(missing.length > 0){
-
-                console.error(
-                    "Missing content form elements:",
-                    missing
-                );
-
-                alert(
-                    "Content form error.\n\nMissing:\n" +
-                    missing.join("\n")
-                );
-
-                return;
-
-            }
-
-
-            // =====================================
-            // CREATE CONTENT
-            // =====================================
-
-            const content = {
-
-                id:
-                    editingContentId !== null
-                    ?
-                    editingContentId
-                    :
-                    Date.now(),
-
-                accountId:
-                    activeAccountId,
-
-                date:
-                    date.value,
-
-                caption:
-                    caption.value.trim(),
-
-                hashtag:
-                    hashtag.value.trim(),
-
-                contentType:
-    contentType.value,
-
-subject:
-    document.getElementById("contentSubject").value.trim(),
-
-impressions:
-    Number(impressions.value) || 0,
-
-                reach:
-                    Number(reach.value) || 0,
-
-                likes:
-                    Number(likes.value) || 0,
-
-                comments:
-                    Number(comments.value) || 0,
-
-                shares:
-                    Number(shares.value) || 0,
-
-                saved:
-                    Number(saved.value) || 0,
-
-                platform:
-                    platform.value,
-
-                status:
-                    status.value || "Published"
-
-            };
-
-
-            // =====================================
-            // VALIDATION
-            // =====================================
-
-            if(!content.date){
-
-                alert("Please select a content date.");
-
-                return;
-
-            }
-
-
-            if(!content.platform){
-
-                alert("Please select a platform.");
-
-                return;
-
-            }
-
-
-            // =====================================
-            // EDIT EXISTING CONTENT
-            // =====================================
-
-            if(editingContentId !== null){
-
-                const index =
-                    account.contents.findIndex(
-                        item =>
-                        item.id === editingContentId
-                    );
-
-
-                if(index !== -1){
-
-                    account.contents[index] = content;
-
-                }
-
-            }
-
-
-            // =====================================
-            // ADD NEW CONTENT
-            // =====================================
-
-            else{
-
-                account.contents.push(content);
-
-            }
-
-
-            // =====================================
-            // SAVE DATABASE
-            // =====================================
-
-            saveDatabase();
-
-
-            // =====================================
-            // REFRESH UI
-            // =====================================
-
-            renderContents();
-
-loadAnalytics();
-
-renderSubjectTable();
-
-renderSubjectContentTable();
-
-renderPlatforms();
-
-loadEngagement();
-
-renderHashtags();
-
-renderPlatformComparison();
-
-renderMonthlyReport();
-
-renderWeeklyReport();
-
-
-            // =====================================
-            // RESET EDIT MODE
-            // =====================================
-
-            editingContentId = null;
-
-
-            // =====================================
-            // CLOSE MODAL
-            // =====================================
-
-            if(contentModal){
-
-                contentModal.style.display =
-                    "none";
-
-            }
-
-
-            // =====================================
-            // RESET TITLE
-            // =====================================
 
             const title =
                 document.getElementById(
                     "contentModalTitle"
                 );
+
 
             if(title){
 
@@ -2204,45 +2704,670 @@ renderWeeklyReport();
             }
 
 
-            // =====================================
-            // SUCCESS
-            // =====================================
+            if(contentModal){
 
-            showToast(
-                "Content saved successfully!",
-                "success"
-            );
+                contentModal.style.display =
+                    "flex";
 
+            }
 
-            console.log(
-                "Content saved:",
-                content
-            );
-
-        }
-
-        catch(error){
-
-            console.error(
-                "SAVE CONTENT ERROR:",
-                error
-            );
-
-            alert(
-                "Unable to save content.\n\n" +
-                error.message
-            );
-
-        }
-
-    };
+        };
 
 }
 
+
 // =====================================
-// PART 3
+// CLOSE CONTENT MODAL
+// =====================================
+
+if(cancelContentBtn){
+
+    cancelContentBtn.onclick =
+        function(){
+
+            editingContentId =
+                null;
+
+
+            if(contentModal){
+
+                contentModal.style.display =
+                    "none";
+
+            }
+
+        };
+
+}
+
+
+if(closeContentModal){
+
+    closeContentModal.onclick =
+        function(){
+
+            editingContentId =
+                null;
+
+
+            if(contentModal){
+
+                contentModal.style.display =
+                    "none";
+
+            }
+
+        };
+
+}
+
+
+// =====================================
+// SAVE CONTENT
+// =====================================
+
+if(saveContent){
+
+    saveContent.onclick =
+        function(){
+
+            try{
+
+                if(!account){
+
+                    return;
+                }
+
+
+                // =========================
+                // FORM ELEMENTS
+                // =========================
+
+                const date =
+                    document.getElementById(
+                        "contentDate"
+                    );
+
+                const caption =
+                    document.getElementById(
+                        "contentCaption"
+                    );
+
+                const hashtag =
+                    document.getElementById(
+                        "contentHashtag"
+                    );
+
+                const contentType =
+                    document.getElementById(
+                        "contentType"
+                    );
+
+                const subject =
+                    document.getElementById(
+                        "contentSubject"
+                    );
+
+                const impressions =
+                    document.getElementById(
+                        "contentImpressions"
+                    );
+
+                const reach =
+                    document.getElementById(
+                        "contentReach"
+                    );
+
+                const likes =
+                    document.getElementById(
+                        "contentLikes"
+                    );
+
+                const comments =
+                    document.getElementById(
+                        "contentComments"
+                    );
+
+                const shares =
+                    document.getElementById(
+                        "contentShares"
+                    );
+
+                const saved =
+                    document.getElementById(
+                        "contentSaved"
+                    );
+
+                const platform =
+                    document.getElementById(
+                        "contentPlatform"
+                    );
+
+                const status =
+                    document.getElementById(
+                        "contentStatus"
+                    );
+
+
+                // =========================
+                // REQUIRED ELEMENT CHECK
+                // =========================
+
+                const fields = {
+
+                    contentDate:
+                        date,
+
+                    contentCaption:
+                        caption,
+
+                    contentHashtag:
+                        hashtag,
+
+                    contentType:
+                        contentType,
+
+                    contentSubject:
+                        subject,
+
+                    contentImpressions:
+                        impressions,
+
+                    contentReach:
+                        reach,
+
+                    contentLikes:
+                        likes,
+
+                    contentComments:
+                        comments,
+
+                    contentShares:
+                        shares,
+
+                    contentSaved:
+                        saved,
+
+                    contentPlatform:
+                        platform,
+
+                    contentStatus:
+                        status
+
+                };
+
+
+                const missing =
+                    Object.entries(fields)
+                    .filter(
+                        ([, element]) =>
+                            !element
+                    )
+                    .map(
+                        ([name]) =>
+                            name
+                    );
+
+
+                if(missing.length > 0){
+
+                    console.error(
+                        "Missing content form elements:",
+                        missing
+                    );
+
+
+                    alert(
+                        "Content form error.\n\nMissing:\n" +
+                        missing.join("\n")
+                    );
+
+
+                    return;
+                }
+
+
+                // =========================
+                // BUILD CONTENT
+                // =========================
+
+                const content = {
+
+                    id:
+                        editingContentId !== null
+                            ? editingContentId
+                            : Date.now(),
+
+                    accountId:
+                        activeAccountId,
+
+                    date:
+                        date.value,
+
+                    caption:
+                        caption.value.trim(),
+
+                    hashtag:
+                        hashtag.value.trim(),
+
+                    contentType:
+                        contentType.value,
+
+                    subject:
+                        subject.value.trim(),
+
+                    impressions:
+                        Number(
+                            impressions.value
+                        ) || 0,
+
+                    reach:
+                        Number(
+                            reach.value
+                        ) || 0,
+
+                    likes:
+                        Number(
+                            likes.value
+                        ) || 0,
+
+                    comments:
+                        Number(
+                            comments.value
+                        ) || 0,
+
+                    shares:
+                        Number(
+                            shares.value
+                        ) || 0,
+
+                    saved:
+                        Number(
+                            saved.value
+                        ) || 0,
+
+                    platform:
+                        platform.value,
+
+                    status:
+                        status.value ||
+                        "Published"
+
+                };
+
+
+                // =========================
+                // VALIDATION
+                // =========================
+
+                if(!content.date){
+
+                    alert(
+                        "Please select a content date."
+                    );
+
+                    return;
+                }
+
+
+                if(!content.platform){
+
+                    alert(
+                        "Please select a platform."
+                    );
+
+                    return;
+                }
+
+
+                // =========================
+                // EDIT EXISTING CONTENT
+                // =========================
+
+                if(
+                    editingContentId !== null
+                ){
+
+                    const index =
+                        account.contents.findIndex(
+                            item =>
+                                String(item.id) ===
+                                String(
+                                    editingContentId
+                                )
+                        );
+
+
+                    if(index === -1){
+
+                        alert(
+                            "The content you are trying to edit could not be found."
+                        );
+
+                        return;
+                    }
+
+
+                    account.contents[index] =
+                        content;
+
+                }
+
+
+                // =========================
+                // ADD NEW CONTENT
+                // =========================
+
+                else{
+
+                    account.contents.push(
+                        content
+                    );
+
+                }
+
+
+                // =========================
+                // SYNC ANALYTICS
+                // =========================
+
+                syncPlatformAnalytics(
+                    false
+                );
+
+
+                // =========================
+                // SAVE FIRESTORE
+                // =========================
+
+                saveDatabase();
+
+
+                // =========================
+                // REFRESH UI
+                // =========================
+
+                renderContents();
+
+                loadAnalytics();
+
+                renderSubjectTable();
+
+                renderSubjectContentTable();
+
+                renderPlatforms();
+
+                if(
+                    typeof loadEngagement ===
+                    "function"
+                ){
+
+                    loadEngagement();
+
+                }
+
+                if(
+                    typeof renderHashtags ===
+                    "function"
+                ){
+
+                    renderHashtags();
+
+                }
+
+                if(
+                    typeof renderPlatformComparison ===
+                    "function"
+                ){
+
+                    renderPlatformComparison();
+
+                }
+
+                if(
+                    typeof renderMonthlyReport ===
+                    "function"
+                ){
+
+                    renderMonthlyReport();
+
+                }
+
+                if(
+                    typeof renderWeeklyReport ===
+                    "function"
+                ){
+
+                    renderWeeklyReport();
+
+                }
+
+
+                // =========================
+                // RESET EDIT MODE
+                // =========================
+
+                editingContentId =
+                    null;
+
+
+                // =========================
+                // CLOSE MODAL
+                // =========================
+
+                if(contentModal){
+
+                    contentModal.style.display =
+                        "none";
+
+                }
+
+
+                // =========================
+                // RESET TITLE
+                // =========================
+
+                const title =
+                    document.getElementById(
+                        "contentModalTitle"
+                    );
+
+
+                if(title){
+
+                    title.textContent =
+                        "Add Content";
+
+                }
+
+
+                // =========================
+                // SUCCESS
+                // =========================
+
+                showToast(
+                    "Content saved successfully!",
+                    "success"
+                );
+
+
+                console.log(
+                    "Content saved:",
+                    content
+                );
+
+            }
+
+            catch(error){
+
+                console.error(
+                    "SAVE CONTENT ERROR:",
+                    error
+                );
+
+
+                alert(
+                    "Unable to save content.\n\n" +
+                    error.message
+                );
+
+            }
+
+        };
+
+}
+
+
+// =====================================
+// INITIALIZE ACCOUNT PAGE
+// =====================================
+
+function initializeAccountPage(){
+
+    if(!account){
+
+        console.warn(
+            "Account page initialization skipped: no account."
+        );
+
+        return;
+    }
+
+
+    // =================================
+    // ENSURE DATA STRUCTURE
+    // =================================
+
+    normalizeAccountData();
+
+
+    // =================================
+    // RENDER BASIC ACCOUNT DATA
+    // =================================
+
+    renderContents();
+
+    renderPlatforms();
+
+    loadAnalytics();
+
+    renderSubjectTable();
+
+    renderSubjectContentTable();
+
+
+    // =================================
+    // OTHER ACCOUNT MODULES
+    // =================================
+
+    if(
+        typeof renderPlatformComparison ===
+        "function"
+    ){
+
+        renderPlatformComparison();
+
+    }
+
+
+    if(
+        typeof renderHashtags ===
+        "function"
+    ){
+
+        renderHashtags();
+
+    }
+
+
+    if(
+        typeof loadEngagement ===
+        "function"
+    ){
+
+        loadEngagement();
+
+    }
+
+
+    if(
+        typeof renderMonthlyReport ===
+        "function"
+    ){
+
+        renderMonthlyReport();
+
+    }
+
+
+    if(
+        typeof renderWeeklyReport ===
+        "function"
+    ){
+
+        renderWeeklyReport();
+
+    }
+
+
+    if(
+        typeof buildWeeklyYearFilter ===
+        "function"
+    ){
+
+        buildWeeklyYearFilter();
+
+    }
+
+
+    if(
+        typeof buildMonthlyFilters ===
+        "function"
+    ){
+
+        buildMonthlyFilters();
+
+    }
+
+
+    // =================================
+    // SYNC STORED ANALYTICS
+    // =================================
+
+    syncPlatformAnalytics(
+        false
+    );
+
+
+    console.log(
+        "Socmedata account page initialized."
+    );
+
+}
+
+
+// =====================================
+// START
+// =====================================
+
+loadActiveProfile();
+
+
+// =====================================
+// END OF PART 1
+// =====================================
+// PART 2 WILL CONTINUE WITH:
 // CONTENT TABLE + DELETE SYSTEM
-// + TABS + TOAST
+// TABS + PLATFORM COMPARISON
+// HASHTAGS + ENGAGEMENT
+// =====================================
+
+// =====================================
+// SOCMEDATA ACCOUNT DASHBOARD
+// PART 2 OF 3
+// CONTENT TABLE + DELETE
+// TABS + PLATFORM COMPARISON
+// HASHTAG ANALYTICS + ENGAGEMENT
 // =====================================
 
 
@@ -2252,468 +3377,791 @@ renderWeeklyReport();
 
 function renderContents(){
 
-
     const table =
-    document.getElementById("contentTableBody");
+        document.getElementById(
+            "contentTableBody"
+        );
 
 
+    if(!table){
 
-    if(!table)
         return;
-
-
-
-    table.innerHTML = "";
-
-
-
-    let sortedContents =
-    [...account.contents].sort(
-        (a,b)=>
-        new Date(a.date)-new Date(b.date)
-    );
-
-
-
-
-    sortedContents.forEach((content,index)=>{
-
-
-        let engagement =
-
-        (Number(content.likes)||0)
-
-        +
-
-        (Number(content.comments)||0)
-
-        +
-
-        (Number(content.shares)||0)
-
-        +
-
-        (Number(content.saved)||0);
-
-
-
-
-        table.innerHTML += `
-
-
-<tr>
-
-
-<td>
-${index + 1}
-</td>
-
-
-
-<td>
-${content.date || "-"}
-</td>
-
-
-
-
-<td>
-${content.caption || "-"}
-</td>
-
-
-
-
-<td>
-${content.hashtag || "-"}
-</td>
-
-
-
-
-<td>
-${content.platform || "-"}
-</td>
-
-
-
-
-<td>
-
-<span class="status-badge ${
-(content.status || "Published")
-.toLowerCase()
-}">
-
-
-${
-content.status === "Published"
-?
-"🟢"
-:
-content.status === "Scheduled"
-?
-"🔵"
-:
-content.status === "Draft"
-?
-"🟠"
-:
-"🟣"
-}
-
-
-${content.status || "Published"}
-
-
-</span>
-
-
-</td>
-
-
-
-
-
-<td>
-    ${formatNumber(content.impressions || 0)}
-</td>
-
-<td>
-    ${formatNumber(content.reach || 0)}
-</td>
-
-<td>
-    ${formatNumber(engagement)}
-</td>
-
-
-
-
-
-<td>
-
-
-<div class="content-actions">
-
-
-<button
-class="edit-content"
-data-id="${content.id}">
-
-Edit
-
-</button>
-
-
-
-<button
-class="delete-content"
-data-id="${content.id}">
-
-Delete
-
-</button>
-
-
-</div>
-
-
-</td>
-
-
-
-</tr>
-
-
-`;
-
-
-
-    });
-
-
-
-
-
-    // =================================
-    // EDIT BUTTON
-    // =================================
-
-
-    document
-    .querySelectorAll(".edit-content")
-    .forEach(button=>{
-
-
-        button.onclick=function(){
-
-
-            let id =
-            Number(this.dataset.id);
-
-
-
-            let content =
-            account.contents.find(
-                item =>
-                item.id === id
-            );
-
-
-
-            if(!content)
-                return;
-
-
-
-
-            editingContentId=id;
-
-
-
-
-            document.getElementById("contentDate").value =
-            content.date || "";
-
-
-
-            document.getElementById("contentCaption").value =
-            content.caption || "";
-
-
-
-            document.getElementById("contentHashtag").value =
-            content.hashtag || "";
-
-
-
-            document.getElementById("contentType").value =
-content.contentType || "";
-
-document.getElementById("contentSubject").value =
-content.subject || "";
-
-const impressionsField =
-document.getElementById(
-    "contentImpressions"
-);
-
-if(impressionsField){
-
-    impressionsField.value =
-    content.impressions || 0;
-
-}
-
-const reachField =
-document.getElementById(
-    "contentReach"
-);
-
-if(reachField){
-
-    reachField.value =
-    content.reach || 0;
-
-}
-
-
-
-            document.getElementById("contentLikes").value =
-            content.likes || 0;
-
-
-
-            document.getElementById("contentComments").value =
-            content.comments || 0;
-
-
-
-            document.getElementById("contentShares").value =
-            content.shares || 0;
-
-
-
-            document.getElementById("contentSaved").value =
-            content.saved || 0;
-
-
-
-            document.getElementById("contentPlatform").value =
-            content.platform || "";
-
-
-
-            document.getElementById("contentStatus").value =
-            content.status || "Published";
-
-
-
-            let title =
-            document.getElementById("contentModalTitle");
-
-
-
-            if(title){
-
-                title.textContent =
-                "Edit Content";
-
-            }
-
-
-
-            contentModal.style.display="flex";
-
-
-
-        };
-
-
-    });
-
-
-
-
-
-    // =================================
-    // DELETE BUTTON
-    // =================================
-
-
-    let deleteContentId=null;
-
-
-
-    const deleteModal =
-    document.getElementById("deleteModal");
-
-
-
-    const cancelDelete =
-    document.getElementById("cancelDelete");
-
-
-
-    const confirmDelete =
-    document.getElementById("confirmDelete");
-
-
-
-
-
-    document
-    .querySelectorAll(".delete-content")
-    .forEach(button=>{
-
-
-        button.onclick=function(){
-
-
-            deleteContentId =
-            Number(this.dataset.id);
-
-
-
-            if(deleteModal){
-
-                deleteModal.style.display="flex";
-
-            }
-
-
-        };
-
-
-    });
-
-
-
-
-
-
-    if(cancelDelete){
-
-
-        cancelDelete.onclick=function(){
-
-
-            deleteContentId=null;
-
-
-            deleteModal.style.display="none";
-
-
-        };
-
-
     }
 
 
+    const contents =
+        Array.isArray(
+            account?.contents
+        )
+
+        ?
+
+        [...account.contents]
+
+        :
+
+        [];
 
 
+    // =================================
+    // SORT BY DATE
+    // =================================
+
+    contents.sort(
+        (a, b) => {
+
+            const dateA =
+                new Date(
+                    a.date || 0
+                ).getTime();
+
+            const dateB =
+                new Date(
+                    b.date || 0
+                ).getTime();
 
 
-    if(confirmDelete){
+            return dateA - dateB;
+
+        }
+    );
 
 
-        confirmDelete.onclick=function(){
+    // =================================
+    // EMPTY STATE
+    // =================================
+
+    if(contents.length === 0){
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td colspan="9">
+
+                    No content available.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+    }
 
 
+    // =================================
+    // BUILD TABLE
+    // =================================
 
-            if(deleteContentId===null)
+    table.innerHTML =
+
+        contents
+        .map(
+            (content, index) => {
+
+                const engagement =
+
+                    (
+                        Number(
+                            content.likes
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.comments
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.shares
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.saved
+                        ) || 0
+                    );
+
+
+                const status =
+                    content.status ||
+                    "Published";
+
+
+                let statusIcon =
+                    "🟣";
+
+
+                if(
+                    status ===
+                    "Published"
+                ){
+
+                    statusIcon =
+                        "🟢";
+
+                }
+
+                else if(
+                    status ===
+                    "Scheduled"
+                ){
+
+                    statusIcon =
+                        "🔵";
+
+                }
+
+                else if(
+                    status ===
+                    "Draft"
+                ){
+
+                    statusIcon =
+                        "🟠";
+
+                }
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${index + 1}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.date ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.caption ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.hashtag ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.platform ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+
+                            <span
+                                class="status-badge ${escapeHtml(
+                                    status.toLowerCase()
+                                )}"
+                            >
+
+                                ${statusIcon}
+
+                                ${escapeHtml(
+                                    status
+                                )}
+
+                            </span>
+
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                content.impressions ||
+                                0
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                content.reach ||
+                                0
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                engagement
+                            )}
+                        </td>
+
+                        <td>
+
+                            <div class="content-actions">
+
+                                <button
+                                    type="button"
+                                    class="edit-content"
+                                    data-id="${String(
+                                        content.id
+                                    )}"
+                                >
+                                    Edit
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="delete-content"
+                                    data-id="${String(
+                                        content.id
+                                    )}"
+                                >
+                                    Delete
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        )
+        .join("");
+
+
+    // =================================
+    // EDIT BUTTONS
+    // =================================
+
+    document
+        .querySelectorAll(
+            ".edit-content"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function(){
+
+                        const id =
+                            String(
+                                this.dataset.id
+                            );
+
+
+                        const content =
+                            account.contents.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) === id
+                            );
+
+
+                        if(!content){
+
+                            console.warn(
+                                "Content not found:",
+                                id
+                            );
+
+                            return;
+                        }
+
+
+                        editingContentId =
+                            content.id;
+
+
+                        // =====================
+                        // DATE
+                        // =====================
+
+                        const date =
+                            document.getElementById(
+                                "contentDate"
+                            );
+
+                        if(date){
+
+                            date.value =
+                                content.date ||
+                                "";
+
+                        }
+
+
+                        // =====================
+                        // CAPTION
+                        // =====================
+
+                        const caption =
+                            document.getElementById(
+                                "contentCaption"
+                            );
+
+                        if(caption){
+
+                            caption.value =
+                                content.caption ||
+                                "";
+
+                        }
+
+
+                        // =====================
+                        // HASHTAG
+                        // =====================
+
+                        const hashtag =
+                            document.getElementById(
+                                "contentHashtag"
+                            );
+
+                        if(hashtag){
+
+                            hashtag.value =
+                                content.hashtag ||
+                                "";
+
+                        }
+
+
+                        // =====================
+                        // TYPE
+                        // =====================
+
+                        const type =
+                            document.getElementById(
+                                "contentType"
+                            );
+
+                        if(type){
+
+                            type.value =
+                                content.contentType ||
+                                "";
+
+                        }
+
+
+                        // =====================
+                        // SUBJECT
+                        // =====================
+
+                        const subject =
+                            document.getElementById(
+                                "contentSubject"
+                            );
+
+                        if(subject){
+
+                            subject.value =
+                                content.subject ||
+                                "";
+
+                        }
+
+
+                        // =====================
+                        // IMPRESSIONS
+                        // =====================
+
+                        const impressions =
+                            document.getElementById(
+                                "contentImpressions"
+                            );
+
+                        if(impressions){
+
+                            impressions.value =
+                                Number(
+                                    content.impressions
+                                ) || 0;
+
+                        }
+
+
+                        // =====================
+                        // REACH
+                        // =====================
+
+                        const reach =
+                            document.getElementById(
+                                "contentReach"
+                            );
+
+                        if(reach){
+
+                            reach.value =
+                                Number(
+                                    content.reach
+                                ) || 0;
+
+                        }
+
+
+                        // =====================
+                        // LIKES
+                        // =====================
+
+                        const likes =
+                            document.getElementById(
+                                "contentLikes"
+                            );
+
+                        if(likes){
+
+                            likes.value =
+                                Number(
+                                    content.likes
+                                ) || 0;
+
+                        }
+
+
+                        // =====================
+                        // COMMENTS
+                        // =====================
+
+                        const comments =
+                            document.getElementById(
+                                "contentComments"
+                            );
+
+                        if(comments){
+
+                            comments.value =
+                                Number(
+                                    content.comments
+                                ) || 0;
+
+                        }
+
+
+                        // =====================
+                        // SHARES
+                        // =====================
+
+                        const shares =
+                            document.getElementById(
+                                "contentShares"
+                            );
+
+                        if(shares){
+
+                            shares.value =
+                                Number(
+                                    content.shares
+                                ) || 0;
+
+                        }
+
+
+                        // =====================
+                        // SAVED
+                        // =====================
+
+                        const saved =
+                            document.getElementById(
+                                "contentSaved"
+                            );
+
+                        if(saved){
+
+                            saved.value =
+                                Number(
+                                    content.saved
+                                ) || 0;
+
+                        }
+
+
+                        // =====================
+                        // PLATFORM
+                        // =====================
+
+                        const platform =
+                            document.getElementById(
+                                "contentPlatform"
+                            );
+
+                        if(platform){
+
+                            platform.value =
+                                content.platform ||
+                                "";
+
+                        }
+
+
+                        // =====================
+                        // STATUS
+                        // =====================
+
+                        const status =
+                            document.getElementById(
+                                "contentStatus"
+                            );
+
+                        if(status){
+
+                            status.value =
+                                content.status ||
+                                "Published";
+
+                        }
+
+
+                        // =====================
+                        // MODAL TITLE
+                        // =====================
+
+                        const title =
+                            document.getElementById(
+                                "contentModalTitle"
+                            );
+
+                        if(title){
+
+                            title.textContent =
+                                "Edit Content";
+
+                        }
+
+
+                        // =====================
+                        // OPEN MODAL
+                        // =====================
+
+                        if(contentModal){
+
+                            contentModal.style.display =
+                                "flex";
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+    // =================================
+    // DELETE BUTTONS
+    // =================================
+
+    document
+        .querySelectorAll(
+            ".delete-content"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function(){
+
+                        const id =
+                            String(
+                                this.dataset.id
+                            );
+
+
+                        openDeleteModal(
+                            id
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+// =====================================
+// DELETE STATE
+// =====================================
+
+let deleteContentId = null;
+
+
+// =====================================
+// DELETE MODAL
+// =====================================
+
+const deleteModal =
+    document.getElementById(
+        "deleteModal"
+    );
+
+const cancelDelete =
+    document.getElementById(
+        "cancelDelete"
+    );
+
+const confirmDelete =
+    document.getElementById(
+        "confirmDelete"
+    );
+
+
+// =====================================
+// OPEN DELETE MODAL
+// =====================================
+
+function openDeleteModal(
+    id
+){
+
+    deleteContentId =
+        String(id);
+
+
+    if(deleteModal){
+
+        deleteModal.style.display =
+            "flex";
+
+    }
+
+}
+
+
+// =====================================
+// CLOSE DELETE MODAL
+// =====================================
+
+function closeDeleteModal(){
+
+    deleteContentId =
+        null;
+
+
+    if(deleteModal){
+
+        deleteModal.style.display =
+            "none";
+
+    }
+
+}
+
+
+// =====================================
+// CANCEL DELETE
+// =====================================
+
+if(cancelDelete){
+
+    cancelDelete.addEventListener(
+        "click",
+        closeDeleteModal
+    );
+
+}
+
+
+// =====================================
+// CONFIRM DELETE
+// =====================================
+
+if(confirmDelete){
+
+    confirmDelete.addEventListener(
+        "click",
+        async function(){
+
+            if(
+                deleteContentId ===
+                null
+            ){
+
                 return;
-
-
-
-            account.contents =
-            account.contents.filter(
-
-                item =>
-                item.id !== deleteContentId
-
-            );
-
-
-
-            saveDatabase();
-
-
-
-            renderContents();
-
-loadAnalytics();
-
-renderSubjectTable();
-
-renderSubjectContentTable();
-
-renderPlatforms();
-
-
-
-
-            if(typeof loadEngagement==="function")
-                loadEngagement();
-
-
-
-            if(typeof renderHashtags==="function")
-                renderHashtags();
-
-
-
-            if(deleteModal){
-
-                deleteModal.style.display="none";
-
             }
 
 
+            const id =
+                String(
+                    deleteContentId
+                );
 
-            deleteContentId=null;
 
+            // =========================
+            // REMOVE CONTENT
+            // =========================
+
+            account.contents =
+                account.contents.filter(
+                    item =>
+                        String(
+                            item.id
+                        ) !== id
+                );
+
+
+            // =========================
+            // RESET DELETE STATE
+            // =========================
+
+            closeDeleteModal();
+
+
+            // =========================
+            // REFRESH ANALYTICS
+            // =========================
+
+            syncPlatformAnalytics(
+                false
+            );
+
+
+            loadAnalytics();
+
+            renderContents();
+
+            renderSubjectTable();
+
+            renderSubjectContentTable();
+
+            renderPlatforms();
+
+            renderPlatformComparison();
+
+            renderHashtags();
+
+            loadEngagement();
+
+            renderMonthlyReport();
+
+            renderWeeklyReport();
+
+
+            // =========================
+            // SAVE FIRESTORE
+            // =========================
+
+            await saveDatabase();
 
 
             showToast(
@@ -2721,263 +4169,259 @@ renderPlatforms();
                 "success"
             );
 
-
-        };
-
-
-    }
-
-
+        }
+    );
 
 }
-
-
-
-
-
-
 
 
 // =====================================
 // TOAST SYSTEM
 // =====================================
 
-
 function showToast(
-message,
-type="success"
+    message,
+    type = "success"
 ){
 
-
-
     const toast =
-    document.getElementById("toast");
+        document.getElementById(
+            "toast"
+        );
 
 
+    if(!toast){
 
-    if(!toast)
+        console.warn(
+            "Toast element not found."
+        );
+
         return;
-
+    }
 
 
     const icon =
-    toast.querySelector(".toast-icon");
-
+        toast.querySelector(
+            ".toast-icon"
+        );
 
 
     const text =
-    toast.querySelector(".toast-message");
-
+        toast.querySelector(
+            ".toast-message"
+        );
 
 
     if(text){
 
         text.textContent =
-        message;
+            message;
 
     }
-
-
-
 
 
     if(icon){
 
+        if(
+            type ===
+            "success"
+        ){
 
-        if(type==="success"){
-
-            icon.innerHTML="✓";
-
-        }
-
-
-        else if(type==="error"){
-
-            icon.innerHTML="✕";
+            icon.textContent =
+                "✓";
 
         }
 
+        else if(
+            type ===
+            "error"
+        ){
+
+            icon.textContent =
+                "✕";
+
+        }
 
         else{
 
-            icon.innerHTML="!";
+            icon.textContent =
+                "!";
 
         }
-
 
     }
 
 
+    toast.classList.add(
+        "show"
+    );
 
 
-
-    toast.classList.add("show");
-
-
-
-    clearTimeout(toast.timer);
+    clearTimeout(
+        toast._timer
+    );
 
 
+    toast._timer =
+        setTimeout(
+            () => {
 
-    toast.timer =
-    setTimeout(()=>{
+                toast.classList.remove(
+                    "show"
+                );
 
-
-        toast.classList.remove("show");
-
-
-    },3000);
-
-
+            },
+            3000
+        );
 
 }
-
-
-
-
-
 
 
 // =====================================
 // ACCOUNT TABS
 // =====================================
 
-
 const tabs =
-document.querySelectorAll(".account-tab");
-
-
+    document.querySelectorAll(
+        ".account-tab"
+    );
 
 const tabContents =
-document.querySelectorAll(".tab-content");
+    document.querySelectorAll(
+        ".tab-content"
+    );
 
 
+// =====================================
+// ACTIVATE TAB
+// =====================================
+
+function activateAccountTab(
+    target
+){
+
+    if(!target){
+
+        target =
+            "dashboard";
+
+    }
 
 
-tabs.forEach(tab=>{
+    // =========================
+    // REMOVE ACTIVE STATES
+    // =========================
+
+    tabs.forEach(
+        tab => {
+
+            tab.classList.remove(
+                "active"
+            );
+
+        }
+    );
 
 
-    tab.onclick=function(){
+    tabContents.forEach(
+        content => {
+
+            content.classList.remove(
+                "active"
+            );
+
+        }
+    );
 
 
+    // =========================
+    // ACTIVATE BUTTON
+    // =========================
 
-        let target =
-        tab.dataset.tab;
+    const activeTab =
+        document.querySelector(
+            `[data-tab="${CSS.escape(
+                target
+            )}"]`
+        );
 
 
+    if(activeTab){
 
-        localStorage.setItem(
-            "activeAccountTab",
+        activeTab.classList.add(
+            "active"
+        );
+
+    }
+
+
+    // =========================
+    // ACTIVATE CONTENT
+    // =========================
+
+    const activeContent =
+        document.getElementById(
             target
         );
 
 
+    if(activeContent){
 
-        tabs.forEach(btn=>{
+        activeContent.classList.add(
+            "active"
+        );
 
-            btn.classList.remove("active");
-
-        });
-
-
-
-        tabContents.forEach(content=>{
-
-            content.classList.remove("active");
-
-        });
+    }
 
 
+    // =========================
+    // SAVE TAB
+    // =========================
+
+    localStorage.setItem(
+        "activeAccountTab",
+        target
+    );
+
+}
 
 
-        tab.classList.add("active");
+// =====================================
+// TAB CLICK EVENTS
+// =====================================
 
+tabs.forEach(
+    tab => {
 
+        tab.addEventListener(
+            "click",
+            function(){
 
-        let section =
-        document.getElementById(target);
+                activateAccountTab(
+                    this.dataset.tab
+                );
 
+            }
+        );
 
-
-        if(section){
-
-            section.classList.add("active");
-
-        }
-
-
-    };
-
-
-});
-
-
-
-
+    }
+);
 
 
 // =====================================
 // RESTORE LAST TAB
 // =====================================
 
+const savedTab =
+    localStorage.getItem(
+        "activeAccountTab"
+    );
 
-let savedTab =
-localStorage.getItem(
-"activeAccountTab"
+
+activateAccountTab(
+    savedTab ||
+    "dashboard"
 );
-
-
-
-tabs.forEach(tab=>{
-
-    tab.classList.remove("active");
-
-});
-
-
-
-tabContents.forEach(content=>{
-
-    content.classList.remove("active");
-
-});
-
-
-
-
-let activeTab =
-document.querySelector(
-`[data-tab="${savedTab || "dashboard"}"]`
-);
-
-
-
-let activeContent =
-document.getElementById(
-savedTab || "dashboard"
-);
-
-
-
-
-if(activeTab){
-
-    activeTab.classList.add("active");
-
-}
-
-
-
-if(activeContent){
-
-    activeContent.classList.add("active");
-
-}
-
-// =====================================
-// PART 4
-// ENGAGEMENT + HASHTAG + PLATFORM ANALYTICS
-// =====================================
 
 
 // =====================================
@@ -2986,268 +4430,52 @@ if(activeContent){
 
 function renderPlatformComparison(){
 
-
     const result =
-    document.getElementById(
-        "platformComparisonResult"
-    );
+        document.getElementById(
+            "platformComparisonResult"
+        );
 
 
+    if(!result){
 
-    if(!result)
         return;
-
-
-
-    let platforms = {};
-
-
-
-    account.contents.forEach(content=>{
-
-
-        let platform =
-        content.platform || "Unknown";
-
-
-
-        if(!platforms[platform]){
-
-
-            platforms[platform]={
-    impressions:0,
-    reach:0,
-    likes:0,
-    comments:0,
-    shares:0,
-    saved:0
-};
-
-
-        }
-
-
-
-
-        platforms[platform].impressions +=
-    Number(content.impressions) || 0;
-
-platforms[platform].reach +=
-    Number(content.reach) || 0;
-
-
-
-        platforms[platform].likes +=
-        Number(content.likes)||0;
-
-
-
-        platforms[platform].comments +=
-        Number(content.comments)||0;
-
-
-
-        platforms[platform].shares +=
-        Number(content.shares)||0;
-
-
-
-        platforms[platform].saved +=
-        Number(content.saved)||0;
-
-
-
-    });
-
-
-
-
-    let html="";
-
-
-
-
-    Object.keys(platforms)
-    .forEach(platform=>{
-
-
-        let data =
-        platforms[platform];
-
-
-
-        let engagement =
-
-        data.likes
-
-        +
-
-        data.comments
-
-        +
-
-        data.shares
-
-        +
-
-        data.saved;
-
-
-
-
-        let rate = 0;
-
-if(data.impressions > 0){
-
-    rate =
-    (
-        engagement /
-        data.impressions *
-        100
-    ).toFixed(1);
-
-}
-
-
-        html += `
-
-
-<div class="platform-performance-item">
-
-
-<div class="platform-performance-header">
-
-
-<span>
-
-${platform}
-
-</span>
-
-
-
-<strong>
-
-${rate}%
-
-</strong>
-
-
-
-</div>
-
-
-
-<div class="performance-bar">
-
-
-<span style="width:${rate}%"></span>
-
-
-</div>
-
-
-
-</div>
-
-
-`;
-
-
-
-    });
-
-
-
-
-    if(html===""){
-
-
-        html =
-        "No platform data yet.";
-
-
     }
 
 
+    const platforms = {};
 
 
-    result.innerHTML =
-    html;
+    const contents =
+        Array.isArray(
+            account?.contents
+        )
+
+        ?
+
+        account.contents
+
+        :
+
+        [];
 
 
+    // =================================
+    // GROUP CONTENT BY PLATFORM
+    // =================================
 
-}
+    contents.forEach(
+        content => {
 
-
-
-
-
-
-
-
-
-// =====================================
-// HASHTAG ANALYTICS
-// =====================================
-
-function renderHashtags(){
-
-    const hashtagList =
-        document.getElementById(
-            "hashtagList"
-        );
+            const platform =
+                String(
+                    content.platform ||
+                    "Unknown"
+                );
 
 
-    const hashtagSummary =
-        document.getElementById(
-            "hashtagSummary"
-        );
+            if(!platforms[platform]){
 
-
-    if(!hashtagList)
-        return;
-
-
-    let hashtags = {};
-
-
-
-    account.contents.forEach(content=>{
-
-        if(!content.hashtag)
-            return;
-
-
-        let tags =
-            content.hashtag.split(/\s+/);
-
-
-        tags.forEach(tag=>{
-
-            tag =
-                tag.replace(/^#/,"")
-                .trim();
-
-
-            if(tag === "")
-                return;
-
-
-            let key =
-                tag.toLowerCase();
-
-
-            if(!hashtags[key]){
-
-                hashtags[key] = {
-
-                    name:
-                        tag.charAt(0).toUpperCase()
-                        +
-                        tag.slice(1).toLowerCase(),
-
-                    used: 0,
+                platforms[platform] = {
 
                     impressions: 0,
 
@@ -3266,244 +4494,566 @@ function renderHashtags(){
             }
 
 
-            hashtags[key].used++;
+            const data =
+                platforms[platform];
 
 
-            hashtags[key].impressions +=
-    Number(content.impressions) || 0;
-
-hashtags[key].reach +=
-    Number(content.reach) || 0;
-
-            hashtags[key].likes +=
-                Number(content.likes) || 0;
+            data.impressions +=
+                Number(
+                    content.impressions
+                ) || 0;
 
 
-            hashtags[key].comments +=
-                Number(content.comments) || 0;
+            data.reach +=
+                Number(
+                    content.reach
+                ) || 0;
 
 
-            hashtags[key].shares +=
-                Number(content.shares) || 0;
+            data.likes +=
+                Number(
+                    content.likes
+                ) || 0;
 
 
-            hashtags[key].saved +=
-                Number(content.saved) || 0;
+            data.comments +=
+                Number(
+                    content.comments
+                ) || 0;
 
-        });
 
-    });
+            data.shares +=
+                Number(
+                    content.shares
+                ) || 0;
 
+
+            data.saved +=
+                Number(
+                    content.saved
+                ) || 0;
+
+        }
+    );
+
+
+    // =================================
+    // EMPTY STATE
+    // =================================
+
+    if(
+        Object.keys(
+            platforms
+        ).length === 0
+    ){
+
+        result.innerHTML =
+            "No platform data yet.";
+
+        return;
+    }
+
+
+    // =================================
+    // BUILD RESULT
+    // =================================
 
     let html = "";
 
 
+    Object.entries(
+        platforms
+    )
+    .forEach(
+        ([platform, data]) => {
+
+            const engagement =
+
+                data.likes +
+
+                data.comments +
+
+                data.shares +
+
+                data.saved;
+
+
+            const rate =
+
+                data.impressions > 0
+
+                    ?
+
+                    (
+                        engagement /
+                        data.impressions *
+                        100
+                    ).toFixed(1)
+
+                    :
+
+                    "0.0";
+
+
+            html += `
+
+                <div
+                    class="platform-performance-item"
+                >
+
+                    <div
+                        class="platform-performance-header"
+                    >
+
+                        <span>
+                            ${escapeHtml(
+                                platform
+                            )}
+                        </span>
+
+                        <strong>
+                            ${rate}%
+                        </strong>
+
+                    </div>
+
+
+                    <div
+                        class="performance-bar"
+                    >
+
+                        <span
+                            style="width:${Math.min(
+                                Number(rate),
+                                100
+                            )}%"
+                        ></span>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }
+    );
+
+
+    result.innerHTML =
+        html;
+
+}
+
+
+// =====================================
+// HASHTAG ANALYTICS
+// =====================================
+
+function renderHashtags(){
+
+    const hashtagList =
+        document.getElementById(
+            "hashtagList"
+        );
+
+    const hashtagSummary =
+        document.getElementById(
+            "hashtagSummary"
+        );
+
+
+    if(!hashtagList){
+
+        return;
+    }
+
+
+    const hashtags = {};
+
+
+    const contents =
+        Array.isArray(
+            account?.contents
+        )
+
+        ?
+
+        account.contents
+
+        :
+
+        [];
+
+
+    // =================================
+    // COLLECT HASHTAGS
+    // =================================
+
+    contents.forEach(
+        content => {
+
+            const rawHashtag =
+                String(
+                    content.hashtag ||
+                    ""
+                ).trim();
+
+
+            if(!rawHashtag){
+
+                return;
+            }
+
+
+            const tags =
+                rawHashtag.split(
+                    /\s+/
+                );
+
+
+            tags.forEach(
+                rawTag => {
+
+                    const cleaned =
+                        rawTag
+                            .replace(
+                                /^#/,
+                                ""
+                            )
+                            .trim();
+
+
+                    if(!cleaned){
+
+                        return;
+                    }
+
+
+                    const key =
+                        cleaned.toLowerCase();
+
+
+                    if(!hashtags[key]){
+
+                        hashtags[key] = {
+
+                            name:
+                                cleaned,
+
+                            used: 0,
+
+                            impressions: 0,
+
+                            reach: 0,
+
+                            likes: 0,
+
+                            comments: 0,
+
+                            shares: 0,
+
+                            saved: 0
+
+                        };
+
+                    }
+
+
+                    const data =
+                        hashtags[key];
+
+
+                    data.used++;
+
+
+                    data.impressions +=
+                        Number(
+                            content.impressions
+                        ) || 0;
+
+
+                    data.reach +=
+                        Number(
+                            content.reach
+                        ) || 0;
+
+
+                    data.likes +=
+                        Number(
+                            content.likes
+                        ) || 0;
+
+
+                    data.comments +=
+                        Number(
+                            content.comments
+                        ) || 0;
+
+
+                    data.shares +=
+                        Number(
+                            content.shares
+                        ) || 0;
+
+
+                    data.saved +=
+                        Number(
+                            content.saved
+                        ) || 0;
+
+                }
+            );
+
+        }
+    );
+
+
+    // =================================
+    // SORT
+    // =================================
+
+    const sorted =
+        Object.values(
+            hashtags
+        )
+        .sort(
+            (a, b) =>
+                b.impressions -
+                a.impressions
+        );
+
+
+    // =================================
+    // SUMMARY VALUES
+    // =================================
+
     let totalUsage = 0;
 
-    let totalReach = 0;
-
     let bestHashtag = "-";
-
 
     let highestImpressions = 0;
 
 
-    Object.values(hashtags)
+    sorted.forEach(
+        tag => {
 
-    .sort(
-        (a,b) =>
-            b.impressions - a.impressions
-    )
-
-    .forEach(tag=>{
+            totalUsage +=
+                tag.used;
 
 
-        totalUsage +=
-            tag.used;
+            if(
+                tag.impressions >
+                highestImpressions
+            ){
 
+                highestImpressions =
+                    tag.impressions;
 
-        if(
-            tag.impressions >
-            highestImpressions
-        ){
+                bestHashtag =
+                    "#" +
+                    tag.name;
 
-            highestImpressions =
-                tag.impressions;
-
-            bestHashtag =
-                "#" + tag.name;
+            }
 
         }
+    );
 
 
-        let engagement =
+    // =================================
+    // TABLE
+    // =================================
 
-            tag.likes +
-            tag.comments +
-            tag.shares +
-            tag.saved;
+    if(sorted.length === 0){
 
+        hashtagList.innerHTML = `
 
-        let rate = 0;
+            <tr>
 
+                <td colspan="9">
+                    No hashtag data yet.
+                </td>
 
-        if(tag.impressions > 0){
-
-            rate =
-                (
-                    engagement /
-                    tag.impressions *
-                    100
-                ).toFixed(1);
-
-        }
-
-
-        html += `
-
-        <tr>
-
-            <td class="hashtag-name">
-                #${tag.name}
-            </td>
-
-
-            <td>
-                ${tag.used}
-            </td>
-
-
-            <td>
-                ${formatNumber(tag.impressions)}
-            </td>
-
-            <td>
-                ${formatNumber(tag.reach)}
-            </td>
-
-
-            <td>
-                ${formatNumber(tag.likes)}
-            </td>
-
-
-            <td>
-                ${formatNumber(tag.comments)}
-            </td>
-
-
-            <td>
-                ${formatNumber(tag.shares)}
-            </td>
-
-
-            <td>
-                ${formatNumber(tag.saved)}
-            </td>
-
-
-            <td>
-                ${rate}%
-            </td>
-
-        </tr>
-
-        `;
-
-    });
-
-
-    if(html === ""){
-
-        html = `
-
-        <tr>
-
-            <td colspan="9">
-    No hashtag data yet.
-</td>
-
-        </tr>
+            </tr>
 
         `;
 
     }
 
+    else{
 
-    hashtagList.innerHTML =
-        html;
+        hashtagList.innerHTML =
+
+            sorted
+            .map(
+                tag => {
+
+                    const engagement =
+
+                        tag.likes +
+
+                        tag.comments +
+
+                        tag.shares +
+
+                        tag.saved;
 
 
-    // =====================================
-    // HASHTAG SUMMARY
-    // =====================================
+                    const rate =
+
+                        tag.impressions > 0
+
+                            ?
+
+                            (
+                                engagement /
+                                tag.impressions *
+                                100
+                            ).toFixed(1)
+
+                            :
+
+                            "0.0";
+
+
+                    return `
+
+                        <tr>
+
+                            <td
+                                class="hashtag-name"
+                            >
+                                #${escapeHtml(
+                                    tag.name
+                                )}
+                            </td>
+
+                            <td>
+                                ${tag.used}
+                            </td>
+
+                            <td>
+                                ${formatNumber(
+                                    tag.impressions
+                                )}
+                            </td>
+
+                            <td>
+                                ${formatNumber(
+                                    tag.reach
+                                )}
+                            </td>
+
+                            <td>
+                                ${formatNumber(
+                                    tag.likes
+                                )}
+                            </td>
+
+                            <td>
+                                ${formatNumber(
+                                    tag.comments
+                                )}
+                            </td>
+
+                            <td>
+                                ${formatNumber(
+                                    tag.shares
+                                )}
+                            </td>
+
+                            <td>
+                                ${formatNumber(
+                                    tag.saved
+                                )}
+                            </td>
+
+                            <td>
+                                ${rate}%
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+    }
+
+
+    // =================================
+    // SUMMARY
+    // =================================
 
     if(hashtagSummary){
 
-    hashtagSummary.innerHTML = `
+        hashtagSummary.innerHTML = `
 
-    <div class="hashtag-card">
+            <div class="hashtag-card">
 
-        <span>
-            Total Hashtags
-        </span>
+                <span>
+                    Total Hashtags
+                </span>
 
-        <h2>
-            ${Object.keys(hashtags).length}
-        </h2>
+                <h2>
+                    ${Object.keys(
+                        hashtags
+                    ).length}
+                </h2>
 
-    </div>
-
-
-    <div class="hashtag-card">
-
-        <span>
-            Total Usage
-        </span>
-
-        <h2>
-            ${totalUsage}
-        </h2>
-
-    </div>
+            </div>
 
 
-    <div class="hashtag-card">
+            <div class="hashtag-card">
 
-        <span>
-            Best Hashtag
-        </span>
+                <span>
+                    Total Usage
+                </span>
 
-        <h2>
-            ${bestHashtag}
-        </h2>
+                <h2>
+                    ${formatNumber(
+                        totalUsage
+                    )}
+                </h2>
 
-    </div>
+            </div>
 
 
-    <div class="hashtag-card">
+            <div class="hashtag-card">
 
-        <span>
-            Most Impressions
-        </span>
+                <span>
+                    Best Hashtag
+                </span>
 
-        <h2>
-            ${formatNumber(highestImpressions)}
-        </h2>
+                <h2>
+                    ${escapeHtml(
+                        bestHashtag
+                    )}
+                </h2>
 
-    </div>
+            </div>
 
-    `;
+
+            <div class="hashtag-card">
+
+                <span>
+                    Most Impressions
+                </span>
+
+                <h2>
+                    ${formatNumber(
+                        highestImpressions
+                    )}
+                </h2>
+
+            </div>
+
+        `;
+
+    }
 
 }
-
-}
-
-
-
-
-
-
 
 
 // =====================================
@@ -3512,540 +5062,594 @@ hashtags[key].reach +=
 
 function loadEngagement(){
 
-
-
     const contents =
-    account.contents || [];
+        Array.isArray(
+            account?.contents
+        )
+
+        ?
+
+        account.contents
+
+        :
+
+        [];
 
 
+    let likes = 0;
 
-    let likes=0;
+    let comments = 0;
 
-    let comments=0;
+    let shares = 0;
 
-    let shares=0;
-
-    let saved=0;
+    let saved = 0;
 
     let impressions = 0;
 
-let reach = 0;
+    let reach = 0;
 
 
+    const contentTypes = {};
 
-    let contentTypes={};
+    const platformEngagement = {};
 
-    let platformEngagement={};
 
+    let topContent = null;
 
+    let topScore = -1;
 
-    let topContent=null;
 
-    let topScore=-1;
+    // =================================
+    // CALCULATE
+    // =================================
 
+    contents.forEach(
+        content => {
 
+            const contentLikes =
+                Number(
+                    content.likes
+                ) || 0;
 
 
+            const contentComments =
+                Number(
+                    content.comments
+                ) || 0;
 
-    contents.forEach(content=>{
 
+            const contentShares =
+                Number(
+                    content.shares
+                ) || 0;
 
 
-        likes +=
-        Number(content.likes)||0;
+            const contentSaved =
+                Number(
+                    content.saved
+                ) || 0;
 
 
+            const contentImpressions =
+                Number(
+                    content.impressions
+                ) || 0;
 
-        comments +=
-        Number(content.comments)||0;
 
+            likes +=
+                contentLikes;
 
 
-        shares +=
-        Number(content.shares)||0;
+            comments +=
+                contentComments;
 
 
+            shares +=
+                contentShares;
 
-        saved +=
-        Number(content.saved)||0;
 
+            saved +=
+                contentSaved;
 
 
-        impressions +=
-    Number(content.impressions) || 0;
+            impressions +=
+                contentImpressions;
 
-    reach +=
-    Number(content.reach) || 0;
 
+            reach +=
+                Number(
+                    content.reach
+                ) || 0;
 
 
+            // =========================
+            // CONTENT TYPE
+            // =========================
 
+            const type =
+                content.contentType ||
+                "Uncategorized";
 
 
-        let type =
-        content.contentType ||
-        "Uncategorized";
+            contentTypes[type] =
+                (
+                    contentTypes[type] ||
+                    0
+                ) + 1;
 
 
+            // =========================
+            // PLATFORM
+            // =========================
 
-        contentTypes[type] =
-        (contentTypes[type]||0)+1;
+            const platform =
+                content.platform ||
+                "Unknown";
 
 
+            const engagement =
 
+                contentLikes +
 
+                contentComments +
 
-        let platform =
-        content.platform ||
-        "Unknown";
+                contentShares +
 
+                contentSaved;
 
 
-        let engagement =
+            platformEngagement[
+                platform
+            ] =
 
-        (Number(content.likes)||0)
+                (
+                    platformEngagement[
+                        platform
+                    ] || 0
+                )
 
-        +
+                +
 
-        (Number(content.comments)||0)
+                engagement;
 
-        +
 
-        (Number(content.shares)||0)
+            // =========================
+            // TOP CONTENT
+            // =========================
 
-        +
+            const score =
 
-        (Number(content.saved)||0);
+                contentImpressions > 0
 
+                    ?
 
+                    (
+                        engagement /
+                        contentImpressions *
+                        100
+                    )
 
+                    :
 
+                    0;
 
-        platformEngagement[platform] =
-        (platformEngagement[platform]||0)
-        +
-        engagement;
 
+            if(
+                score >
+                topScore
+            ){
 
+                topScore =
+                    score;
 
+                topContent =
+                    content;
 
+            }
 
+        }
+    );
 
-        let score =
-    Number(content.impressions || 0) > 0
-    ?
-    (
-        engagement /
-        Number(content.impressions) *
-        100
-    )
-    :
-    0;
 
+    // =================================
+    // TOTAL ENGAGEMENT
+    // =================================
 
-if(score > topScore){
+    const totalEngagement =
 
-    topScore = score;
+        likes +
+        comments +
+        shares +
+        saved;
 
-    topContent = content;
 
-}
+    // =================================
+    // ENGAGEMENT RATE
+    // =================================
 
+    const rate =
 
+        impressions > 0
 
+            ?
 
-    });
+            (
+                totalEngagement /
+                impressions *
+                100
+            ).toFixed(1)
 
+            :
 
+            "0.0";
 
 
-
-    let totalEngagement =
-    likes+
-    comments+
-    shares+
-    saved;
-
-
-
-
-    let rate = "0.0";
-
-if(Number(impressions) > 0){
-
-    rate = (
-        Number(totalEngagement) /
-        Number(impressions) *
-        100
-    ).toFixed(1);
-
-}
-
-
-
-
-
+    // =================================
+    // BEST PLATFORM
+    // =================================
 
     let bestPlatform = "-";
 
-let highest = 0;
+    let highest = 0;
 
 
-Object.keys(platformEngagement).forEach(platform=>{
+    Object.entries(
+        platformEngagement
+    )
+    .forEach(
+        ([platform, value]) => {
 
-    let value = Number(platformEngagement[platform]) || 0;
-
-
-    if(value > highest){
-
-        highest = value;
-
-        bestPlatform = platform;
-
-    }
-
-});
+            const number =
+                Number(value) || 0;
 
 
+            if(
+                number >
+                highest
+            ){
+
+                highest =
+                    number;
+
+                bestPlatform =
+                    platform;
+
+            }
+
+        }
+    );
 
 
-    let elements={
+    // =================================
+    // UPDATE SUMMARY ELEMENTS
+    // =================================
 
+    const values = {
 
-        totalEngagement:
         totalEngagement,
 
         totalReach:
-        reach,
+            reach,
 
         engagementRate:
-        rate+"%",
+            `${rate}%`,
 
-
-        bestPlatform:
         bestPlatform,
 
-
         totalLikes:
-        likes,
-
+            likes,
 
         totalComments:
-        comments,
-
+            comments,
 
         totalShares:
-        shares,
-
+            shares,
 
         totalSaved:
-        saved
-
+            saved
 
     };
 
 
+    Object.entries(
+        values
+    )
+    .forEach(
+        ([id, value]) => {
+
+            const element =
+                document.getElementById(
+                    id
+                );
 
 
+            if(!element){
 
-    Object.keys(elements)
-.forEach(id=>{
-
-
-    let el =
-    document.getElementById(id);
+                return;
+            }
 
 
+            if(
+                id ===
+                "engagementRate"
+                ||
+                id ===
+                "bestPlatform"
+            ){
 
-    if(el){
+                element.textContent =
+                    value;
 
+            }
 
-        if(
-            id === "engagementRate" ||
-            id === "bestPlatform"
-        ){
+            else{
 
-            el.textContent =
-            elements[id];
+                element.textContent =
+                    formatNumber(
+                        value
+                    );
 
+            }
 
         }
-
-        else{
-
-
-            el.textContent =
-            Number(elements[id])
-            .toLocaleString();
+    );
 
 
-        }
-
-
-    }
-
-
-
-});
-
-
-
-
+    // =================================
+    // TOP CONTENT
+    // =================================
 
     const topResult =
-    document.getElementById(
-        "topContentResult"
-    );
+        document.getElementById(
+            "topContentResult"
+        );
 
 
-    if(topResult){
+    if(!topResult){
+
+        return;
+    }
 
 
+    if(!topContent){
 
-        if(topContent){
+        topResult.innerHTML = `
 
+            <div class="top-content-empty">
 
-            topResult.innerHTML=`
+                <div
+                    class="top-content-empty-icon"
+                >
+                    📊
+                </div>
 
+                <h3>
+                    No Content Yet
+                </h3>
 
-<div class="top-content-item">
+                <p>
+                    Add content to see your
+                    top performing post.
+                </p>
 
-
-<p class="top-content-caption">
-
-${topContent.caption || "Untitled"}
-
-</p>
-
-
-<p>
-
-Platform:
-${topContent.platform}
-
-</p>
-
-
-<p>
-
-👁 Impressions:
-${formatNumber(topContent.impressions)}
-
-</p>
-
-
-<p>
-
-🔥 Engagement:
-${formatNumber(
-(Number(topContent.likes)||0)
-+
-(Number(topContent.comments)||0)
-+
-(Number(topContent.shares)||0)
-+
-(Number(topContent.saved)||0)
-)}
-
-</p>
-
-
-
-</div>
-
-
-`;
-
-
-        }
-
-        else{
-
-    topResult.innerHTML = `
-
-        <div class="top-content-empty">
-
-            <div class="top-content-empty-icon">
-                📊
             </div>
 
-            <h3>
-                No Content Yet
-            </h3>
+        `;
 
-            <p>
-                Add content to see your top performing post.
-            </p>
+    }
 
-        </div>
+    else{
 
-    `;
+        const topEngagement =
 
-}
+            (
+                Number(
+                    topContent.likes
+                ) || 0
+            )
+
+            +
+
+            (
+                Number(
+                    topContent.comments
+                ) || 0
+            )
+
+            +
+
+            (
+                Number(
+                    topContent.shares
+                ) || 0
+            )
+
+            +
+
+            (
+                Number(
+                    topContent.saved
+                ) || 0
+            );
+
+
+        topResult.innerHTML = `
+
+            <div class="top-content-item">
+
+                <p
+                    class="top-content-caption"
+                >
+                    ${escapeHtml(
+                        topContent.caption ||
+                        "Untitled"
+                    )}
+                </p>
+
+                <p>
+                    Platform:
+                    ${escapeHtml(
+                        topContent.platform ||
+                        "-"
+                    )}
+                </p>
+
+                <p>
+                    👁 Impressions:
+                    ${formatNumber(
+                        topContent.impressions ||
+                        0
+                    )}
+                </p>
+
+                <p>
+                    🔥 Engagement:
+                    ${formatNumber(
+                        topEngagement
+                    )}
+                </p>
+
+            </div>
+
+        `;
 
     }
 
 
-
-
-
+    // =================================
+    // CONTENT TYPE BREAKDOWN
+    // =================================
 
     const typeResult =
-    document.getElementById(
-        "contentTypeResult"
-    );
-
+        document.getElementById(
+            "contentTypeResult"
+        );
 
 
     if(typeResult){
 
-
-        let html="";
-
-
-
-        Object.keys(contentTypes)
-        .forEach(type=>{
+        const typeEntries =
+            Object.entries(
+                contentTypes
+            );
 
 
-            html += `
+        if(typeEntries.length === 0){
 
+            typeResult.innerHTML =
+                "No content type data yet.";
 
-<div class="content-type-item">
+        }
 
+        else{
 
-<span>
+            typeResult.innerHTML =
 
-${type}
+                typeEntries
+                .map(
+                    ([type, count]) => `
 
-</span>
+                        <div
+                            class="content-type-item"
+                        >
 
+                            <span>
+                                ${escapeHtml(
+                                    type
+                                )}
+                            </span>
 
-<strong>
+                            <strong>
+                                ${formatNumber(
+                                    count
+                                )}
+                                posts
+                            </strong>
 
-${contentTypes[type]} posts
+                        </div>
 
-</strong>
+                    `
+                )
+                .join("");
 
-
-</div>
-
-
-`;
-
-
-        });
-
-
-
-        typeResult.innerHTML =
-        html || "No content type data yet.";
-
+        }
 
     }
-
-
-
-
 
 }
 
 // =====================================
-// PART 5
-// MONTHLY + WEEKLY REPORT
-// FILTERS
-// LOGO
-// STARTUP
+// SOCMEDATA ACCOUNT DASHBOARD
+// PART 3 OF 3
+// MONTHLY + WEEKLY REPORTS
+// FILTERS + LOGO + NAVIGATION
+// FINAL STARTUP
 // =====================================
 
 
-
 // =====================================
-// GROWTH CALCULATOR
+// GROWTH INDICATOR
 // =====================================
 
-function calculateGrowth(current, previous){
+function growthIndicator(
+    value
+){
+
+    const number =
+        Number(value) || 0;
 
 
-    if(previous===0){
-
-
-        return current===0
-        ?
-        0
-        :
-        100;
-
-
-    }
-
-
-
-    return (
-        (current-previous)
-        /
-        previous
-        *
-        100
-    );
-
-
-}
-
-
-
-
-
-function growthIndicator(value){
-
-
-    if(value>0){
-
+    if(number > 0){
 
         return `
 
-<small class="monthly-growth growth-up">
+            <small
+                class="monthly-growth growth-up"
+            >
 
-↑ ${value.toFixed(1)}% from last month
+                ↑ ${number.toFixed(1)}%
+                from last month
 
-</small>
+            </small>
 
-`;
+        `;
 
     }
 
 
-    if(value<0){
-
+    if(number < 0){
 
         return `
 
-<small class="monthly-growth growth-down">
+            <small
+                class="monthly-growth growth-down"
+            >
 
-↓ ${Math.abs(value).toFixed(1)}% from last month
+                ↓ ${Math.abs(
+                    number
+                ).toFixed(1)}%
+                from last month
 
-</small>
+            </small>
 
-`;
+        `;
 
     }
-
 
 
     return `
 
-<small class="monthly-growth growth-neutral">
+        <small
+            class="monthly-growth growth-neutral"
+        >
 
-— 0% from last month
+            — 0% from last month
 
-</small>
+        </small>
 
-`;
+    `;
 
 }
-
-
-
 
 
 // =====================================
@@ -4054,251 +5658,321 @@ function growthIndicator(value){
 
 function renderMonthlyReport(){
 
-
-const summary =
-document.getElementById(
-"monthlySummary"
-);
-
-
-if(!summary)
-return;
+    const summary =
+        document.getElementById(
+            "monthlySummary"
+        );
 
 
+    if(!summary){
 
-const monthFilter =
-document.getElementById(
-"monthlyFilter"
-);
-
-
-const yearFilter =
-document.getElementById(
-"monthlyYearFilter"
-);
+        return;
+    }
 
 
+    const monthFilter =
+        document.getElementById(
+            "monthlyFilter"
+        );
 
-const now =
-new Date();
-
-
-
-const month =
-monthFilter
-?
-Number(monthFilter.value)
-:
-now.getMonth();
+    const yearFilter =
+        document.getElementById(
+            "monthlyYearFilter"
+        );
 
 
-
-const year =
-yearFilter
-?
-Number(yearFilter.value)
-:
-now.getFullYear();
+    const now =
+        new Date();
 
 
+    const month =
+        monthFilter &&
+        monthFilter.value !== ""
+
+            ?
+
+            Number(
+                monthFilter.value
+            )
+
+            :
+
+            now.getMonth();
 
 
+    const year =
+        yearFilter &&
+        yearFilter.value !== ""
 
-let impressions = 0;
+            ?
 
-let reach = 0;
+            Number(
+                yearFilter.value
+            )
 
-let posts = 0;
+            :
 
-let engagement = 0;
-
-
-
-account.contents.forEach(content=>{
-
-
-if(!content.date)
-return;
+            now.getFullYear();
 
 
+    let impressions = 0;
 
-let date =
-    new Date(content.date + "T00:00:00");
+    let reach = 0;
 
+    let posts = 0;
 
-
-if(
-date.getMonth()===month
-&&
-date.getFullYear()===year
-){
+    let engagement = 0;
 
 
-posts++;
+    const contents =
+        Array.isArray(
+            account?.contents
+        )
+
+        ?
+
+        account.contents
+
+        :
+
+        [];
 
 
-impressions +=
-Number(content.impressions)||0;
+    contents.forEach(
+        content => {
 
-reach +=
-Number(content.reach)||0;
+            if(!content.date){
 
-
-
-engagement +=
-
-(Number(content.likes)||0)
-
-+
-
-(Number(content.comments)||0)
-
-+
-
-(Number(content.shares)||0)
-
-+
-
-(Number(content.saved)||0);
+                return;
+            }
 
 
+            const date =
+                new Date(
+                    content.date +
+                    "T00:00:00"
+                );
 
-}
+
+            if(
+                Number.isNaN(
+                    date.getTime()
+                )
+            ){
+
+                return;
+            }
 
 
+            if(
+                date.getMonth() !==
+                    month
+                ||
+                date.getFullYear() !==
+                    year
+            ){
 
-});
+                return;
+            }
 
 
-    let rate =
-impressions > 0
-?
-(
-    engagement / impressions * 100
-).toFixed(1)
-:
-0;
+            posts++;
+
+
+            impressions +=
+                Number(
+                    content.impressions
+                ) || 0;
+
+
+            reach +=
+                Number(
+                    content.reach
+                ) || 0;
+
+
+            engagement +=
+
+                (
+                    Number(
+                        content.likes
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.comments
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.shares
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.saved
+                    ) || 0
+                );
+
+        }
+    );
+
+
+    const rate =
+        impressions > 0
+
+            ?
+
+            (
+                engagement /
+                impressions *
+                100
+            ).toFixed(1)
+
+            :
+
+            "0.0";
 
 
     summary.innerHTML = `
 
+        <div class="monthly-card">
 
-<div class="monthly-card">
+            <div class="monthly-card-icon">
+                👁
+            </div>
 
-    <div class="monthly-card-icon">
-        👁
-    </div>
+            <div class="monthly-card-info">
 
-    <div class="monthly-card-info">
+                <span>
+                    Impressions
+                </span>
 
-        <span>
-            Impressions
-        </span>
+                <h2>
+                    ${formatNumber(
+                        impressions
+                    )}
+                </h2>
 
-        <h2>
-            ${formatNumber(impressions)}
-        </h2>
+            </div>
 
-    </div>
-
-</div>
-
-
-<div class="monthly-card">
-
-    <div class="monthly-card-icon">
-        👥
-    </div>
-
-    <div class="monthly-card-info">
-
-        <span>
-            Reach
-        </span>
-
-        <h2>
-            ${formatNumber(reach)}
-        </h2>
-
-    </div>
-
-</div>
+        </div>
 
 
-<div class="monthly-card">
+        <div class="monthly-card">
 
-    <div class="monthly-card-icon">
-        📝
-    </div>
+            <div class="monthly-card-icon">
+                👥
+            </div>
 
-    <div class="monthly-card-info">
+            <div class="monthly-card-info">
 
-        <span>
-            Posts
-        </span>
+                <span>
+                    Reach
+                </span>
 
-        <h2>
-            ${posts}
-        </h2>
+                <h2>
+                    ${formatNumber(
+                        reach
+                    )}
+                </h2>
 
-    </div>
+            </div>
 
-</div>
-
-
-<div class="monthly-card">
-
-    <div class="monthly-card-icon">
-        🔥
-    </div>
-
-    <div class="monthly-card-info">
-
-        <span>
-            Engagement
-        </span>
-
-        <h2>
-            ${formatNumber(engagement)}
-        </h2>
-
-    </div>
-
-</div>
+        </div>
 
 
-<div class="monthly-card">
+        <div class="monthly-card">
 
-    <div class="monthly-card-icon">
-        📊
-    </div>
+            <div class="monthly-card-icon">
+                📝
+            </div>
 
-    <div class="monthly-card-info">
+            <div class="monthly-card-info">
 
-        <span>
-            Rate
-        </span>
+                <span>
+                    Posts
+                </span>
 
-        <h2>
-            ${rate}%
-        </h2>
+                <h2>
+                    ${formatNumber(
+                        posts
+                    )}
+                </h2>
 
-    </div>
+            </div>
 
-</div>
+        </div>
 
 
-`;
+        <div class="monthly-card">
 
-renderMonthlyPlatformReport();
+            <div class="monthly-card-icon">
+                🔥
+            </div>
 
-renderMonthlyTopContent(month, year);
+            <div class="monthly-card-info">
 
-renderMonthlyContentTable(month, year);
+                <span>
+                    Engagement
+                </span>
 
+                <h2>
+                    ${formatNumber(
+                        engagement
+                    )}
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="monthly-card">
+
+            <div class="monthly-card-icon">
+                📊
+            </div>
+
+            <div class="monthly-card-info">
+
+                <span>
+                    Rate
+                </span>
+
+                <h2>
+                    ${rate}%
+                </h2>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    renderMonthlyPlatformReport();
+
+    renderMonthlyTopContent(
+        month,
+        year
+    );
+
+    renderMonthlyContentTable(
+        month,
+        year
+    );
 
 }
-
 
 
 // =====================================
@@ -4307,355 +5981,415 @@ renderMonthlyContentTable(month, year);
 
 function renderMonthlyPlatformReport(){
 
-
     const platformBox =
-    document.getElementById(
-        "monthlyPlatforms"
-    );
+        document.getElementById(
+            "monthlyPlatforms"
+        );
 
 
     const bestBox =
-    document.getElementById(
-        "monthlyBestPlatform"
-    );
+        document.getElementById(
+            "monthlyBestPlatform"
+        );
 
 
+    if(!platformBox){
 
-    if(!platformBox)
         return;
-
-
-
-    let platforms = {};
-
+    }
 
 
     const monthFilter =
-    document.getElementById(
-        "monthlyFilter"
-    );
+        document.getElementById(
+            "monthlyFilter"
+        );
 
 
     const yearFilter =
-    document.getElementById(
-        "monthlyYearFilter"
-    );
-
+        document.getElementById(
+            "monthlyYearFilter"
+        );
 
 
     const selectedMonth =
-    monthFilter
-    ?
-    Number(monthFilter.value)
-    :
-    new Date().getMonth();
+        monthFilter &&
+        monthFilter.value !== ""
 
+            ?
+
+            Number(
+                monthFilter.value
+            )
+
+            :
+
+            new Date().getMonth();
 
 
     const selectedYear =
-    yearFilter
-    ?
-    Number(yearFilter.value)
-    :
-    new Date().getFullYear();
+        yearFilter &&
+        yearFilter.value !== ""
+
+            ?
+
+            Number(
+                yearFilter.value
+            )
+
+            :
+
+            new Date().getFullYear();
 
 
+    const platforms = {};
 
 
+    const contents =
+        Array.isArray(
+            account?.contents
+        )
 
-    account.contents.forEach(content=>{
+        ?
 
+        account.contents
 
+        :
 
-        if(!content.date)
-            return;
-
-
-
-        let date =
-    new Date(content.date + "T00:00:00");
-
-
+        [];
 
 
-        if(
-            date.getMonth() !== selectedMonth ||
-            date.getFullYear() !== selectedYear
-        ){
+    contents.forEach(
+        content => {
 
-            return;
+            if(!content.date){
+
+                return;
+            }
+
+
+            const date =
+                new Date(
+                    content.date +
+                    "T00:00:00"
+                );
+
+
+            if(
+                Number.isNaN(
+                    date.getTime()
+                )
+            ){
+
+                return;
+            }
+
+
+            if(
+                date.getMonth() !==
+                    selectedMonth
+                ||
+                date.getFullYear() !==
+                    selectedYear
+            ){
+
+                return;
+            }
+
+
+            const platform =
+                String(
+                    content.platform ||
+                    "Unknown"
+                );
+
+
+            if(!platforms[platform]){
+
+                platforms[platform] = {
+
+                    impressions: 0,
+
+                    reach: 0,
+
+                    engagement: 0,
+
+                    posts: 0
+
+                };
+
+            }
+
+
+            const data =
+                platforms[platform];
+
+
+            data.impressions +=
+                Number(
+                    content.impressions
+                ) || 0;
+
+
+            data.reach +=
+                Number(
+                    content.reach
+                ) || 0;
+
+
+            data.engagement +=
+
+                (
+                    Number(
+                        content.likes
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.comments
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.shares
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.saved
+                    ) || 0
+                );
+
+
+            data.posts++;
 
         }
-
-
-
-
-
-        let platform =
-        content.platform || "Unknown";
-
-
-
-
-        if(!platforms[platform]){
-
-    platforms[platform]={
-
-        impressions:0,
-
-        reach:0,
-
-        engagement:0,
-
-        posts:0
-
-    };
-
-}
-
-
-
-
-
-        platforms[platform].impressions +=
-Number(content.impressions) || 0;
-
-platforms[platform].reach +=
-Number(content.reach) || 0;
-
-
-
-
-        platforms[platform].engagement +=
-
-        (Number(content.likes)||0)
-
-        +
-
-        (Number(content.comments)||0)
-
-        +
-
-        (Number(content.shares)||0)
-
-        +
-
-        (Number(content.saved)||0);
-
-
-
-
-        platforms[platform].posts++;
-
-
-
-
-    });
-
-
-
-
+    );
 
 
     let html = "";
 
-
-
     let bestPlatform = "-";
 
-let highestEngagement = -1;
+    let highestEngagement = -1;
 
 
+    Object.entries(
+        platforms
+    )
+    .forEach(
+        ([platform, data]) => {
+
+            if(
+                data.engagement >
+                highestEngagement
+            ){
+
+                highestEngagement =
+                    data.engagement;
+
+                bestPlatform =
+                    platform;
+
+            }
 
 
+            html += `
 
-    Object.keys(platforms)
+                <div
+                    class="platform-performance-item"
+                >
 
-    .forEach(platform=>{
+                    <div
+                        class="platform-performance-header"
+                    >
+
+                        <span>
+                            ${escapeHtml(
+                                platform
+                            )}
+                        </span>
+
+                        <strong>
+                            ${formatNumber(
+                                data.impressions
+                            )}
+                            impressions
+                        </strong>
+
+                    </div>
 
 
+                    <div
+                        class="platform-performance-detail"
+                    >
 
-        let data =
-        platforms[platform];
+                        <span>
+                            ${data.posts}
+                            posts
+                        </span>
 
+                        <span>
+                            ${formatNumber(
+                                data.impressions
+                            )}
+                            impressions
+                        </span>
 
+                        <span>
+                            ${formatNumber(
+                                data.reach
+                            )}
+                            reach
+                        </span>
 
+                        <span>
+                            ${formatNumber(
+                                data.engagement
+                            )}
+                            engagement
+                        </span>
 
+                    </div>
 
-        if(
-            data.engagement >
-            highestEngagement
-        ){
+                </div>
 
-            highestEngagement =
-            data.engagement;
-
-
-            bestPlatform =
-            platform;
-
+            `;
 
         }
-
-
-
-
-
-        html += `
-
-
-<div class="platform-performance-item">
-
-
-    <div class="platform-performance-header">
-
-
-        <span>
-            ${platform}
-        </span>
-
-
-        <strong>
-    ${formatNumber(data.impressions)}
-    impressions
-</strong>
-
-
-    </div>
-
-
-
-    <div class="platform-performance-detail">
-
-    <span>
-        ${data.posts} posts
-    </span>
-
-    <span>
-        ${formatNumber(data.impressions)}
-        impressions
-    </span>
-
-    <span>
-        ${formatNumber(data.reach)}
-        reach
-    </span>
-
-    <span>
-        ${formatNumber(data.engagement)}
-        engagement
-    </span>
-
-</div>
-
-
-
-</div>
-
-
-`;
-
-
-
-    });
-
-
-
-
+    );
 
 
     if(html === ""){
 
-
         html =
-        "No platform data this month.";
-
+            "No platform data this month.";
 
     }
 
 
-
-
     platformBox.innerHTML =
-    html;
+        html;
 
 
+    // =================================
+    // BEST PLATFORM
+    // =================================
+
+    if(!bestBox){
+
+        return;
+    }
 
 
-
-    if(bestBox){
-
-    if(bestPlatform !== "-"){
+    if(
+        bestPlatform !== "-"
+    ){
 
         bestBox.innerHTML = `
 
-        <div class="monthly-best-platform">
+            <div
+                class="monthly-best-platform"
+            >
 
-            <div class="monthly-best-platform-glow"></div>
-
-            <div class="monthly-best-platform-top">
-
-                <div class="monthly-best-platform-trophy">
-                    🏆
-                </div>
-
-                <span class="monthly-best-platform-badge">
-                    #1 PERFORMER
-                </span>
-
-            </div>
+                <div
+                    class="monthly-best-platform-glow"
+                ></div>
 
 
-            <div class="monthly-best-platform-main">
+                <div
+                    class="monthly-best-platform-top"
+                >
 
-                <span class="monthly-best-platform-label">
-                    BEST PLATFORM THIS MONTH
-                </span>
+                    <div
+                        class="monthly-best-platform-trophy"
+                    >
+                        🏆
+                    </div>
 
-                <h2>
-                    ${bestPlatform}
-                </h2>
-
-                <p>
-                    Leading your social media performance
-                </p>
-
-            </div>
-
-
-            <div class="monthly-best-platform-bottom">
-
-                <div class="monthly-best-platform-stat">
-
-                    <span>
-                        Engagement
+                    <span
+                        class="monthly-best-platform-badge"
+                    >
+                        #1 PERFORMER
                     </span>
 
-                    <strong>
-                        ${formatNumber(highestEngagement)}
-                    </strong>
+                </div>
+
+
+                <div
+                    class="monthly-best-platform-main"
+                >
+
+                    <span
+                        class="monthly-best-platform-label"
+                    >
+                        BEST PLATFORM THIS MONTH
+                    </span>
+
+                    <h2>
+                        ${escapeHtml(
+                            bestPlatform
+                        )}
+                    </h2>
+
+                    <p>
+                        Leading your social media performance
+                    </p>
 
                 </div>
 
 
-                <div class="monthly-best-platform-divider"></div>
+                <div
+                    class="monthly-best-platform-bottom"
+                >
+
+                    <div
+                        class="monthly-best-platform-stat"
+                    >
+
+                        <span>
+                            Engagement
+                        </span>
+
+                        <strong>
+                            ${formatNumber(
+                                highestEngagement
+                            )}
+                        </strong>
+
+                    </div>
 
 
-                <div class="monthly-best-platform-stat">
+                    <div
+                        class="monthly-best-platform-divider"
+                    ></div>
 
-                    <span>
-                        Performance
-                    </span>
 
-                    <strong>
-                        TOP
-                    </strong>
+                    <div
+                        class="monthly-best-platform-stat"
+                    >
+
+                        <span>
+                            Performance
+                        </span>
+
+                        <strong>
+                            TOP
+                        </strong>
+
+                    </div>
 
                 </div>
 
             </div>
-
-        </div>
 
         `;
 
@@ -4665,29 +6399,32 @@ let highestEngagement = -1;
 
         bestBox.innerHTML = `
 
-        <div class="monthly-best-platform-empty">
+            <div
+                class="monthly-best-platform-empty"
+            >
 
-            <div class="monthly-empty-icon">
-                🏆
+                <div
+                    class="monthly-empty-icon"
+                >
+                    🏆
+                </div>
+
+                <h3>
+                    No Winner Yet
+                </h3>
+
+                <p>
+                    Add content this month to see your best platform.
+                </p>
+
             </div>
-
-            <h3>
-                No Winner Yet
-            </h3>
-
-            <p>
-                Add content this month to see your best platform.
-            </p>
-
-        </div>
 
         `;
 
-       }
+    }
 
 }
 
-}
 
 // =====================================
 // WEEKLY REPORT
@@ -4696,63 +6433,82 @@ let highestEngagement = -1;
 function renderWeeklyReport(){
 
     const monthSelect =
-        document.getElementById("weeklyMonthFilter");
+        document.getElementById(
+            "weeklyMonthFilter"
+        );
+
 
     const weekSelect =
-        document.getElementById("weeklyFilter");
+        document.getElementById(
+            "weeklyFilter"
+        );
 
 
-    if(!monthSelect || !weekSelect){
-
-        console.log("Weekly filters not found.");
+    if(
+        !monthSelect ||
+        !weekSelect
+    ){
 
         return;
-
     }
 
 
     const selectedMonth =
-        Number(monthSelect.value);
+        Number(
+            monthSelect.value
+        );
+
 
     const selectedWeek =
-        Number(weekSelect.value);
+        Number(
+            weekSelect.value
+        );
 
 
     if(
-        Number.isNaN(selectedMonth) ||
-        Number.isNaN(selectedWeek)
+        Number.isNaN(
+            selectedMonth
+        )
+        ||
+        Number.isNaN(
+            selectedWeek
+        )
     ){
 
-        console.log("Invalid weekly filter.");
-
         return;
-
     }
 
 
-    // =====================================
-// YEAR
-// =====================================
-
-const yearSelect =
-    document.getElementById(
-        "weeklyYearFilter"
-    );
-
-const selectedYear =
-    yearSelect && yearSelect.value
-    ?
-    Number(yearSelect.value)
-    :
-    new Date().getFullYear();
+    const yearSelect =
+        document.getElementById(
+            "weeklyYearFilter"
+        );
 
 
-    // =====================================
+    const selectedYear =
+        yearSelect &&
+        yearSelect.value
+
+            ?
+
+            Number(
+                yearSelect.value
+            )
+
+            :
+
+            new Date().getFullYear();
+
+
+    // =================================
     // WEEK RANGE
-    // =====================================
+    // =================================
 
     const startDay =
-        (selectedWeek * 7) + 1;
+        (
+            selectedWeek *
+            7
+        ) + 1;
 
 
     const lastDayOfMonth =
@@ -4794,45 +6550,55 @@ const selectedYear =
         );
 
 
-    console.log(
-        "Weekly range:",
-        startDate,
-        endDate
-    );
-
-
-    // =====================================
-    // FILTER ACCOUNT CONTENT
-    // =====================================
+    // =================================
+    // FILTER CONTENT
+    // =================================
 
     const weeklyContents =
-        (account.contents || []).filter(content=>{
+        (
+            Array.isArray(
+                account?.contents
+            )
 
-            if(!content.date)
-                return false;
+            ?
 
+            account.contents
 
-            const contentDate =
-                new Date(content.date + "T00:00:00");
+            :
 
+            []
+        )
+        .filter(
+            content => {
 
-            return (
-                contentDate >= startDate &&
-                contentDate <= endDate
-            );
+                if(!content.date){
 
-        });
-
-
-    console.log(
-        "WEEKLY CONTENTS:",
-        weeklyContents
-    );
+                    return false;
+                }
 
 
-    // =====================================
-    // CALCULATE SUMMARY
-    // =====================================
+                const contentDate =
+                    new Date(
+                        content.date +
+                        "T00:00:00"
+                    );
+
+
+                return (
+                    contentDate >=
+                        startDate
+                    &&
+                    contentDate <=
+                        endDate
+                );
+
+            }
+        );
+
+
+    // =================================
+    // SUMMARY
+    // =================================
 
     let weeklyPosts = 0;
 
@@ -4849,58 +6615,82 @@ const selectedYear =
     let weeklySaved = 0;
 
 
-    weeklyContents.forEach(content=>{
+    weeklyContents.forEach(
+        content => {
 
-        weeklyPosts++;
-
-
-        weeklyImpressions +=
-    Number(content.impressions) || 0;
-
-weeklyReach +=
-    Number(content.reach) || 0;
+            weeklyPosts++;
 
 
-        weeklyLikes +=
-            Number(content.likes) || 0;
+            weeklyImpressions +=
+                Number(
+                    content.impressions
+                ) || 0;
 
 
-        weeklyComments +=
-            Number(content.comments) || 0;
+            weeklyReach +=
+                Number(
+                    content.reach
+                ) || 0;
 
 
-        weeklyShares +=
-            Number(content.shares) || 0;
+            weeklyLikes +=
+                Number(
+                    content.likes
+                ) || 0;
 
 
-        weeklySaved +=
-            Number(content.saved) || 0;
+            weeklyComments +=
+                Number(
+                    content.comments
+                ) || 0;
 
-    });
+
+            weeklyShares +=
+                Number(
+                    content.shares
+                ) || 0;
+
+
+            weeklySaved +=
+                Number(
+                    content.saved
+                ) || 0;
+
+        }
+    );
 
 
     const weeklyEngagement =
+
         weeklyLikes +
+
         weeklyComments +
+
         weeklyShares +
+
         weeklySaved;
 
 
     const weeklyRate =
-    weeklyImpressions > 0
-    ?
-    (
-        weeklyEngagement /
-        weeklyImpressions *
-        100
-    ).toFixed(1)
-    :
-    "0.0";
+
+        weeklyImpressions > 0
+
+            ?
+
+            (
+                weeklyEngagement /
+                weeklyImpressions *
+                100
+            ).toFixed(1)
+
+            :
+
+            "0.0";
 
 
-    // =====================================
-    // WEEKLY SUMMARY
-    // =====================================
+    // =================================
+    // SUMMARY UI
+    // =================================
 
     const summary =
         document.getElementById(
@@ -4912,118 +6702,126 @@ weeklyReach +=
 
         summary.innerHTML = `
 
-        <div class="monthly-card">
+            <div class="monthly-card">
 
-    <div class="monthly-card-icon">
-        👁
-    </div>
+                <div class="monthly-card-icon">
+                    👁
+                </div>
 
-    <div class="monthly-card-info">
+                <div class="monthly-card-info">
 
-        <span>
-            Impressions
-        </span>
+                    <span>
+                        Impressions
+                    </span>
 
-        <h2>
-            ${formatNumber(weeklyImpressions)}
-        </h2>
+                    <h2>
+                        ${formatNumber(
+                            weeklyImpressions
+                        )}
+                    </h2>
 
-    </div>
-
-</div>
-
-
-<div class="monthly-card">
-
-    <div class="monthly-card-icon">
-        👥
-    </div>
-
-    <div class="monthly-card-info">
-
-        <span>
-            Reach
-        </span>
-
-        <h2>
-            ${formatNumber(weeklyReach)}
-        </h2>
-
-    </div>
-
-</div>
-
-
-        <div class="monthly-card">
-
-            <div class="monthly-card-icon">
-                📝
-            </div>
-
-            <div class="monthly-card-info">
-
-                <span>
-                    Posts
-                </span>
-
-                <h2>
-                    ${weeklyPosts}
-                </h2>
+                </div>
 
             </div>
 
-        </div>
 
+            <div class="monthly-card">
 
-        <div class="monthly-card">
+                <div class="monthly-card-icon">
+                    👥
+                </div>
 
-            <div class="monthly-card-icon">
-                🔥
-            </div>
+                <div class="monthly-card-info">
 
-            <div class="monthly-card-info">
+                    <span>
+                        Reach
+                    </span>
 
-                <span>
-                    Engagement
-                </span>
+                    <h2>
+                        ${formatNumber(
+                            weeklyReach
+                        )}
+                    </h2>
 
-                <h2>
-                    ${formatNumber(weeklyEngagement)}
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <div class="monthly-card">
-
-            <div class="monthly-card-icon">
-                📊
-            </div>
-
-            <div class="monthly-card-info">
-
-                <span>
-                    Rate
-                </span>
-
-                <h2>
-                    ${weeklyRate}%
-                </h2>
+                </div>
 
             </div>
 
-        </div>
+
+            <div class="monthly-card">
+
+                <div class="monthly-card-icon">
+                    📝
+                </div>
+
+                <div class="monthly-card-info">
+
+                    <span>
+                        Posts
+                    </span>
+
+                    <h2>
+                        ${formatNumber(
+                            weeklyPosts
+                        )}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="monthly-card">
+
+                <div class="monthly-card-icon">
+                    🔥
+                </div>
+
+                <div class="monthly-card-info">
+
+                    <span>
+                        Engagement
+                    </span>
+
+                    <h2>
+                        ${formatNumber(
+                            weeklyEngagement
+                        )}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="monthly-card">
+
+                <div class="monthly-card-icon">
+                    📊
+                </div>
+
+                <div class="monthly-card-info">
+
+                    <span>
+                        Rate
+                    </span>
+
+                    <h2>
+                        ${weeklyRate}%
+                    </h2>
+
+                </div>
+
+            </div>
 
         `;
 
     }
 
 
-    // =====================================
+    // =================================
     // DATE RANGE
-    // =====================================
+    // =================================
 
     const dateRange =
         document.getElementById(
@@ -5038,58 +6836,53 @@ weeklyReach +=
             `${startDate.toLocaleDateString(
                 "en-US",
                 {
-                    month:"short",
-                    day:"numeric"
+                    month:
+                        "short",
+
+                    day:
+                        "numeric"
                 }
             )} – ${endDate.toLocaleDateString(
                 "en-US",
                 {
-                    month:"short",
-                    day:"numeric",
-                    year:"numeric"
+                    month:
+                        "short",
+
+                    day:
+                        "numeric",
+
+                    year:
+                        "numeric"
                 }
             )}`;
 
     }
 
 
-    // =====================================
-    // PLATFORM PERFORMANCE
-    // =====================================
+    // =================================
+    // SUB REPORTS
+    // =================================
 
     renderWeeklyPlatformReport(
         weeklyContents
     );
 
 
-    // =====================================
-    // BEST PLATFORM
-    // =====================================
-
     renderWeeklyBestPlatform(
         weeklyContents
     );
 
-
-    // =====================================
-    // TOP CONTENT
-    // =====================================
 
     renderWeeklyTopContent(
         weeklyContents
     );
 
 
-    // =====================================
-    // CONTENT TABLE
-    // =====================================
-
     renderWeeklyContentTable(
         weeklyContents
     );
 
 }
-
 
 
 // =====================================
@@ -5106,114 +6899,170 @@ function renderWeeklyPlatformReport(
         );
 
 
-    if(!box)
+    if(!box){
+
         return;
+    }
 
 
     const platforms = {};
 
 
-    weeklyContents.forEach(content=>{
+    weeklyContents.forEach(
+        content => {
 
-        const platform =
-            content.platform || "Unknown";
+            const platform =
+                String(
+                    content.platform ||
+                    "Unknown"
+                );
 
 
-        if(!platforms[platform]){
+            if(!platforms[platform]){
 
-            platforms[platform] = {
+                platforms[platform] = {
 
-    impressions:0,
+                    impressions: 0,
 
-    reach:0,
+                    reach: 0,
 
-    engagement:0,
+                    engagement: 0,
 
-    posts:0
+                    posts: 0
 
-};
+                };
+
+            }
+
+
+            const data =
+                platforms[platform];
+
+
+            data.impressions +=
+                Number(
+                    content.impressions
+                ) || 0;
+
+
+            data.reach +=
+                Number(
+                    content.reach
+                ) || 0;
+
+
+            data.engagement +=
+
+                (
+                    Number(
+                        content.likes
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.comments
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.shares
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.saved
+                    ) || 0
+                );
+
+
+            data.posts++;
 
         }
-
-
-        platforms[platform].impressions +=
-    Number(content.impressions) || 0;
-
-platforms[platform].reach +=
-    Number(content.reach) || 0;
-
-
-        platforms[platform].engagement +=
-
-            (Number(content.likes) || 0) +
-
-            (Number(content.comments) || 0) +
-
-            (Number(content.shares) || 0) +
-
-            (Number(content.saved) || 0);
-
-
-        platforms[platform].posts++;
-
-    });
+    );
 
 
     let html = "";
 
 
-    Object.keys(platforms).forEach(platform=>{
+    Object.entries(
+        platforms
+    )
+    .forEach(
+        ([platform, data]) => {
 
-        const data =
-            platforms[platform];
+            html += `
+
+                <div
+                    class="platform-performance-item"
+                >
+
+                    <div
+                        class="platform-performance-header"
+                    >
+
+                        <span>
+                            ${escapeHtml(
+                                platform
+                            )}
+                        </span>
+
+                        <strong>
+                            ${formatNumber(
+                                data.impressions
+                            )}
+                            impressions
+                        </strong>
+
+                    </div>
 
 
-        html += `
+                    <div
+                        class="platform-performance-detail"
+                    >
 
-        <div class="platform-performance-item">
+                        <span>
+                            ${data.posts}
+                            posts
+                        </span>
 
-            <div class="platform-performance-header">
+                        <span>
+                            ${formatNumber(
+                                data.impressions
+                            )}
+                            impressions
+                        </span>
 
-                <span>
-                    ${platform}
-                </span>
+                        <span>
+                            ${formatNumber(
+                                data.reach
+                            )}
+                            reach
+                        </span>
 
-                <strong>
-    ${formatNumber(data.impressions)}
-    impressions
-</strong>
+                        <span>
+                            ${formatNumber(
+                                data.engagement
+                            )}
+                            engagement
+                        </span>
 
-            </div>
+                    </div>
 
+                </div>
 
-            <div class="platform-performance-detail">
+            `;
 
-    <span>
-        ${data.posts} posts
-    </span>
-
-    <span>
-        ${formatNumber(data.impressions)}
-        impressions
-    </span>
-
-    <span>
-        ${formatNumber(data.reach)}
-        reach
-    </span>
-
-    <span>
-        ${formatNumber(data.engagement)}
-        engagement
-    </span>
-
-</div>
-
-        </div>
-
-        `;
-
-    });
+        }
+    );
 
 
     if(html === ""){
@@ -5232,7 +7081,6 @@ platforms[platform].reach +=
 
 // =====================================
 // WEEKLY BEST PLATFORM
-// PREMIUM DESIGN
 // =====================================
 
 function renderWeeklyBestPlatform(
@@ -5245,308 +7093,356 @@ function renderWeeklyBestPlatform(
         );
 
 
-    if(!box)
+    if(!box){
+
         return;
+    }
 
 
     const platforms = {};
 
 
-    // =====================================
-    // CALCULATE PLATFORM PERFORMANCE
-    // =====================================
+    weeklyContents.forEach(
+        content => {
 
-    weeklyContents.forEach(content=>{
+            const platform =
+                String(
+                    content.platform ||
+                    "Unknown"
+                );
 
-        const platform =
-            content.platform || "Unknown";
+
+            if(!platforms[platform]){
+
+                platforms[platform] = {
+
+                    impressions: 0,
+
+                    reach: 0,
+
+                    engagement: 0,
+
+                    posts: 0
+
+                };
+
+            }
 
 
-        if(!platforms[platform]){
+            const data =
+                platforms[platform];
 
-            platforms[platform] = {
 
-    impressions: 0,
+            data.impressions +=
+                Number(
+                    content.impressions
+                ) || 0;
 
-    reach: 0,
 
-    engagement: 0,
+            data.reach +=
+                Number(
+                    content.reach
+                ) || 0;
 
-    posts: 0
 
-};
+            data.engagement +=
+
+                (
+                    Number(
+                        content.likes
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.comments
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.shares
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        content.saved
+                    ) || 0
+                );
+
+
+            data.posts++;
 
         }
+    );
 
 
-        platforms[platform].impressions +=
-    Number(content.impressions) || 0;
-
-platforms[platform].reach +=
-    Number(content.reach) || 0;
+    let bestPlatform =
+        null;
 
 
-        platforms[platform].engagement +=
+    Object.keys(
+        platforms
+    )
+    .forEach(
+        platform => {
 
-            (Number(content.likes) || 0) +
+            if(
+                !bestPlatform
+                ||
+                platforms[platform]
+                    .engagement
+                    >
+                platforms[bestPlatform]
+                    .engagement
+            ){
 
-            (Number(content.comments) || 0) +
+                bestPlatform =
+                    platform;
 
-            (Number(content.shares) || 0) +
-
-            (Number(content.saved) || 0);
-
-
-        platforms[platform].posts++;
-
-    });
-
-
-    // =====================================
-    // FIND BEST PLATFORM
-    // =====================================
-
-    let bestPlatform = null;
-
-
-    Object.keys(platforms).forEach(platform=>{
-
-        if(
-            !bestPlatform ||
-
-            platforms[platform].engagement >
-            platforms[bestPlatform].engagement
-        ){
-
-            bestPlatform =
-                platform;
+            }
 
         }
+    );
 
-    });
-
-
-    // =====================================
-    // NO DATA
-    // =====================================
 
     if(!bestPlatform){
 
         box.innerHTML = `
 
-        <div class="weekly-best-empty">
+            <div
+                class="weekly-best-empty"
+            >
 
-            <div class="weekly-best-empty-icon">
-                🏆
+                <div
+                    class="weekly-best-empty-icon"
+                >
+                    🏆
+                </div>
+
+                <h3>
+                    No platform data yet
+                </h3>
+
+                <p>
+                    Publish content during this week
+                    to see your best platform.
+                </p>
+
             </div>
-
-            <h3>
-                No platform data yet
-            </h3>
-
-            <p>
-                Publish content during this week
-                to see your best platform.
-            </p>
-
-        </div>
 
         `;
 
         return;
-
     }
 
-
-    // =====================================
-    // BEST PLATFORM DATA
-    // =====================================
 
     const data =
         platforms[bestPlatform];
 
 
     const engagementRate =
-    data.impressions > 0
-    ?
-    (
-        data.engagement /
-        data.impressions *
-        100
-    ).toFixed(1)
-    :
-    "0.0";
 
+        data.impressions > 0
 
-    // =====================================
-    // PLATFORM ICON
-    // =====================================
+            ?
+
+            (
+                data.engagement /
+                data.impressions *
+                100
+            ).toFixed(1)
+
+            :
+
+            "0.0";
+
 
     const icon =
-        getPlatformIcon(bestPlatform);
+        getPlatformIcon(
+            bestPlatform
+        );
 
-
-    // =====================================
-    // PLATFORM CLASS
-    // =====================================
 
     const platformClass =
-        getPlatformClass(bestPlatform);
+        getPlatformClass(
+            bestPlatform
+        );
 
-
-    // =====================================
-    // RENDER PREMIUM CARD
-    // =====================================
 
     box.innerHTML = `
 
-    <div class="
-        weekly-best-platform-card
-        ${platformClass}
-    ">
+        <div
+            class="
+                weekly-best-platform-card
+                ${platformClass}
+            "
+        >
 
+            <div class="weekly-best-top">
 
-        <div class="weekly-best-top">
-
-
-            <div class="weekly-best-badge">
-
-                🏆
-
-                <span>
-                    BEST PLATFORM
-                </span>
-
-            </div>
-
-
-            <div class="weekly-best-rank">
-
-                #1
-
-            </div>
-
-
-        </div>
-
-
-
-        <div class="weekly-best-main">
-
-
-            <div class="weekly-best-icon">
-
-                <img
-                    src="${icon}"
-                    alt="${bestPlatform}"
+                <div
+                    class="weekly-best-badge"
                 >
 
+                    🏆
+
+                    <span>
+                        BEST PLATFORM
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="weekly-best-rank"
+                >
+                    #1
+                </div>
+
             </div>
 
 
-            <div class="weekly-best-platform-name">
+            <div class="weekly-best-main">
+
+                <div
+                    class="weekly-best-icon"
+                >
+
+                    <img
+                        src="${icon}"
+                        alt="${escapeHtml(
+                            bestPlatform
+                        )}"
+                    >
+
+                </div>
+
+
+                <div
+                    class="weekly-best-platform-name"
+                >
+
+                    <span>
+                        This Week's Winner
+                    </span>
+
+                    <h2>
+                        ${escapeHtml(
+                            bestPlatform
+                        )}
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="weekly-best-stats">
+
+                <div
+                    class="weekly-best-stat"
+                >
+
+                    <span>
+                        Impressions
+                    </span>
+
+                    <strong>
+                        ${formatNumber(
+                            data.impressions
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    class="weekly-best-stat"
+                >
+
+                    <span>
+                        Reach
+                    </span>
+
+                    <strong>
+                        ${formatNumber(
+                            data.reach
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    class="weekly-best-stat"
+                >
+
+                    <span>
+                        Engagement
+                    </span>
+
+                    <strong>
+                        ${formatNumber(
+                            data.engagement
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    class="weekly-best-stat"
+                >
+
+                    <span>
+                        Posts
+                    </span>
+
+                    <strong>
+                        ${data.posts}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    class="weekly-best-stat"
+                >
+
+                    <span>
+                        Rate
+                    </span>
+
+                    <strong>
+                        ${engagementRate}%
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="weekly-best-footer">
 
                 <span>
-                    This Week's Winner
+                    🏆 Highest engagement this week
                 </span>
 
-                <h2>
-                    ${bestPlatform}
-                </h2>
-
             </div>
-
 
         </div>
-
-
-
-        <div class="weekly-best-stats">
-
-
-            <div class="weekly-best-stat">
-
-    <span>
-        Impressions
-    </span>
-
-    <strong>
-        ${formatNumber(data.impressions)}
-    </strong>
-
-</div>
-
-<div class="weekly-best-stat">
-
-    <span>
-        Reach
-    </span>
-
-    <strong>
-        ${formatNumber(data.reach)}
-    </strong>
-
-</div>
-
-
-            <div class="weekly-best-stat">
-
-                <span>
-                    Engagement
-                </span>
-
-                <strong>
-                    ${formatNumber(data.engagement)}
-                </strong>
-
-            </div>
-
-
-            <div class="weekly-best-stat">
-
-                <span>
-                    Posts
-                </span>
-
-                <strong>
-                    ${data.posts}
-                </strong>
-
-            </div>
-
-
-            <div class="weekly-best-stat">
-
-                <span>
-                    Rate
-                </span>
-
-                <strong>
-                    ${engagementRate}%
-                </strong>
-
-            </div>
-
-
-        </div>
-
-
-
-        <div class="weekly-best-footer">
-
-            <span>
-                🏆 Highest engagement this week
-            </span>
-
-        </div>
-
-
-    </div>
 
     `;
 
 }
-
 
 
 // =====================================
@@ -5563,98 +7459,159 @@ function renderWeeklyTopContent(
         );
 
 
-    if(!box)
+    if(!box){
+
         return;
+    }
 
 
-    if(weeklyContents.length === 0){
+    if(
+        !weeklyContents ||
+        weeklyContents.length === 0
+    ){
 
-    box.innerHTML = `
+        box.innerHTML = `
 
-        <div class="top-content-empty">
+            <div
+                class="top-content-empty"
+            >
 
-            <div class="top-content-empty-icon">
-                📊
+                <div
+                    class="top-content-empty-icon"
+                >
+                    📊
+                </div>
+
+                <h3>
+                    No Content This Week
+                </h3>
+
+                <p>
+                    Add content to see your top performing post.
+                </p>
+
             </div>
 
-            <h3>
-                No Content This Week
-            </h3>
+        `;
 
-            <p>
-                Add content to see your top performing post.
-            </p>
-
-        </div>
-
-    `;
-
-    return;
-
-}
+        return;
+    }
 
 
     const sorted =
-        [...weeklyContents].sort(
-            (a,b)=>{
+        [...weeklyContents]
+        .sort(
+            (a, b) => {
 
                 const engagementA =
 
-                    (Number(a.likes) || 0) +
+                    (
+                        Number(
+                            a.likes
+                        ) || 0
+                    )
 
-                    (Number(a.comments) || 0) +
+                    +
 
-                    (Number(a.shares) || 0) +
+                    (
+                        Number(
+                            a.comments
+                        ) || 0
+                    )
 
-                    (Number(a.saved) || 0);
+                    +
+
+                    (
+                        Number(
+                            a.shares
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            a.saved
+                        ) || 0
+                    );
 
 
                 const engagementB =
 
-                    (Number(b.likes) || 0) +
+                    (
+                        Number(
+                            b.likes
+                        ) || 0
+                    )
 
-                    (Number(b.comments) || 0) +
+                    +
 
-                    (Number(b.shares) || 0) +
+                    (
+                        Number(
+                            b.comments
+                        ) || 0
+                    )
 
-                    (Number(b.saved) || 0);
+                    +
+
+                    (
+                        Number(
+                            b.shares
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            b.saved
+                        ) || 0
+                    );
 
 
                 const rateA =
 
-    Number(a.impressions) > 0
+                    Number(
+                        a.impressions
+                    ) > 0
 
-    ?
+                        ?
 
-    (
-        engagementA /
-        Number(a.impressions) *
-        100
-    )
+                        (
+                            engagementA /
+                            Number(
+                                a.impressions
+                            ) *
+                            100
+                        )
 
-    :
+                        :
 
-    0;
-
-
-const rateB =
-
-    Number(b.impressions) > 0
-
-    ?
-
-    (
-        engagementB /
-        Number(b.impressions) *
-        100
-    )
-
-    :
-
-    0;
+                        0;
 
 
-return rateB - rateA;
+                const rateB =
+
+                    Number(
+                        b.impressions
+                    ) > 0
+
+                        ?
+
+                        (
+                            engagementB /
+                            Number(
+                                b.impressions
+                            ) *
+                            100
+                        )
+
+                        :
+
+                        0;
+
+
+                return rateB - rateA;
 
             }
         );
@@ -5666,175 +7623,296 @@ return rateB - rateA;
 
     const engagement =
 
-        (Number(top.likes) || 0) +
+        (
+            Number(
+                top.likes
+            ) || 0
+        )
 
-        (Number(top.comments) || 0) +
+        +
 
-        (Number(top.shares) || 0) +
+        (
+            Number(
+                top.comments
+            ) || 0
+        )
 
-        (Number(top.saved) || 0);
+        +
 
+        (
+            Number(
+                top.shares
+            ) || 0
+        )
 
-    box.innerHTML = `
+        +
 
-    <div class="top-monthly-item">
-
-        <h3>
-            ${top.caption || "Untitled Content"}
-        </h3>
-
-        <p>
-            Platform:
-            ${top.platform || "-"}
-        </p>
-
-        <p>
-    👁 ${formatNumber(top.impressions || 0)}
-    impressions
-</p>
-
-<p>
-    👥 ${formatNumber(top.reach || 0)}
-    reach
-</p>
-
-        <p>
-            🔥 ${formatNumber(engagement)}
-            engagement
-        </p>
-
-    </div>
-
-    `;
-
-}
-
-
-
-// =====================================
-// MONTHLY TOP CONTENT
-// =====================================
-
-function renderMonthlyTopContent(month, year){
-
-    const box =
-        document.getElementById(
-            "monthlyTopContent"
+        (
+            Number(
+                top.saved
+            ) || 0
         );
 
-    if(!box)
-        return;
-
-
-    let contents =
-        account.contents.filter(content=>{
-
-            if(!content.date)
-                return false;
-
-            let date =
-                new Date(content.date);
-
-            return (
-                date.getMonth() === month &&
-                date.getFullYear() === year
-            );
-
-        });
-
-
-    if(contents.length === 0){
 
     box.innerHTML = `
 
-        <div class="top-content-empty">
-
-            <div class="top-content-empty-icon">
-                📊
-            </div>
+        <div
+            class="top-monthly-item"
+        >
 
             <h3>
-                No Content This Month
+                ${escapeHtml(
+                    top.caption ||
+                    "Untitled Content"
+                )}
             </h3>
 
             <p>
-                Add content to see your top performing post.
+                Platform:
+                ${escapeHtml(
+                    top.platform ||
+                    "-"
+                )}
+            </p>
+
+            <p>
+                👁 ${formatNumber(
+                    top.impressions ||
+                    0
+                )}
+                impressions
+            </p>
+
+            <p>
+                👥 ${formatNumber(
+                    top.reach ||
+                    0
+                )}
+                reach
+            </p>
+
+            <p>
+                🔥 ${formatNumber(
+                    engagement
+                )}
+                engagement
             </p>
 
         </div>
 
     `;
 
-    return;
-
 }
 
 
-    // =====================================
-    // CALCULATE TOP CONTENT SCORE
-    // =====================================
+// =====================================
+// MONTHLY TOP CONTENT
+// =====================================
 
-    contents.sort((a,b)=>{
+function renderMonthlyTopContent(
+    month,
+    year
+){
 
-        const engagementA =
-
-            (Number(a.likes) || 0) +
-
-            (Number(a.comments) || 0) +
-
-            (Number(a.shares) || 0) +
-
-            (Number(a.saved) || 0);
+    const box =
+        document.getElementById(
+            "monthlyTopContent"
+        );
 
 
-        const engagementB =
+    if(!box){
 
-            (Number(b.likes) || 0) +
-
-            (Number(b.comments) || 0) +
-
-            (Number(b.shares) || 0) +
-
-            (Number(b.saved) || 0);
+        return;
+    }
 
 
-        const rateA =
+    const contents =
+        (
+            Array.isArray(
+                account?.contents
+            )
 
-    Number(a.impressions) > 0
+            ?
 
-    ?
+            account.contents
 
-    (
-        engagementA /
-        Number(a.impressions) *
-        100
-    )
+            :
 
-    :
+            []
+        )
+        .filter(
+            content => {
 
-    0;
+                if(!content.date){
 
-
-const rateB =
-
-    Number(b.impressions) > 0
-
-    ?
-
-    (
-        engagementB /
-        Number(b.impressions) *
-        100
-    )
-
-    :
-
-    0;
+                    return false;
+                }
 
 
-return rateB - rateA;
+                const date =
+                    new Date(
+                        content.date +
+                        "T00:00:00"
+                    );
 
-    });
+
+                return (
+                    date.getMonth() ===
+                        month
+                    &&
+                    date.getFullYear() ===
+                        year
+                );
+
+            }
+        );
+
+
+    if(contents.length === 0){
+
+        box.innerHTML = `
+
+            <div
+                class="top-content-empty"
+            >
+
+                <div
+                    class="top-content-empty-icon"
+                >
+                    📊
+                </div>
+
+                <h3>
+                    No Content This Month
+                </h3>
+
+                <p>
+                    Add content to see your top performing post.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    contents.sort(
+        (a, b) => {
+
+            const engagementA =
+
+                (
+                    Number(
+                        a.likes
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        a.comments
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        a.shares
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        a.saved
+                    ) || 0
+                );
+
+
+            const engagementB =
+
+                (
+                    Number(
+                        b.likes
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        b.comments
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        b.shares
+                    ) || 0
+                )
+
+                +
+
+                (
+                    Number(
+                        b.saved
+                    ) || 0
+                );
+
+
+            const rateA =
+
+                Number(
+                    a.impressions
+                ) > 0
+
+                    ?
+
+                    (
+                        engagementA /
+                        Number(
+                            a.impressions
+                        ) *
+                        100
+                    )
+
+                    :
+
+                    0;
+
+
+            const rateB =
+
+                Number(
+                    b.impressions
+                ) > 0
+
+                    ?
+
+                    (
+                        engagementB /
+                        Number(
+                            b.impressions
+                        ) *
+                        100
+                    )
+
+                    :
+
+                    0;
+
+
+            return rateB - rateA;
+
+        }
+    );
 
 
     const top =
@@ -5843,48 +7921,82 @@ return rateB - rateA;
 
     const engagement =
 
-        (Number(top.likes) || 0) +
+        (
+            Number(
+                top.likes
+            ) || 0
+        )
 
-        (Number(top.comments) || 0) +
+        +
 
-        (Number(top.shares) || 0) +
+        (
+            Number(
+                top.comments
+            ) || 0
+        )
 
-        (Number(top.saved) || 0);
+        +
+
+        (
+            Number(
+                top.shares
+            ) || 0
+        )
+
+        +
+
+        (
+            Number(
+                top.saved
+            ) || 0
+        );
 
 
     box.innerHTML = `
 
-    <div class="top-monthly-item">
+        <div
+            class="top-monthly-item"
+        >
 
-        <h3>
-            ${top.caption || "Untitled Content"}
-        </h3>
+            <h3>
+                ${escapeHtml(
+                    top.caption ||
+                    "Untitled Content"
+                )}
+            </h3>
 
+            <p>
+                Platform:
+                ${escapeHtml(
+                    top.platform ||
+                    "-"
+                )}
+            </p>
 
-        <p>
-            Platform:
-            ${top.platform || "-"}
-        </p>
+            <p>
+                👁 ${formatNumber(
+                    top.impressions ||
+                    0
+                )}
+                impressions
+            </p>
 
+            <p>
+                👥 ${formatNumber(
+                    top.reach ||
+                    0
+                )}
+                reach
+            </p>
 
-        <p>
-            👁 ${formatNumber(top.impressions || 0)}
-            impressions
-        </p>
+            <p>
+                🔥 ${formatNumber(
+                    engagement
+                )}
+                engagement
+            </p>
 
-
-        <p>
-            👥 ${formatNumber(top.reach || 0)}
-            reach
-        </p>
-
-
-        <p>
-            🔥 ${formatNumber(engagement)}
-            engagement
-        </p>
-
-    </div>
+        </div>
 
     `;
 
@@ -5895,36 +8007,63 @@ return rateB - rateA;
 // MONTHLY CONTENT TABLE
 // =====================================
 
-function renderMonthlyContentTable(month, year){
+function renderMonthlyContentTable(
+    month,
+    year
+){
 
     const table =
         document.getElementById(
             "monthlyContentTable"
         );
 
-    if(!table)
+
+    if(!table){
+
         return;
+    }
 
 
     const contents =
-        (account.contents || []).filter(content => {
+        (
+            Array.isArray(
+                account?.contents
+            )
 
-            if(!content.date)
-                return false;
+            ?
+
+            account.contents
+
+            :
+
+            []
+        )
+        .filter(
+            content => {
+
+                if(!content.date){
+
+                    return false;
+                }
 
 
-            const date =
-                new Date(
-                    content.date + "T00:00:00"
+                const date =
+                    new Date(
+                        content.date +
+                        "T00:00:00"
+                    );
+
+
+                return (
+                    date.getMonth() ===
+                        month
+                    &&
+                    date.getFullYear() ===
+                        year
                 );
 
-
-            return (
-                date.getMonth() === month &&
-                date.getFullYear() === year
-            );
-
-        });
+            }
+        );
 
 
     if(contents.length === 0){
@@ -5942,64 +8081,100 @@ function renderMonthlyContentTable(month, year){
         `;
 
         return;
-
     }
 
 
-    let html = "";
-
-
-    contents.forEach(content => {
-
-        const engagement =
-
-            (Number(content.likes) || 0) +
-            (Number(content.comments) || 0) +
-            (Number(content.shares) || 0) +
-            (Number(content.saved) || 0);
-
-
-        html += `
-
-            <tr>
-
-                <td>
-                    ${content.date || "-"}
-                </td>
-
-                <td>
-                    ${content.platform || "-"}
-                </td>
-
-                <td>
-                    ${content.caption || "-"}
-                </td>
-
-                <td>
-                    ${formatNumber(
-                        Number(content.impressions) || 0
-                    )}
-                </td>
-
-                <td>
-                    ${formatNumber(
-                        Number(content.reach) || 0
-                    )}
-                </td>
-
-                <td>
-                    ${formatNumber(engagement)}
-                </td>
-
-            </tr>
-
-        `;
-
-    });
-
-
     table.innerHTML =
-        html;
+
+        contents
+        .map(
+            content => {
+
+                const engagement =
+
+                    (
+                        Number(
+                            content.likes
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.comments
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.shares
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.saved
+                        ) || 0
+                    );
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                content.date ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.platform ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.caption ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                content.impressions ||
+                                0
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                content.reach ||
+                                0
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                engagement
+                            )}
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        )
+        .join("");
 
 }
 
@@ -6008,19 +8183,27 @@ function renderMonthlyContentTable(month, year){
 // WEEKLY CONTENT TABLE
 // =====================================
 
-function renderWeeklyContentTable(weeklyContents){
+function renderWeeklyContentTable(
+    weeklyContents
+){
 
     const table =
         document.getElementById(
             "weeklyContentTable"
         );
 
-    if(!table)
+
+    if(!table){
+
         return;
+    }
 
 
     if(
-        !weeklyContents ||
+        !Array.isArray(
+            weeklyContents
+        )
+        ||
         weeklyContents.length === 0
     ){
 
@@ -6037,70 +8220,106 @@ function renderWeeklyContentTable(weeklyContents){
         `;
 
         return;
-
     }
 
 
-    let html = "";
-
-
-    weeklyContents.forEach(content => {
-
-        const engagement =
-
-            (Number(content.likes) || 0) +
-            (Number(content.comments) || 0) +
-            (Number(content.shares) || 0) +
-            (Number(content.saved) || 0);
-
-
-        html += `
-
-            <tr>
-
-                <td>
-                    ${content.date || "-"}
-                </td>
-
-                <td>
-                    ${content.platform || "-"}
-                </td>
-
-                <td>
-                    ${content.caption || "-"}
-                </td>
-
-                <td>
-                    ${formatNumber(
-                        Number(content.impressions) || 0
-                    )}
-                </td>
-
-                <td>
-                    ${formatNumber(
-                        Number(content.reach) || 0
-                    )}
-                </td>
-
-                <td>
-                    ${formatNumber(engagement)}
-                </td>
-
-            </tr>
-
-        `;
-
-    });
-
-
     table.innerHTML =
-        html;
+
+        weeklyContents
+        .map(
+            content => {
+
+                const engagement =
+
+                    (
+                        Number(
+                            content.likes
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.comments
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.shares
+                        ) || 0
+                    )
+
+                    +
+
+                    (
+                        Number(
+                            content.saved
+                        ) || 0
+                    );
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+                            ${escapeHtml(
+                                content.date ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.platform ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHtml(
+                                content.caption ||
+                                "-"
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                content.impressions ||
+                                0
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                content.reach ||
+                                0
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatNumber(
+                                engagement
+                            )}
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        )
+        .join("");
 
 }
 
 
 // =====================================
-// BUILD WEEKLY YEAR FILTER
+// WEEKLY YEAR FILTER
 // =====================================
 
 function buildWeeklyYearFilter(){
@@ -6110,13 +8329,19 @@ function buildWeeklyYearFilter(){
             "weeklyYearFilter"
         );
 
-    if(!year)
+
+    if(!year){
+
         return;
+    }
+
 
     const current =
         new Date().getFullYear();
 
+
     year.innerHTML = "";
+
 
     for(
         let y = current - 5;
@@ -6126,129 +8351,225 @@ function buildWeeklyYearFilter(){
 
         year.innerHTML += `
 
-        <option value="${y}">
-            ${y}
-        </option>
+            <option value="${y}">
+                ${y}
+            </option>
 
         `;
 
     }
 
-    year.value = current;
+
+    year.value =
+        String(
+            current
+        );
 
 }
 
 
 // =====================================
-// BUILD MONTH FILTER
+// MONTHLY FILTERS
 // =====================================
 
 function buildMonthlyFilters(){
 
-
-const month =
-document.getElementById(
-"monthlyFilter"
-);
-
+    const month =
+        document.getElementById(
+            "monthlyFilter"
+        );
 
 
-const year =
-document.getElementById(
-"monthlyYearFilter"
-);
+    const year =
+        document.getElementById(
+            "monthlyYearFilter"
+        );
 
 
+    if(
+        !month ||
+        !year
+    ){
 
-if(!month || !year)
-return;
-
-
-
-const months=[
-
-"January",
-"February",
-"March",
-"April",
-"May",
-"June",
-"July",
-"August",
-"September",
-"October",
-"November",
-"December"
-
-];
+        return;
+    }
 
 
+    const months = [
 
-month.innerHTML="";
+        "January",
 
+        "February",
 
+        "March",
 
-months.forEach((m,i)=>{
+        "April",
 
+        "May",
 
-month.innerHTML+=`
+        "June",
 
-<option value="${i}">
+        "July",
 
-${m}
+        "August",
 
-</option>
+        "September",
 
-`;
+        "October",
 
-});
+        "November",
 
+        "December"
 
-
-month.value =
-new Date().getMonth();
-
-
-
-year.innerHTML="";
-
+    ];
 
 
-let current =
-new Date().getFullYear();
+    month.innerHTML = "";
 
 
+    months.forEach(
+        (name, index) => {
 
-for(
-let y=current-5;
-y<=current+1;
-y++
-){
+            month.innerHTML += `
+
+                <option value="${index}">
+                    ${name}
+                </option>
+
+            `;
+
+        }
+    );
 
 
-year.innerHTML+=`
+    const currentDate =
+        new Date();
 
-<option value="${y}">
 
-${y}
+    const currentMonth =
+        currentDate.getMonth();
 
-</option>
 
-`;
+    const currentYear =
+        currentDate.getFullYear();
+
+
+    month.value =
+        String(
+            currentMonth
+        );
+
+
+    year.innerHTML = "";
+
+
+    for(
+        let y = currentYear - 5;
+        y <= currentYear + 1;
+        y++
+    ){
+
+        year.innerHTML += `
+
+            <option value="${y}">
+                ${y}
+            </option>
+
+        `;
+
+    }
+
+
+    year.value =
+        String(
+            currentYear
+        );
 
 }
 
 
+// =====================================
+// REPORT FILTER EVENTS
+// =====================================
 
-year.value=current;
+const monthlyFilter =
+    document.getElementById(
+        "monthlyFilter"
+    );
 
 
+const monthlyYearFilter =
+    document.getElementById(
+        "monthlyYearFilter"
+    );
+
+
+const weeklyMonthFilter =
+    document.getElementById(
+        "weeklyMonthFilter"
+    );
+
+
+const weeklyFilter =
+    document.getElementById(
+        "weeklyFilter"
+    );
+
+
+const weeklyYearFilter =
+    document.getElementById(
+        "weeklyYearFilter"
+    );
+
+
+if(monthlyFilter){
+
+    monthlyFilter.addEventListener(
+        "change",
+        renderMonthlyReport
+    );
 
 }
 
 
+if(monthlyYearFilter){
+
+    monthlyYearFilter.addEventListener(
+        "change",
+        renderMonthlyReport
+    );
+
+}
 
 
+if(weeklyMonthFilter){
+
+    weeklyMonthFilter.addEventListener(
+        "change",
+        renderWeeklyReport
+    );
+
+}
+
+
+if(weeklyFilter){
+
+    weeklyFilter.addEventListener(
+        "change",
+        renderWeeklyReport
+    );
+
+}
+
+
+if(weeklyYearFilter){
+
+    weeklyYearFilter.addEventListener(
+        "change",
+        renderWeeklyReport
+    );
+
+}
 
 
 // =====================================
@@ -6256,87 +8577,173 @@ year.value=current;
 // =====================================
 
 const logoButton =
-document.getElementById(
-"logoButton"
-);
+    document.getElementById(
+        "logoButton"
+    );
 
 
 const logoModal =
-document.getElementById(
-"logoModal"
-);
+    document.getElementById(
+        "logoModal"
+    );
 
 
 const saveLogo =
-document.getElementById(
-"saveLogo"
-);
+    document.getElementById(
+        "saveLogo"
+    );
 
 
 const logoUrl =
-document.getElementById(
-"logoUrl"
-);
+    document.getElementById(
+        "logoUrl"
+    );
 
+
+// =====================================
+// OPEN LOGO MODAL
+// =====================================
 
 if(logoButton){
 
+    logoButton.onclick =
+        function(){
 
-logoButton.onclick=function(){
+            if(logoModal){
 
+                logoModal.style.display =
+                    "flex";
 
-logoModal.style.display="flex";
+            }
 
-
-};
-
+        };
 
 }
 
 
+// =====================================
+// SAVE LOGO
+// =====================================
 
 if(saveLogo){
 
+    saveLogo.onclick =
+        async function(){
 
-saveLogo.onclick=function(){
+            if(!account){
 
-
-let url =
-logoUrl.value.trim();
-
-
-
-if(url==="")
-return;
+                return;
+            }
 
 
-
-account.logoButtonImage=url;
-
-
-
-saveDatabase();
-
+            const url =
+                logoUrl?.value
+                    ?.trim()
+                ||
+                "";
 
 
-logoButton.innerHTML=`
+            if(!url){
 
-<img src="${url}">
+                showToast(
+                    "Please enter a logo URL.",
+                    "error"
+                );
 
-`;
-
-
-
-logoModal.style.display="none";
-
-
-
-};
+                return;
+            }
 
 
+            // =========================
+            // SAVE ACCOUNT LOGO
+            // =========================
+
+            account.logoButtonImage =
+                url;
+
+
+            // =========================
+            // UPDATE BUTTON
+            // =========================
+
+            if(logoButton){
+
+                logoButton.innerHTML = `
+
+                    <img
+                        src="${escapeHtml(
+                            url
+                        )}"
+                        alt="Account logo"
+                    >
+
+                `;
+
+            }
+
+
+            // =========================
+            // SAVE FIRESTORE
+            // =========================
+
+            await saveDatabase();
+
+
+            // =========================
+            // CLOSE MODAL
+            // =========================
+
+            if(logoModal){
+
+                logoModal.style.display =
+                    "none";
+
+            }
+
+
+            showToast(
+                "Logo updated successfully!",
+                "success"
+            );
+
+        };
 
 }
 
+
+// =====================================
+// LOAD SAVED LOGO
+// =====================================
+
+function loadSavedLogo(){
+
+    if(
+        !account ||
+        !account.logoButtonImage
+    ){
+
+        return;
+    }
+
+
+    if(!logoButton){
+
+        return;
+    }
+
+
+    logoButton.innerHTML = `
+
+        <img
+            src="${escapeHtml(
+                account.logoButtonImage
+            )}"
+            alt="Account logo"
+        >
+
+    `;
+
+}
 
 
 // =====================================
@@ -6344,15 +8751,134 @@ logoModal.style.display="none";
 // =====================================
 
 const backButton =
-    document.getElementById("backButton");
+    document.getElementById(
+        "backButton"
+    );
+
 
 if(backButton){
 
-    backButton.onclick = function(){
+    backButton.onclick =
+        function(){
 
-        window.location.href =
-            "dashboard.html";
+            window.location.href =
+                "dashboard.html";
 
-    };
+        };
 
 }
+
+
+// =====================================
+// CLOSE MODALS WHEN CLICKING OUTSIDE
+// =====================================
+
+window.addEventListener(
+    "click",
+    function(event){
+
+        if(
+            platformModal &&
+            event.target ===
+            platformModal
+        ){
+
+            platformModal.style.display =
+                "none";
+
+        }
+
+
+        if(
+            contentModal &&
+            event.target ===
+            contentModal
+        ){
+
+            contentModal.style.display =
+                "none";
+
+            editingContentId =
+                null;
+
+        }
+
+
+        if(
+            deleteModal &&
+            event.target ===
+            deleteModal
+        ){
+
+            closeDeleteModal();
+
+        }
+
+
+        if(
+            logoModal &&
+            event.target ===
+            logoModal
+        ){
+
+            logoModal.style.display =
+                "none";
+
+        }
+
+    }
+);
+
+
+// =====================================
+// RESTORE SAVED LOGO
+// =====================================
+
+loadSavedLogo();
+
+
+// =====================================
+// FINAL REPORT FILTER SETUP
+// =====================================
+
+buildMonthlyFilters();
+
+buildWeeklyYearFilter();
+
+
+// =====================================
+// FINAL REPORT RENDER
+// =====================================
+
+if(
+    typeof renderMonthlyReport ===
+    "function"
+){
+
+    renderMonthlyReport();
+
+}
+
+
+if(
+    typeof renderWeeklyReport ===
+    "function"
+){
+
+    renderWeeklyReport();
+
+}
+
+
+// =====================================
+// FINAL ACCOUNT PAGE STARTUP
+// =====================================
+
+// loadActiveProfile() is already called
+// at the end of Part 1.
+//
+// DO NOT call it a second time here.
+//
+// =====================================
+// END OF ACCOUNT.JS
+// =====================================

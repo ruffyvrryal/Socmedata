@@ -3,7 +3,9 @@
 // FIRESTORE VERSION
 // =====================================
 
-console.log("CONTENT.JS LOADED - FIRESTORE VERSION");
+console.log(
+    "CONTENT.JS LOADED - FIRESTORE VERSION"
+);
 
 
 // =====================================
@@ -23,11 +25,15 @@ import {
 let profile = null;
 let account = null;
 
-let activeProfileId =
-    localStorage.getItem("activeProfileId");
+const activeProfileId =
+    localStorage.getItem(
+        "activeProfileId"
+    );
 
-let activeAccountId =
-    localStorage.getItem("activeAccountId");
+const activeAccountId =
+    localStorage.getItem(
+        "activeAccountId"
+    );
 
 let editingContentId = null;
 
@@ -37,19 +43,29 @@ let editingContentId = null;
 // =====================================
 
 const contentList =
-    document.getElementById("contentList");
+    document.getElementById(
+        "contentList"
+    );
 
 const searchContent =
-    document.getElementById("searchContent");
+    document.getElementById(
+        "searchContent"
+    );
 
 const statusFilter =
-    document.getElementById("statusFilter");
+    document.getElementById(
+        "statusFilter"
+    );
 
 const platformFilter =
-    document.getElementById("platformFilter");
+    document.getElementById(
+        "platformFilter"
+    );
 
 const addContent =
-    document.getElementById("addContentBtn");
+    document.getElementById(
+        "addContentBtn"
+    );
 
 
 // =====================================
@@ -57,19 +73,29 @@ const addContent =
 // =====================================
 
 const contentModal =
-    document.getElementById("contentModal");
+    document.getElementById(
+        "contentModal"
+    );
 
 const closeContentModal =
-    document.getElementById("closeContentModal");
+    document.getElementById(
+        "closeContentModal"
+    );
 
 const cancelContent =
-    document.getElementById("cancelContent");
+    document.getElementById(
+        "cancelContent"
+    );
 
 const saveContent =
-    document.getElementById("saveContent");
+    document.getElementById(
+        "saveContent"
+    );
 
 const contentModalTitle =
-    document.getElementById("contentModalTitle");
+    document.getElementById(
+        "contentModalTitle"
+    );
 
 
 // =====================================
@@ -77,46 +103,74 @@ const contentModalTitle =
 // =====================================
 
 const contentTitle =
-    document.getElementById("contentTitle");
+    document.getElementById(
+        "contentTitle"
+    );
 
 const contentPlatform =
-    document.getElementById("contentPlatform");
+    document.getElementById(
+        "contentPlatform"
+    );
 
 const contentType =
-    document.getElementById("contentType");
+    document.getElementById(
+        "contentType"
+    );
 
 const contentStatus =
-    document.getElementById("contentStatus");
+    document.getElementById(
+        "contentStatus"
+    );
 
 const contentDate =
-    document.getElementById("contentDate");
+    document.getElementById(
+        "contentDate"
+    );
 
 const contentCaption =
-    document.getElementById("contentCaption");
+    document.getElementById(
+        "contentCaption"
+    );
 
 const contentHashtag =
-    document.getElementById("contentHashtag");
+    document.getElementById(
+        "contentHashtag"
+    );
 
 const contentImpressions =
-    document.getElementById("contentImpressions");
+    document.getElementById(
+        "contentImpressions"
+    );
 
 const contentReach =
-    document.getElementById("contentReach");
+    document.getElementById(
+        "contentReach"
+    );
 
 const contentLikes =
-    document.getElementById("contentLikes");
+    document.getElementById(
+        "contentLikes"
+    );
 
 const contentComments =
-    document.getElementById("contentComments");
+    document.getElementById(
+        "contentComments"
+    );
 
 const contentShares =
-    document.getElementById("contentShares");
+    document.getElementById(
+        "contentShares"
+    );
 
 const contentSaved =
-    document.getElementById("contentSaved");
+    document.getElementById(
+        "contentSaved"
+    );
 
 const contentNotes =
-    document.getElementById("contentNotes");
+    document.getElementById(
+        "contentNotes"
+    );
 
 
 // =====================================
@@ -124,7 +178,9 @@ const contentNotes =
 // =====================================
 
 const profileName =
-    document.getElementById("profileName");
+    document.getElementById(
+        "profileName"
+    );
 
 
 // =====================================
@@ -181,12 +237,22 @@ function getEngagement(content) {
 function getContents() {
 
     if (!account) {
+
         return [];
+
     }
 
-    if (!Array.isArray(account.contents)) {
+
+    if (
+        !Array.isArray(
+            account.contents
+        )
+    ) {
+
         account.contents = [];
+
     }
+
 
     return account.contents;
 
@@ -214,21 +280,31 @@ async function loadContentData() {
     );
 
 
+    // =================================
+    // VALIDATE VAULT
+    // =================================
+
     if (!activeProfileId) {
 
         console.error(
             "No active profile selected."
         );
 
-        alert("No vault selected.");
+        alert(
+            "No vault selected."
+        );
 
         window.location.href =
             "../index.html";
 
-        return;
+        return false;
 
     }
 
+
+    // =================================
+    // VALIDATE ACCOUNT
+    // =================================
 
     if (!activeAccountId) {
 
@@ -236,17 +312,23 @@ async function loadContentData() {
             "No active account selected."
         );
 
-        alert("No account selected.");
+        alert(
+            "No account selected."
+        );
 
         window.location.href =
             "dashboard.html";
 
-        return;
+        return false;
 
     }
 
 
     try {
+
+        // =================================
+        // LOAD VAULT FROM FIRESTORE
+        // =================================
 
         profile =
             await getProfile(
@@ -261,28 +343,69 @@ async function loadContentData() {
                 activeProfileId
             );
 
-            alert("Vault not found.");
+            alert(
+                "Vault not found."
+            );
 
             window.location.href =
                 "../index.html";
 
-            return;
+            return false;
 
         }
 
 
-        console.log(
-            "Profile loaded:",
-            profile
-        );
+        // =================================
+        // NORMALIZE VAULT DATA
+        // =================================
 
-
-        if (!Array.isArray(profile.accounts)) {
+        if (
+            !Array.isArray(
+                profile.accounts
+            )
+        ) {
 
             profile.accounts = [];
 
         }
 
+
+        if (
+            !Array.isArray(
+                profile.contents
+            )
+        ) {
+
+            profile.contents = [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                profile.schedules
+            )
+        ) {
+
+            profile.schedules = [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                profile.activities
+            )
+        ) {
+
+            profile.activities = [];
+
+        }
+
+
+        // =================================
+        // FIND ACTIVE ACCOUNT
+        // =================================
 
         account =
             profile.accounts.find(
@@ -299,22 +422,36 @@ async function loadContentData() {
                 activeAccountId
             );
 
-            alert("Account not found.");
+            alert(
+                "Account not found."
+            );
 
             window.location.href =
                 "dashboard.html";
 
-            return;
+            return false;
 
         }
 
 
-        if (!Array.isArray(account.contents)) {
+        // =================================
+        // NORMALIZE CONTENT ARRAY
+        // =================================
+
+        if (
+            !Array.isArray(
+                account.contents
+            )
+        ) {
 
             account.contents = [];
 
         }
 
+
+        // =================================
+        // PROFILE NAME
+        // =================================
 
         if (profileName) {
 
@@ -326,12 +463,24 @@ async function loadContentData() {
 
 
         console.log(
-            "Active account loaded:",
+            "Active vault:",
+            profile
+        );
+
+        console.log(
+            "Active account:",
             account
         );
 
 
+        // =================================
+        // RENDER
+        // =================================
+
         showContents();
+
+
+        return true;
 
     }
 
@@ -341,6 +490,7 @@ async function loadContentData() {
             "Failed to load content:",
             error
         );
+
 
         if (contentList) {
 
@@ -365,6 +515,9 @@ async function loadContentData() {
             `;
 
         }
+
+
+        return false;
 
     }
 
@@ -411,6 +564,7 @@ async function saveDatabase() {
             "Profile successfully saved to Firestore."
         );
 
+
         return true;
 
     }
@@ -421,6 +575,7 @@ async function saveDatabase() {
             "Firestore save error:",
             error
         );
+
 
         return false;
 
@@ -454,7 +609,7 @@ function showContents() {
 
 
     // =================================
-    // SEARCH VALUE
+    // SEARCH
     // =================================
 
     const searchValue =
@@ -466,7 +621,7 @@ function showContents() {
 
 
     // =================================
-    // FILTER CONTENT
+    // FILTER
     // =================================
 
     const filteredContents =
@@ -500,7 +655,8 @@ function showContents() {
 
                 const currentStatus =
                     String(
-                        content.status || "Draft"
+                        content.status ||
+                        "Draft"
                     ).toLowerCase();
 
 
@@ -542,7 +698,9 @@ function showContents() {
     // EMPTY STATE
     // =================================
 
-    if (filteredContents.length === 0) {
+    if (
+        filteredContents.length === 0
+    ) {
 
         contentList.innerHTML = `
 
@@ -570,14 +728,16 @@ function showContents() {
 
 
     // =================================
-    // CREATE CONTENT CARDS
+    // RENDER CONTENT
     // =================================
 
     filteredContents.forEach(
         content => {
 
             const card =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             card.className =
@@ -716,7 +876,7 @@ function showContents() {
 
 
             // =================================
-            // EDIT BUTTON
+            // EDIT
             // =================================
 
             const editButton =
@@ -742,7 +902,7 @@ function showContents() {
 
 
             // =================================
-            // DELETE BUTTON
+            // DELETE
             // =================================
 
             const deleteButton =
@@ -824,8 +984,7 @@ function clearContentForm() {
 
     if (contentTitle) {
 
-        contentTitle.value =
-            "";
+        contentTitle.value = "";
 
     }
 
@@ -1044,7 +1203,9 @@ function openEditContent(id) {
     if (contentImpressions) {
 
         contentImpressions.value =
-            content.impressions || 0;
+            Number(
+                content.impressions || 0
+            );
 
     }
 
@@ -1052,7 +1213,9 @@ function openEditContent(id) {
     if (contentReach) {
 
         contentReach.value =
-            content.reach || 0;
+            Number(
+                content.reach || 0
+            );
 
     }
 
@@ -1060,7 +1223,9 @@ function openEditContent(id) {
     if (contentLikes) {
 
         contentLikes.value =
-            content.likes || 0;
+            Number(
+                content.likes || 0
+            );
 
     }
 
@@ -1068,7 +1233,9 @@ function openEditContent(id) {
     if (contentComments) {
 
         contentComments.value =
-            content.comments || 0;
+            Number(
+                content.comments || 0
+            );
 
     }
 
@@ -1076,7 +1243,9 @@ function openEditContent(id) {
     if (contentShares) {
 
         contentShares.value =
-            content.shares || 0;
+            Number(
+                content.shares || 0
+            );
 
     }
 
@@ -1084,7 +1253,9 @@ function openEditContent(id) {
     if (contentSaved) {
 
         contentSaved.value =
-            content.saved || 0;
+            Number(
+                content.saved || 0
+            );
 
     }
 
@@ -1122,7 +1293,7 @@ function buildContentData() {
 
 
         accountId:
-            activeAccountId,
+            String(activeAccountId),
 
 
         title:
@@ -1231,16 +1402,16 @@ function buildContentData() {
 
 async function saveContentData() {
 
-    // =================================
-    // VALIDATE TITLE
-    // =================================
-
     if (!contentTitle) {
 
         return;
 
     }
 
+
+    // =================================
+    // VALIDATE TITLE
+    // =================================
 
     const title =
         contentTitle.value.trim();
@@ -1286,23 +1457,25 @@ async function saveContentData() {
     }
 
 
+    const contents =
+        getContents();
+
+
     // =================================
-    // BUILD DATA
+    // CREATE DATA
     // =================================
 
     const contentData =
         buildContentData();
 
 
-    const contents =
-        getContents();
-
-
     // =================================
     // UPDATE EXISTING
     // =================================
 
-    if (editingContentId !== null) {
+    if (
+        editingContentId !== null
+    ) {
 
         const index =
             contents.findIndex(
@@ -1323,6 +1496,13 @@ async function saveContentData() {
         }
 
 
+        // Save original for rollback
+        const originalContent =
+            {
+                ...contents[index]
+            };
+
+
         contents[index] = {
 
             ...contents[index],
@@ -1333,6 +1513,25 @@ async function saveContentData() {
                 editingContentId
 
         };
+
+
+        const success =
+            await saveDatabase();
+
+
+        if (!success) {
+
+            contents[index] =
+                originalContent;
+
+
+            alert(
+                "Failed to save content to Firestore."
+            );
+
+            return;
+
+        }
 
     }
 
@@ -1347,24 +1546,29 @@ async function saveContentData() {
             contentData
         );
 
-    }
+
+        const success =
+            await saveDatabase();
 
 
-    // =================================
-    // SAVE TO FIRESTORE
-    // =================================
+        if (!success) {
 
-    const success =
-        await saveDatabase();
+            // Remove failed content
+            account.contents =
+                account.contents.filter(
+                    item =>
+                        String(item.id) !==
+                        String(contentData.id)
+                );
 
 
-    if (!success) {
+            alert(
+                "Failed to save content to Firestore."
+            );
 
-        alert(
-            "Failed to save content to Firestore."
-        );
+            return;
 
-        return;
+        }
 
     }
 
@@ -1377,16 +1581,8 @@ async function saveContentData() {
         null;
 
 
-    // =================================
-    // CLOSE MODAL
-    // =================================
-
     closeContentForm();
 
-
-    // =================================
-    // REFRESH
-    // =================================
 
     showContents();
 
@@ -1431,7 +1627,10 @@ async function deleteContent(id) {
 
     const confirmed =
         confirm(
-            `Delete "${content.title || "this content"}"?`
+            `Delete "${
+                content.title ||
+                "this content"
+            }"?`
         );
 
 
@@ -1442,6 +1641,18 @@ async function deleteContent(id) {
     }
 
 
+    // =================================
+    // SAVE ORIGINAL DATA
+    // =================================
+
+    const originalContents =
+        [...account.contents];
+
+
+    // =================================
+    // REMOVE CONTENT
+    // =================================
+
     account.contents =
         contents.filter(
             item =>
@@ -1450,11 +1661,20 @@ async function deleteContent(id) {
         );
 
 
+    // =================================
+    // SAVE FIRESTORE
+    // =================================
+
     const success =
         await saveDatabase();
 
 
     if (!success) {
+
+        // Restore if Firebase failed
+        account.contents =
+            originalContents;
+
 
         alert(
             "Failed to delete content from Firestore."
@@ -1562,7 +1782,8 @@ window.addEventListener(
 
         if (
             contentModal &&
-            event.target === contentModal
+            event.target ===
+            contentModal
         ) {
 
             closeContentForm();

@@ -1,3 +1,8 @@
+// =====================================
+// SOCMEDATA VAULT SYSTEM
+// FIRESTORE VERSION
+// =====================================
+
 import {
     getProfiles,
     saveProfile,
@@ -6,24 +11,14 @@ import {
 
 
 // =====================================
-// SOCMEDATA VAULT SYSTEM
-// FIRESTORE VERSION
-// =====================================
-
-
-// =====================================
 // APPLICATION DATA
 // =====================================
 
 let profiles = [];
 
-let editingVaultId = null;
-
-let deleteVaultId = null;
-
 
 // =====================================
-// DOM ELEMENTS
+// ELEMENTS
 // =====================================
 
 const profileList =
@@ -98,75 +93,43 @@ const cancelDelete =
 const confirmDelete =
     document.getElementById("confirmDelete");
 
-const deleteVaultText =
-    document.getElementById("deleteVaultText");
+let deleteVaultId = null;
+let editingVaultId = null;
 
 
 // =====================================
-// CREATE VAULT BUTTONS
+// LOAD VAULTS FROM FIRESTORE
 // =====================================
 
-const addProfile =
-    document.getElementById("addProfile");
+async function loadProfiles(){
 
-const toolbarCreateVault =
-    document.getElementById("toolbarCreateVault");
-
-
-// =====================================
-// LOAD PROFILES FROM FIRESTORE
-// =====================================
-
-async function loadProfiles() {
-
-    try {
+    try{
 
         console.log(
-            "Loading vaults from Firestore..."
+            "Loading Vaults from Firestore..."
         );
-
 
         profiles =
             await getProfiles();
 
-
         console.log(
-            "Vaults loaded from Firestore:",
+            "Vaults loaded:",
             profiles
         );
-
 
         showProfiles();
 
     }
-
-    catch (error) {
+    catch(error){
 
         console.error(
-            "Failed to load vaults:",
+            "Failed to load Vaults:",
             error
         );
 
-
-        if (profileList) {
-
-            profileList.innerHTML = `
-
-                <div class="empty-vault-state">
-
-                    <h3>
-                        Unable to load vaults
-                    </h3>
-
-                    <p>
-                        Please check your Firebase connection.
-                    </p>
-
-                </div>
-
-            `;
-
-        }
+        alert(
+            "Failed to load Vaults from Firebase."
+        );
 
     }
 
@@ -174,25 +137,253 @@ async function loadProfiles() {
 
 
 // =====================================
-// OPEN CREATE VAULT MODAL
+// RENDER VAULTS
 // =====================================
 
-function openCreateVaultModal() {
+function showProfiles(){
 
-    if (!createVaultModal) {
+    if(!profileList)
         return;
+
+    profileList.innerHTML = "";
+
+    let filteredProfiles =
+        profiles.filter(profile => {
+
+            if(!searchVault)
+                return true;
+
+            const keyword =
+                searchVault.value
+                .toLowerCase()
+                .trim();
+
+            return (
+                String(profile.name || "")
+                    .toLowerCase()
+                    .includes(keyword)
+                ||
+                String(profile.description || "")
+                    .toLowerCase()
+                    .includes(keyword)
+            );
+
+        });
+
+
+    filteredProfiles.forEach(
+        (profile,index) => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "profile-card";
+
+            card.style.animationDelay =
+                (index * 0.12) + "s";
+
+
+            card.innerHTML = `
+
+                <div class="vault-top">
+
+                    <div class="vault-icon">
+                        📁
+                    </div>
+
+                    <button class="vault-menu">
+                        ⋮
+                    </button>
+
+                </div>
+
+
+                <h3>
+                    ${profile.name || "Unnamed Vault"}
+                </h3>
+
+
+                <p>
+                    ${profile.description || ""}
+                </p>
+
+
+                <div class="vault-info">
+
+                    <span>
+                        📱 ${(profile.accounts || []).length}
+                        Accounts
+                    </span>
+
+                    <span>
+                        📅 ${getTotalContent(profile)}
+                        Posts
+                    </span>
+
+                </div>
+
+
+                <div class="vault-open">
+
+                    <button class="open-vault-btn">
+                        Open Vault →
+                    </button>
+
+                </div>
+
+            `;
+
+
+            const menuButton =
+                card.querySelector(
+                    ".vault-menu"
+                );
+
+            const openButton =
+                card.querySelector(
+                    ".open-vault-btn"
+                );
+
+
+            // =================================
+            // OPEN VAULT
+            // =================================
+
+            openButton.onclick =
+                function(event){
+
+                    event.stopPropagation();
+
+                    openProfile(
+                        profile.id
+                    );
+
+                };
+
+
+            // =================================
+            // EDIT VAULT
+            // =================================
+
+            menuButton.onclick =
+                function(event){
+
+                    event.stopPropagation();
+
+                    editingVaultId =
+                        profile.id;
+
+                    vaultName.value =
+                        profile.name || "";
+
+                    vaultDescription.value =
+                        profile.description || "";
+
+                    vaultModal.style.display =
+                        "flex";
+
+                };
+
+
+            profileList.appendChild(card);
+
+        });
+
+}
+
+
+// =====================================
+// TOTAL CONTENT
+// =====================================
+
+function getTotalContent(profile){
+
+    if(
+        Array.isArray(profile.contents)
+    ){
+
+        return profile.contents.length;
+
     }
 
 
-    if (createVaultName) {
+    let total = 0;
+
+
+    if(
+        Array.isArray(profile.accounts)
+    ){
+
+        profile.accounts.forEach(
+            account => {
+
+                total +=
+                    Array.isArray(
+                        account.contents
+                    )
+                    ?
+                    account.contents.length
+                    :
+                    0;
+
+            }
+        );
+
+    }
+
+
+    return total;
+
+}
+
+
+// =====================================
+// OPEN VAULT
+// =====================================
+
+function openProfile(id){
+
+    console.log(
+        "Opening Vault:",
+        id
+    );
+
+
+    localStorage.setItem(
+        "activeProfileId",
+        String(id)
+    );
+
+
+    window.location.href =
+        "pages/dashboard.html";
+
+}
+
+
+// =====================================
+// CREATE VAULT MODAL
+// =====================================
+
+const addProfile =
+    document.getElementById(
+        "addProfile"
+    );
+
+const toolbarCreateVault =
+    document.getElementById(
+        "toolbarCreateVault"
+    );
+
+
+function openCreateVaultModal(){
+
+    if(createVaultName)
         createVaultName.value = "";
-    }
 
-
-    if (createVaultDescription) {
+    if(createVaultDescription)
         createVaultDescription.value = "";
-    }
-
 
     createVaultModal.style.display =
         "flex";
@@ -200,28 +391,7 @@ function openCreateVaultModal() {
 }
 
 
-// =====================================
-// CLOSE CREATE VAULT MODAL
-// =====================================
-
-function closeCreateVaultModal() {
-
-    if (!createVaultModal) {
-        return;
-    }
-
-
-    createVaultModal.style.display =
-        "none";
-
-}
-
-
-// =====================================
-// CREATE VAULT BUTTON
-// =====================================
-
-if (addProfile) {
+if(addProfile){
 
     addProfile.onclick =
         openCreateVaultModal;
@@ -229,7 +399,7 @@ if (addProfile) {
 }
 
 
-if (toolbarCreateVault) {
+if(toolbarCreateVault){
 
     toolbarCreateVault.onclick =
         openCreateVaultModal;
@@ -238,61 +408,31 @@ if (toolbarCreateVault) {
 
 
 // =====================================
-// CLOSE CREATE VAULT
+// CREATE VAULT
 // =====================================
 
-if (closeCreateVault) {
-
-    closeCreateVault.onclick =
-        closeCreateVaultModal;
-
-}
-
-
-if (cancelCreateVault) {
-
-    cancelCreateVault.onclick =
-        closeCreateVaultModal;
-
-}
-
-
-// =====================================
-// CREATE NEW VAULT
-// FIRESTORE
-// =====================================
-
-if (saveCreateVault) {
-
-    saveCreateVault.onclick =
-        async function () {
+saveCreateVault.onclick =
+    async function(){
 
         const name =
-            createVaultName
-                ? createVaultName.value.trim()
-                : "";
-
+            createVaultName.value
+            .trim();
 
         const description =
-            createVaultDescription
-                ? createVaultDescription.value.trim()
-                : "";
+            createVaultDescription.value
+            .trim();
 
 
-        // Validate name
-
-        if (name === "") {
+        if(!name){
 
             alert(
-                "Please enter a vault name."
+                "Please enter vault name."
             );
 
             return;
 
         }
 
-
-        // Create new profile
 
         const newProfile = {
 
@@ -301,7 +441,8 @@ if (saveCreateVault) {
             name: name,
 
             description:
-                description || "New profile",
+                description ||
+                "New profile",
 
             accounts: [],
 
@@ -314,15 +455,13 @@ if (saveCreateVault) {
         };
 
 
-        try {
+        try{
 
             console.log(
-                "Creating vault:",
+                "Creating Vault:",
                 newProfile
             );
 
-
-            // Save to Firestore
 
             const success =
                 await saveProfile(
@@ -330,10 +469,10 @@ if (saveCreateVault) {
                 );
 
 
-            if (!success) {
+            if(!success){
 
                 alert(
-                    "Failed to create vault."
+                    "Failed to save Vault to Firebase."
                 );
 
                 return;
@@ -341,21 +480,16 @@ if (saveCreateVault) {
             }
 
 
-            // Update local application state
-
             profiles.push(
                 newProfile
             );
 
 
-            // Refresh vault cards
+            createVaultModal.style.display =
+                "none";
+
 
             showProfiles();
-
-
-            // Close modal
-
-            closeCreateVaultModal();
 
 
             console.log(
@@ -363,82 +497,31 @@ if (saveCreateVault) {
             );
 
         }
-
-        catch (error) {
+        catch(error){
 
             console.error(
-                "Create vault error:",
+                "Create Vault error:",
                 error
             );
 
-
             alert(
-                "Failed to create vault."
+                "Failed to create Vault."
             );
 
         }
 
     };
 
-}
-
 
 // =====================================
-// CLOSE EDIT VAULT MODAL
+// EDIT VAULT
 // =====================================
 
-function closeEditVaultModal() {
-
-    if (!vaultModal) {
-        return;
-    }
-
-
-    vaultModal.style.display =
-        "none";
-
-
-    editingVaultId = null;
-
-}
-
-
-if (closeVaultModal) {
-
-    closeVaultModal.onclick =
-        closeEditVaultModal;
-
-}
-
-
-if (cancelVault) {
-
-    cancelVault.onclick =
-        function (event) {
-
-            event.stopPropagation();
-
-            closeEditVaultModal();
-
-        };
-
-}
-
-
-// =====================================
-// SAVE VAULT EDIT
-// FIRESTORE
-// =====================================
-
-if (saveVault) {
-
-    saveVault.onclick =
-        async function (event) {
+saveVault.onclick =
+    async function(event){
 
         event.stopPropagation();
 
-
-        // Find selected vault
 
         const vault =
             profiles.find(
@@ -448,64 +531,25 @@ if (saveVault) {
             );
 
 
-        if (!vault) {
-
-            console.error(
-                "Vault not found:",
-                editingVaultId
-            );
-
+        if(!vault)
             return;
 
-        }
 
+        const oldName =
+            vault.name;
 
-        // Get updated values
+        const oldDescription =
+            vault.description;
 
-        const newName =
-            vaultName
-                ? vaultName.value.trim()
-                : "";
-
-
-        const newDescription =
-            vaultDescription
-                ? vaultDescription.value.trim()
-                : "";
-
-
-        // Validate name
-
-        if (newName === "") {
-
-            alert(
-                "Vault name cannot be empty."
-            );
-
-            return;
-
-        }
-
-
-        // Update local object
 
         vault.name =
-            newName;
-
+            vaultName.value.trim();
 
         vault.description =
-            newDescription || "New profile";
+            vaultDescription.value.trim();
 
 
-        try {
-
-            console.log(
-                "Saving vault:",
-                vault
-            );
-
-
-            // Save updated profile
+        try{
 
             const success =
                 await saveProfile(
@@ -513,10 +557,16 @@ if (saveVault) {
                 );
 
 
-            if (!success) {
+            if(!success){
+
+                vault.name =
+                    oldName;
+
+                vault.description =
+                    oldDescription;
 
                 alert(
-                    "Failed to save vault."
+                    "Failed to update Vault."
                 );
 
                 return;
@@ -524,14 +574,11 @@ if (saveVault) {
             }
 
 
-            // Refresh interface
+            vaultModal.style.display =
+                "none";
+
 
             showProfiles();
-
-
-            // Close modal
-
-            closeEditVaultModal();
 
 
             console.log(
@@ -539,45 +586,35 @@ if (saveVault) {
             );
 
         }
-
-        catch (error) {
+        catch(error){
 
             console.error(
-                "Edit vault error:",
+                "Update Vault error:",
                 error
             );
 
-
             alert(
-                "Failed to save vault."
+                "Failed to update Vault."
             );
 
         }
 
     };
 
-}
-
 
 // =====================================
-// OPEN DELETE CONFIRMATION
+// DELETE VAULT
 // =====================================
 
-if (deleteVault) {
-
-    deleteVault.onclick =
-        function (event) {
+deleteVault.onclick =
+    function(event){
 
         event.stopPropagation();
 
 
-        // Remember selected vault
-
         deleteVaultId =
             editingVaultId;
 
-
-        // Find vault
 
         const vault =
             profiles.find(
@@ -587,23 +624,11 @@ if (deleteVault) {
             );
 
 
-        if (!vault) {
+        if(vault){
 
-            console.error(
-                "Vault not found:",
-                deleteVaultId
-            );
-
-            return;
-
-        }
-
-
-        // Update confirmation text
-
-        if (deleteVaultText) {
-
-            deleteVaultText.innerHTML = `
+            document.getElementById(
+                "deleteVaultText"
+            ).innerHTML = `
 
                 Are you sure you want to delete
                 <strong>${vault.name}</strong> vault?
@@ -619,85 +644,61 @@ if (deleteVault) {
         }
 
 
-        // Close edit modal
+        vaultModal.style.display =
+            "none";
 
-        if (vaultModal) {
-
-            vaultModal.style.display =
-                "none";
-
-        }
-
-
-        // Open delete modal
-
-        if (deleteModal) {
-
-            deleteModal.style.display =
-                "flex";
-
-        }
+        deleteModal.style.display =
+            "flex";
 
     };
 
-}
-
 
 // =====================================
-// CONFIRM DELETE
-// FIRESTORE
+// CONFIRM DELETE VAULT
 // =====================================
 
-if (confirmDelete) {
-
-    confirmDelete.onclick =
-        async function (event) {
+confirmDelete.onclick =
+    async function(event){
 
         event.stopPropagation();
 
 
-        if (
-            deleteVaultId === null ||
-            deleteVaultId === undefined
-        ) {
-
-            console.error(
-                "No vault selected for deletion."
+        const vault =
+            profiles.find(
+                profile =>
+                    String(profile.id) ===
+                    String(deleteVaultId)
             );
 
+
+        if(!vault)
             return;
 
-        }
 
-
-        try {
+        try{
 
             console.log(
-                "Deleting vault:",
-                deleteVaultId
+                "Deleting Vault:",
+                vault.id
             );
 
-
-            // Delete from Firestore
 
             const success =
                 await deleteProfile(
-                    deleteVaultId
+                    vault.id
                 );
 
 
-            if (!success) {
+            if(!success){
 
                 alert(
-                    "Failed to delete vault."
+                    "Failed to delete Vault from Firebase."
                 );
 
                 return;
 
             }
 
-
-            // Remove from local state
 
             profiles =
                 profiles.filter(
@@ -707,52 +708,90 @@ if (confirmDelete) {
                 );
 
 
-            // Refresh vault list
+            deleteModal.style.display =
+                "none";
+
 
             showProfiles();
-
-
-            // Close delete modal
-
-            if (deleteModal) {
-
-                deleteModal.style.display =
-                    "none";
-
-            }
 
 
             console.log(
                 "Vault deleted successfully."
             );
 
-
-            // Clear selected vault
-
-            deleteVaultId =
-                null;
-
-
-            editingVaultId =
-                null;
-
         }
-
-        catch (error) {
+        catch(error){
 
             console.error(
-                "Delete vault error:",
+                "Delete Vault error:",
                 error
             );
 
-
             alert(
-                "Failed to delete vault."
+                "Failed to delete Vault."
             );
 
         }
 
     };
+
+
+// =====================================
+// CLOSE CREATE MODAL
+// =====================================
+
+if(closeCreateVault){
+
+    closeCreateVault.onclick =
+        function(){
+
+            createVaultModal.style.display =
+                "none";
+
+        };
+
+}
+
+
+if(cancelCreateVault){
+
+    cancelCreateVault.onclick =
+        function(){
+
+            createVaultModal.style.display =
+                "none";
+
+        };
+
+}
+
+
+// =====================================
+// CLOSE EDIT MODAL
+// =====================================
+
+if(closeVaultModal){
+
+    closeVaultModal.onclick =
+        function(){
+
+            vaultModal.style.display =
+                "none";
+
+        };
+
+}
+
+
+if(cancelVault){
+
+    cancelVault.onclick =
+        function(){
+
+            vaultModal.style.display =
+                "none";
+
+        };
 
 }
 
@@ -761,38 +800,26 @@ if (confirmDelete) {
 // CLOSE DELETE MODAL
 // =====================================
 
-function closeDeleteConfirmation() {
-
-    if (deleteModal) {
-
-        deleteModal.style.display =
-            "none";
-
-    }
-
-
-    deleteVaultId =
-        null;
-
-}
-
-
-if (closeDeleteModal) {
+if(closeDeleteModal){
 
     closeDeleteModal.onclick =
-        closeDeleteConfirmation;
+        function(){
+
+            deleteModal.style.display =
+                "none";
+
+        };
 
 }
 
 
-if (cancelDelete) {
+if(cancelDelete){
 
     cancelDelete.onclick =
-        function (event) {
+        function(){
 
-            event.stopPropagation();
-
-            closeDeleteConfirmation();
+            deleteModal.style.display =
+                "none";
 
         };
 
@@ -800,355 +827,21 @@ if (cancelDelete) {
 
 
 // =====================================
-// DISPLAY VAULTS
+// SEARCH
 // =====================================
 
-function showProfiles() {
-
-    if (!profileList) {
-
-        return;
-
-    }
-
-
-    // Clear existing cards
-
-    profileList.innerHTML =
-        "";
-
-
-    // Search keyword
-
-    const keyword =
-        searchVault
-            ? searchVault.value
-                .trim()
-                .toLowerCase()
-            : "";
-
-
-    // Filter vaults
-
-    const filteredProfiles =
-        profiles.filter(
-            profile => {
-
-                const name =
-                    String(
-                        profile.name || ""
-                    ).toLowerCase();
-
-
-                const description =
-                    String(
-                        profile.description || ""
-                    ).toLowerCase();
-
-
-                return (
-                    name.includes(keyword) ||
-                    description.includes(keyword)
-                );
-
-            }
-        );
-
-
-    // =================================
-    // EMPTY STATE
-    // =================================
-
-    if (filteredProfiles.length === 0) {
-
-        profileList.innerHTML = `
-
-            <div class="empty-vault-state">
-
-                <h3>
-                    No vaults found
-                </h3>
-
-                <p>
-                    Create a new vault to get started.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-    // =================================
-    // CREATE VAULT CARDS
-    // =================================
-
-    filteredProfiles.forEach(
-        function (profile, index) {
-
-        const card =
-            document.createElement("div");
-
-
-        card.className =
-            "profile-card";
-
-
-        card.style.animationDelay =
-            (index * 0.12) + "s";
-
-
-        // Safe arrays
-
-        const accounts =
-            Array.isArray(
-                profile.accounts
-            )
-                ? profile.accounts
-                : [];
-
-
-        const contents =
-            Array.isArray(
-                profile.contents
-            )
-                ? profile.contents
-                : [];
-
-
-        // =================================
-        // CARD HTML
-        // =================================
-
-        card.innerHTML = `
-
-            <div class="vault-top">
-
-                <div class="vault-icon">
-                    📁
-                </div>
-
-                <button
-                    class="vault-menu"
-                    type="button"
-                    aria-label="Vault options">
-
-                    ⋮
-
-                </button>
-
-            </div>
-
-
-            <h3>
-                ${escapeHTML(
-                    profile.name ||
-                    "Unnamed Vault"
-                )}
-            </h3>
-
-
-            <p>
-                ${escapeHTML(
-                    profile.description ||
-                    ""
-                )}
-            </p>
-
-
-            <div class="vault-info">
-
-                <span>
-                    📱 ${accounts.length} Accounts
-                </span>
-
-
-                <span>
-                    📅 ${contents.length} Posts
-                </span>
-
-            </div>
-
-
-            <div class="vault-open">
-
-                <button
-                    class="open-vault-btn"
-                    type="button">
-
-                    Open Vault →
-
-                </button>
-
-            </div>
-
-        `;
-
-
-        // =================================
-        // MENU BUTTON
-        // =================================
-
-        const menuButton =
-            card.querySelector(
-                ".vault-menu"
-            );
-
-
-        if (menuButton) {
-
-            menuButton.onclick =
-                function (event) {
-
-                event.stopPropagation();
-
-
-                editingVaultId =
-                    profile.id;
-
-
-                if (vaultName) {
-
-                    vaultName.value =
-                        profile.name || "";
-
-                }
-
-
-                if (vaultDescription) {
-
-                    vaultDescription.value =
-                        profile.description || "";
-
-                }
-
-
-                if (vaultModal) {
-
-                    vaultModal.style.display =
-                        "flex";
-
-                }
-
-            };
-
-        }
-
-
-        // =================================
-        // OPEN VAULT BUTTON
-        // =================================
-
-        const openButton =
-            card.querySelector(
-                ".open-vault-btn"
-            );
-
-
-        if (openButton) {
-
-            openButton.onclick =
-                function (event) {
-
-                event.stopPropagation();
-
-
-                openProfile(
-                    profile.id
-                );
-
-            };
-
-        }
-
-
-        // Add card
-
-        profileList.appendChild(
-            card
-        );
-
-    });
-
-}
-
-
-// =====================================
-// ESCAPE HTML
-// =====================================
-
-function escapeHTML(value) {
-
-    return String(value)
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-// =====================================
-// OPEN VAULT
-// =====================================
-
-function openProfile(id) {
-
-    // Store active vault
-
-    localStorage.setItem(
-        "activeProfileId",
-        String(id)
-    );
-
-
-    // Open dashboard
-
-    window.location.href =
-        "pages/dashboard.html";
-
-}
-
-
-// =====================================
-// SEARCH VAULT
-// =====================================
-
-if (searchVault) {
+if(searchVault){
 
     searchVault.addEventListener(
         "input",
-        function () {
-
-            showProfiles();
-
-        }
+        showProfiles
     );
 
 }
 
 
 // =====================================
-// START APPLICATION
+// INITIALIZE
 // =====================================
 
 loadProfiles();
