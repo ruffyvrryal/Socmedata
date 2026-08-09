@@ -23,19 +23,22 @@ import {
 // =====================================
 
 let profile = null;
+
 let account = null;
+
+let editingContentId = null;
+
 
 const activeProfileId =
     localStorage.getItem(
         "activeProfileId"
     );
 
+
 const activeAccountId =
     localStorage.getItem(
         "activeAccountId"
     );
-
-let editingContentId = null;
 
 
 // =====================================
@@ -47,20 +50,24 @@ const contentList =
         "contentList"
     );
 
+
 const searchContent =
     document.getElementById(
         "searchContent"
     );
+
 
 const statusFilter =
     document.getElementById(
         "statusFilter"
     );
 
+
 const platformFilter =
     document.getElementById(
         "platformFilter"
     );
+
 
 const addContent =
     document.getElementById(
@@ -77,20 +84,24 @@ const contentModal =
         "contentModal"
     );
 
+
 const closeContentModal =
     document.getElementById(
         "closeContentModal"
     );
+
 
 const cancelContent =
     document.getElementById(
         "cancelContent"
     );
 
+
 const saveContent =
     document.getElementById(
         "saveContent"
     );
+
 
 const contentModalTitle =
     document.getElementById(
@@ -107,65 +118,78 @@ const contentTitle =
         "contentTitle"
     );
 
+
 const contentPlatform =
     document.getElementById(
         "contentPlatform"
     );
+
 
 const contentType =
     document.getElementById(
         "contentType"
     );
 
+
 const contentStatus =
     document.getElementById(
         "contentStatus"
     );
+
 
 const contentDate =
     document.getElementById(
         "contentDate"
     );
 
+
 const contentCaption =
     document.getElementById(
         "contentCaption"
     );
+
 
 const contentHashtag =
     document.getElementById(
         "contentHashtag"
     );
 
+
 const contentImpressions =
     document.getElementById(
         "contentImpressions"
     );
+
 
 const contentReach =
     document.getElementById(
         "contentReach"
     );
 
+
 const contentLikes =
     document.getElementById(
         "contentLikes"
     );
+
 
 const contentComments =
     document.getElementById(
         "contentComments"
     );
 
+
 const contentShares =
     document.getElementById(
         "contentShares"
     );
 
+
 const contentSaved =
     document.getElementById(
         "contentSaved"
     );
+
 
 const contentNotes =
     document.getElementById(
@@ -184,47 +208,81 @@ const profileName =
 
 
 // =====================================
-// NUMBER FORMAT
+// HELPERS
 // =====================================
 
-function formatNumber(number) {
+function formatNumber(
+    number
+){
 
-    return Number(number || 0)
-        .toLocaleString("id-ID");
+    return Number(
+        number || 0
+    ).toLocaleString(
+        "id-ID"
+    );
 
 }
 
 
-// =====================================
-// HTML SAFETY
-// =====================================
+function escapeHTML(
+    value
+){
 
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(
+        value ?? ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /'/g,
+        "&#039;"
+    );
 
 }
 
 
-// =====================================
-// ENGAGEMENT
-// =====================================
-
-function getEngagement(content) {
+function getEngagement(
+    content
+){
 
     return (
-        Number(content.likes) || 0
+
+        Number(
+            content?.likes
+        ) || 0
+
     ) + (
-        Number(content.comments) || 0
+
+        Number(
+            content?.comments
+        ) || 0
+
     ) + (
-        Number(content.shares) || 0
+
+        Number(
+            content?.shares
+        ) || 0
+
     ) + (
-        Number(content.saved) || 0
+
+        Number(
+            content?.saved
+        ) || 0
+
     );
 
 }
@@ -234,20 +292,20 @@ function getEngagement(content) {
 // GET CONTENTS
 // =====================================
 
-function getContents() {
+function getContents(){
 
-    if (!account) {
+    if(!account){
 
         return [];
 
     }
 
 
-    if (
+    if(
         !Array.isArray(
             account.contents
         )
-    ) {
+    ){
 
         account.contents = [];
 
@@ -260,19 +318,81 @@ function getContents() {
 
 
 // =====================================
+// SAVE PROFILE
+// =====================================
+
+async function saveDatabase(){
+
+    if(!profile){
+
+        console.error(
+            "Cannot save. Profile is missing."
+        );
+
+        return false;
+
+    }
+
+
+    try{
+
+        const success =
+            await saveProfile(
+                profile
+            );
+
+
+        if(!success){
+
+            console.error(
+                "Firestore save failed."
+            );
+
+            return false;
+
+        }
+
+
+        console.log(
+            "Profile successfully saved to Firestore."
+        );
+
+
+        return true;
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Firestore save error:",
+            error
+        );
+
+
+        return false;
+
+    }
+
+}
+
+
+// =====================================
 // LOAD ACTIVE PROFILE
 // =====================================
 
-async function loadContentData() {
+async function loadContentData(){
 
     console.log(
         "Loading content data..."
     );
 
+
     console.log(
         "Active Profile ID:",
         activeProfileId
     );
+
 
     console.log(
         "Active Account ID:",
@@ -280,55 +400,49 @@ async function loadContentData() {
     );
 
 
-    // =================================
-    // VALIDATE VAULT
-    // =================================
-
-    if (!activeProfileId) {
+    if(!activeProfileId){
 
         console.error(
             "No active profile selected."
         );
 
+
         alert(
             "No vault selected."
         );
 
+
         window.location.href =
             "../index.html";
+
 
         return false;
 
     }
 
 
-    // =================================
-    // VALIDATE ACCOUNT
-    // =================================
-
-    if (!activeAccountId) {
+    if(!activeAccountId){
 
         console.error(
             "No active account selected."
         );
 
+
         alert(
             "No account selected."
         );
 
+
         window.location.href =
             "dashboard.html";
+
 
         return false;
 
     }
 
 
-    try {
-
-        // =================================
-        // LOAD VAULT FROM FIRESTORE
-        // =================================
+    try{
 
         profile =
             await getProfile(
@@ -336,19 +450,22 @@ async function loadContentData() {
             );
 
 
-        if (!profile) {
+        if(!profile){
 
             console.error(
                 "Profile not found:",
                 activeProfileId
             );
 
+
             alert(
                 "Vault not found."
             );
 
+
             window.location.href =
                 "../index.html";
+
 
             return false;
 
@@ -356,47 +473,47 @@ async function loadContentData() {
 
 
         // =================================
-        // NORMALIZE VAULT DATA
+        // NORMALIZE PROFILE
         // =================================
 
-        if (
+        if(
             !Array.isArray(
                 profile.accounts
             )
-        ) {
+        ){
 
             profile.accounts = [];
 
         }
 
 
-        if (
+        if(
             !Array.isArray(
                 profile.contents
             )
-        ) {
+        ){
 
             profile.contents = [];
 
         }
 
 
-        if (
+        if(
             !Array.isArray(
                 profile.schedules
             )
-        ) {
+        ){
 
             profile.schedules = [];
 
         }
 
 
-        if (
+        if(
             !Array.isArray(
                 profile.activities
             )
-        ) {
+        ){
 
             profile.activities = [];
 
@@ -410,24 +527,31 @@ async function loadContentData() {
         account =
             profile.accounts.find(
                 item =>
-                    String(item.id) ===
-                    String(activeAccountId)
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        activeAccountId
+                    )
             );
 
 
-        if (!account) {
+        if(!account){
 
             console.error(
                 "Account not found:",
                 activeAccountId
             );
 
+
             alert(
                 "Account not found."
             );
 
+
             window.location.href =
                 "dashboard.html";
+
 
             return false;
 
@@ -435,14 +559,14 @@ async function loadContentData() {
 
 
         // =================================
-        // NORMALIZE CONTENT ARRAY
+        // NORMALIZE ACCOUNT CONTENT
         // =================================
 
-        if (
+        if(
             !Array.isArray(
                 account.contents
             )
-        ) {
+        ){
 
             account.contents = [];
 
@@ -453,7 +577,7 @@ async function loadContentData() {
         // PROFILE NAME
         // =================================
 
-        if (profileName) {
+        if(profileName){
 
             profileName.textContent =
                 profile.name ||
@@ -467,15 +591,12 @@ async function loadContentData() {
             profile
         );
 
+
         console.log(
             "Active account:",
             account
         );
 
-
-        // =================================
-        // RENDER
-        // =================================
 
         showContents();
 
@@ -484,7 +605,7 @@ async function loadContentData() {
 
     }
 
-    catch (error) {
+    catch(error){
 
         console.error(
             "Failed to load content:",
@@ -492,13 +613,17 @@ async function loadContentData() {
         );
 
 
-        if (contentList) {
+        if(contentList){
 
             contentList.innerHTML = `
 
-                <div class="content-empty-state">
+                <div
+                    class="content-empty-state"
+                >
 
-                    <div class="content-empty-icon">
+                    <div
+                        class="content-empty-icon"
+                    >
                         ⚠️
                     </div>
 
@@ -525,61 +650,128 @@ async function loadContentData() {
 
 
 // =====================================
-// SAVE PROFILE TO FIRESTORE
+// FILTER CONTENT
 // =====================================
 
-async function saveDatabase() {
+function getFilteredContents(){
 
-    if (!profile) {
-
-        console.error(
-            "Cannot save. Profile is missing."
-        );
-
-        return false;
-
-    }
+    const contents =
+        getContents();
 
 
-    try {
+    const searchValue =
+        searchContent
 
-        const success =
-            await saveProfile(
-                profile
+            ?
+
+            String(
+                searchContent.value || ""
+            )
+            .trim()
+            .toLowerCase()
+
+            :
+
+            "";
+
+
+    const selectedStatus =
+        statusFilter
+
+            ?
+
+            String(
+                statusFilter.value ||
+                "all"
+            ).toLowerCase()
+
+            :
+
+            "all";
+
+
+    const selectedPlatform =
+        platformFilter
+
+            ?
+
+            String(
+                platformFilter.value ||
+                "all"
+            )
+
+            :
+
+            "all";
+
+
+    return contents.filter(
+        content => {
+
+            const title =
+                String(
+                    content.title ||
+                    ""
+                ).toLowerCase();
+
+
+            const caption =
+                String(
+                    content.caption ||
+                    ""
+                ).toLowerCase();
+
+
+            const hashtag =
+                String(
+                    content.hashtag ||
+                    ""
+                ).toLowerCase();
+
+
+            const matchesSearch =
+                searchValue === "" ||
+                title.includes(
+                    searchValue
+                ) ||
+                caption.includes(
+                    searchValue
+                ) ||
+                hashtag.includes(
+                    searchValue
+                );
+
+
+            const currentStatus =
+                String(
+                    content.status ||
+                    "Draft"
+                ).toLowerCase();
+
+
+            const matchesStatus =
+                selectedStatus === "all" ||
+                currentStatus ===
+                    selectedStatus;
+
+
+            const matchesPlatform =
+                selectedPlatform === "all" ||
+                String(
+                    content.platform ||
+                    ""
+                ) ===
+                    selectedPlatform;
+
+
+            return (
+                matchesSearch &&
+                matchesStatus &&
+                matchesPlatform
             );
-
-
-        if (!success) {
-
-            console.error(
-                "Firestore save failed."
-            );
-
-            return false;
 
         }
-
-
-        console.log(
-            "Profile successfully saved to Firestore."
-        );
-
-
-        return true;
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Firestore save error:",
-            error
-        );
-
-
-        return false;
-
-    }
+    );
 
 }
 
@@ -588,13 +780,14 @@ async function saveDatabase() {
 // RENDER CONTENTS
 // =====================================
 
-function showContents() {
+function showContents(){
 
-    if (!contentList) {
+    if(!contentList){
 
         console.error(
             "contentList not found."
         );
+
 
         return;
 
@@ -605,108 +798,22 @@ function showContents() {
 
 
     const contents =
-        getContents();
+        getFilteredContents();
 
 
-    // =================================
-    // SEARCH
-    // =================================
-
-    const searchValue =
-        searchContent
-            ? searchContent.value
-                .trim()
-                .toLowerCase()
-            : "";
-
-
-    // =================================
-    // FILTER
-    // =================================
-
-    const filteredContents =
-        contents.filter(
-            content => {
-
-                const title =
-                    String(
-                        content.title || ""
-                    ).toLowerCase();
-
-
-                const caption =
-                    String(
-                        content.caption || ""
-                    ).toLowerCase();
-
-
-                const hashtag =
-                    String(
-                        content.hashtag || ""
-                    ).toLowerCase();
-
-
-                const matchesSearch =
-                    searchValue === "" ||
-                    title.includes(searchValue) ||
-                    caption.includes(searchValue) ||
-                    hashtag.includes(searchValue);
-
-
-                const currentStatus =
-                    String(
-                        content.status ||
-                        "Draft"
-                    ).toLowerCase();
-
-
-                const selectedStatus =
-                    statusFilter
-                        ? statusFilter.value
-                        : "all";
-
-
-                const matchesStatus =
-                    selectedStatus === "all" ||
-                    currentStatus ===
-                    selectedStatus;
-
-
-                const selectedPlatform =
-                    platformFilter
-                        ? platformFilter.value
-                        : "all";
-
-
-                const matchesPlatform =
-                    selectedPlatform === "all" ||
-                    content.platform ===
-                    selectedPlatform;
-
-
-                return (
-                    matchesSearch &&
-                    matchesStatus &&
-                    matchesPlatform
-                );
-
-            }
-        );
-
-
-    // =================================
-    // EMPTY STATE
-    // =================================
-
-    if (
-        filteredContents.length === 0
-    ) {
+    if(
+        contents.length === 0
+    ){
 
         contentList.innerHTML = `
 
-            <div class="content-empty-state">
+            <div
+                class="content-empty-state"
+            >
 
-                <div class="content-empty-icon">
+                <div
+                    class="content-empty-icon"
+                >
                     📝
                 </div>
 
@@ -722,16 +829,13 @@ function showContents() {
 
         `;
 
+
         return;
 
     }
 
 
-    // =================================
-    // RENDER CONTENT
-    // =================================
-
-    filteredContents.forEach(
+    contents.forEach(
         content => {
 
             const card =
@@ -769,17 +873,24 @@ function showContents() {
 
                         <h3>
                             🎬
-                            ${escapeHTML(title)}
+                            ${escapeHTML(
+                                title
+                            )}
                         </h3>
 
                     </div>
+
 
                     <span
                         class="status ${escapeHTML(
                             status.toLowerCase()
                         )}"
                     >
-                        ${escapeHTML(status)}
+
+                        ${escapeHTML(
+                            status
+                        )}
+
                     </span>
 
                 </div>
@@ -788,18 +899,26 @@ function showContents() {
                 <div class="content-info">
 
                     <p>
+
                         📱
+
                         ${escapeHTML(
-                            content.platform || "-"
+                            content.platform ||
+                            "-"
                         )}
+
                     </p>
 
 
                     <p>
+
                         🎞
+
                         ${escapeHTML(
-                            content.contentType || "-"
+                            content.contentType ||
+                            "-"
                         )}
+
                     </p>
 
                 </div>
@@ -810,7 +929,8 @@ function showContents() {
                     📅
 
                     ${escapeHTML(
-                        content.date || "-"
+                        content.date ||
+                        "-"
                     )}
 
                 </p>
@@ -875,21 +995,17 @@ function showContents() {
             `;
 
 
-            // =================================
-            // EDIT
-            // =================================
-
             const editButton =
                 card.querySelector(
                     ".edit-content"
                 );
 
 
-            if (editButton) {
+            if(editButton){
 
                 editButton.addEventListener(
                     "click",
-                    function () {
+                    function(){
 
                         openEditContent(
                             content.id
@@ -901,21 +1017,17 @@ function showContents() {
             }
 
 
-            // =================================
-            // DELETE
-            // =================================
-
             const deleteButton =
                 card.querySelector(
                     ".delete-content"
                 );
 
 
-            if (deleteButton) {
+            if(deleteButton){
 
                 deleteButton.addEventListener(
                     "click",
-                    function () {
+                    function(){
 
                         deleteContent(
                             content.id
@@ -941,13 +1053,13 @@ function showContents() {
 // OPEN CREATE CONTENT
 // =====================================
 
-function openCreateContent() {
+function openCreateContent(){
 
     editingContentId =
         null;
 
 
-    if (contentModalTitle) {
+    if(contentModalTitle){
 
         contentModalTitle.textContent =
             "Create Content";
@@ -955,7 +1067,7 @@ function openCreateContent() {
     }
 
 
-    if (saveContent) {
+    if(saveContent){
 
         saveContent.textContent =
             "Create Content";
@@ -966,7 +1078,7 @@ function openCreateContent() {
     clearContentForm();
 
 
-    if (contentModal) {
+    if(contentModal){
 
         contentModal.style.display =
             "flex";
@@ -980,16 +1092,16 @@ function openCreateContent() {
 // CLEAR FORM
 // =====================================
 
-function clearContentForm() {
+function clearContentForm(){
 
-    if (contentTitle) {
+    if(contentTitle){
 
         contentTitle.value = "";
 
     }
 
 
-    if (contentPlatform) {
+    if(contentPlatform){
 
         contentPlatform.selectedIndex =
             0;
@@ -997,7 +1109,7 @@ function clearContentForm() {
     }
 
 
-    if (contentType) {
+    if(contentType){
 
         contentType.selectedIndex =
             0;
@@ -1005,7 +1117,7 @@ function clearContentForm() {
     }
 
 
-    if (contentStatus) {
+    if(contentStatus){
 
         contentStatus.value =
             "Draft";
@@ -1013,7 +1125,7 @@ function clearContentForm() {
     }
 
 
-    if (contentDate) {
+    if(contentDate){
 
         contentDate.value =
             "";
@@ -1021,7 +1133,7 @@ function clearContentForm() {
     }
 
 
-    if (contentCaption) {
+    if(contentCaption){
 
         contentCaption.value =
             "";
@@ -1029,7 +1141,7 @@ function clearContentForm() {
     }
 
 
-    if (contentHashtag) {
+    if(contentHashtag){
 
         contentHashtag.value =
             "";
@@ -1037,7 +1149,7 @@ function clearContentForm() {
     }
 
 
-    if (contentImpressions) {
+    if(contentImpressions){
 
         contentImpressions.value =
             "";
@@ -1045,7 +1157,7 @@ function clearContentForm() {
     }
 
 
-    if (contentReach) {
+    if(contentReach){
 
         contentReach.value =
             "";
@@ -1053,7 +1165,7 @@ function clearContentForm() {
     }
 
 
-    if (contentLikes) {
+    if(contentLikes){
 
         contentLikes.value =
             "";
@@ -1061,7 +1173,7 @@ function clearContentForm() {
     }
 
 
-    if (contentComments) {
+    if(contentComments){
 
         contentComments.value =
             "";
@@ -1069,7 +1181,7 @@ function clearContentForm() {
     }
 
 
-    if (contentShares) {
+    if(contentShares){
 
         contentShares.value =
             "";
@@ -1077,7 +1189,7 @@ function clearContentForm() {
     }
 
 
-    if (contentSaved) {
+    if(contentSaved){
 
         contentSaved.value =
             "";
@@ -1085,7 +1197,7 @@ function clearContentForm() {
     }
 
 
-    if (contentNotes) {
+    if(contentNotes){
 
         contentNotes.value =
             "";
@@ -1099,22 +1211,29 @@ function clearContentForm() {
 // OPEN EDIT CONTENT
 // =====================================
 
-function openEditContent(id) {
+function openEditContent(
+    id
+){
 
     const content =
         getContents().find(
             item =>
-                String(item.id) ===
-                String(id)
+                String(
+                    item.id
+                ) ===
+                String(
+                    id
+                )
         );
 
 
-    if (!content) {
+    if(!content){
 
         console.error(
             "Content not found:",
             id
         );
+
 
         return;
 
@@ -1125,7 +1244,7 @@ function openEditContent(id) {
         content.id;
 
 
-    if (contentModalTitle) {
+    if(contentModalTitle){
 
         contentModalTitle.textContent =
             "Edit Content";
@@ -1133,7 +1252,7 @@ function openEditContent(id) {
     }
 
 
-    if (saveContent) {
+    if(saveContent){
 
         saveContent.textContent =
             "Update Content";
@@ -1141,15 +1260,16 @@ function openEditContent(id) {
     }
 
 
-    if (contentTitle) {
+    if(contentTitle){
 
         contentTitle.value =
-            content.title || "";
+            content.title ||
+            "";
 
     }
 
 
-    if (contentPlatform) {
+    if(contentPlatform){
 
         contentPlatform.value =
             content.platform ||
@@ -1158,7 +1278,7 @@ function openEditContent(id) {
     }
 
 
-    if (contentType) {
+    if(contentType){
 
         contentType.value =
             content.contentType ||
@@ -1167,7 +1287,7 @@ function openEditContent(id) {
     }
 
 
-    if (contentStatus) {
+    if(contentStatus){
 
         contentStatus.value =
             content.status ||
@@ -1176,99 +1296,109 @@ function openEditContent(id) {
     }
 
 
-    if (contentDate) {
+    if(contentDate){
 
         contentDate.value =
-            content.date || "";
+            content.date ||
+            "";
 
     }
 
 
-    if (contentCaption) {
+    if(contentCaption){
 
         contentCaption.value =
-            content.caption || "";
+            content.caption ||
+            "";
 
     }
 
 
-    if (contentHashtag) {
+    if(contentHashtag){
 
         contentHashtag.value =
-            content.hashtag || "";
+            content.hashtag ||
+            "";
 
     }
 
 
-    if (contentImpressions) {
+    if(contentImpressions){
 
         contentImpressions.value =
             Number(
-                content.impressions || 0
+                content.impressions ||
+                0
             );
 
     }
 
 
-    if (contentReach) {
+    if(contentReach){
 
         contentReach.value =
             Number(
-                content.reach || 0
+                content.reach ||
+                0
             );
 
     }
 
 
-    if (contentLikes) {
+    if(contentLikes){
 
         contentLikes.value =
             Number(
-                content.likes || 0
+                content.likes ||
+                0
             );
 
     }
 
 
-    if (contentComments) {
+    if(contentComments){
 
         contentComments.value =
             Number(
-                content.comments || 0
+                content.comments ||
+                0
             );
 
     }
 
 
-    if (contentShares) {
+    if(contentShares){
 
         contentShares.value =
             Number(
-                content.shares || 0
+                content.shares ||
+                0
             );
 
     }
 
 
-    if (contentSaved) {
+    if(contentSaved){
 
         contentSaved.value =
             Number(
-                content.saved || 0
+                content.saved ||
+                0
             );
 
     }
 
 
-    if (contentNotes) {
+    if(contentNotes){
 
         contentNotes.value =
-            content.notes || "";
+            content.notes ||
+            "";
 
     }
 
 
-    if (contentModal) {
+    if(contentModal){
 
         contentModal.style.display =
             "flex";
@@ -1282,60 +1412,113 @@ function openEditContent(id) {
 // BUILD CONTENT OBJECT
 // =====================================
 
-function buildContentData() {
+function buildContentData(){
 
     return {
 
         id:
             editingContentId !== null
-                ? editingContentId
-                : Date.now(),
+
+                ?
+
+                editingContentId
+
+                :
+
+                Date.now(),
 
 
         accountId:
-            String(activeAccountId),
+            String(
+                activeAccountId
+            ),
 
 
         title:
             contentTitle
-                ? contentTitle.value.trim()
-                : "",
+
+                ?
+
+                contentTitle.value
+                    .trim()
+
+                :
+
+                "",
 
 
         platform:
             contentPlatform
-                ? contentPlatform.value
-                : "",
+
+                ?
+
+                contentPlatform.value
+
+                :
+
+                "",
 
 
         contentType:
             contentType
-                ? contentType.value
-                : "Post",
+
+                ?
+
+                contentType.value
+
+                :
+
+                "Post",
 
 
         status:
             contentStatus
-                ? contentStatus.value
-                : "Draft",
+
+                ?
+
+                contentStatus.value
+
+                :
+
+                "Draft",
 
 
         date:
             contentDate
-                ? contentDate.value
-                : "",
+
+                ?
+
+                contentDate.value
+
+                :
+
+                "",
 
 
         caption:
             contentCaption
-                ? contentCaption.value.trim()
-                : "",
+
+                ?
+
+                contentCaption.value
+                    .trim()
+
+                :
+
+                "",
 
 
         hashtag:
             contentHashtag
-                ? contentHashtag.value.trim()
-                : "",
+
+                ?
+
+                contentHashtag.value
+                    .trim()
+
+                :
+
+                "",
 
 
         impressions:
@@ -1388,8 +1571,15 @@ function buildContentData() {
 
         notes:
             contentNotes
-                ? contentNotes.value.trim()
-                : ""
+
+                ?
+
+                contentNotes.value
+                    .trim()
+
+                :
+
+                ""
 
     };
 
@@ -1400,57 +1590,52 @@ function buildContentData() {
 // SAVE CONTENT
 // =====================================
 
-async function saveContentData() {
+async function saveContentData(){
 
-    if (!contentTitle) {
+    if(!contentTitle){
 
         return;
 
     }
 
-
-    // =================================
-    // VALIDATE TITLE
-    // =================================
 
     const title =
         contentTitle.value.trim();
 
 
-    if (title === "") {
+    if(title === ""){
 
         alert(
             "Please enter a content title."
         );
 
+
         return;
 
     }
 
 
-    // =================================
-    // VALIDATE DATE
-    // =================================
-
-    if (
+    if(
         !contentDate ||
         contentDate.value === ""
-    ) {
+    ){
 
         alert(
             "Please select a publish date."
         );
 
+
         return;
 
     }
 
 
-    if (!account) {
+    if(!account){
 
         alert(
             "Account not found."
         );
+
 
         return;
 
@@ -1461,46 +1646,45 @@ async function saveContentData() {
         getContents();
 
 
-    // =================================
-    // CREATE DATA
-    // =================================
-
     const contentData =
         buildContentData();
 
 
     // =================================
-    // UPDATE EXISTING
+    // UPDATE
     // =================================
 
-    if (
+    if(
         editingContentId !== null
-    ) {
+    ){
 
         const index =
             contents.findIndex(
                 item =>
-                    String(item.id) ===
-                    String(editingContentId)
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        editingContentId
+                    )
             );
 
 
-        if (index === -1) {
+        if(index === -1){
 
             alert(
                 "Content not found."
             );
+
 
             return;
 
         }
 
 
-        // Save original for rollback
-        const originalContent =
-            {
-                ...contents[index]
-            };
+        const originalContent = {
+            ...contents[index]
+        };
 
 
         contents[index] = {
@@ -1519,7 +1703,7 @@ async function saveContentData() {
             await saveDatabase();
 
 
-        if (!success) {
+        if(!success){
 
             contents[index] =
                 originalContent;
@@ -1529,6 +1713,7 @@ async function saveContentData() {
                 "Failed to save content to Firestore."
             );
 
+
             return;
 
         }
@@ -1537,10 +1722,10 @@ async function saveContentData() {
 
 
     // =================================
-    // CREATE NEW
+    // CREATE
     // =================================
 
-    else {
+    else{
 
         contents.push(
             contentData
@@ -1551,14 +1736,17 @@ async function saveContentData() {
             await saveDatabase();
 
 
-        if (!success) {
+        if(!success){
 
-            // Remove failed content
             account.contents =
                 account.contents.filter(
                     item =>
-                        String(item.id) !==
-                        String(contentData.id)
+                        String(
+                            item.id
+                        ) !==
+                        String(
+                            contentData.id
+                        )
                 );
 
 
@@ -1566,16 +1754,13 @@ async function saveContentData() {
                 "Failed to save content to Firestore."
             );
 
+
             return;
 
         }
 
     }
 
-
-    // =================================
-    // RESET
-    // =================================
 
     editingContentId =
         null;
@@ -1599,7 +1784,9 @@ async function saveContentData() {
 // DELETE CONTENT
 // =====================================
 
-async function deleteContent(id) {
+async function deleteContent(
+    id
+){
 
     const contents =
         getContents();
@@ -1608,17 +1795,22 @@ async function deleteContent(id) {
     const content =
         contents.find(
             item =>
-                String(item.id) ===
-                String(id)
+                String(
+                    item.id
+                ) ===
+                String(
+                    id
+                )
         );
 
 
-    if (!content) {
+    if(!content){
 
         console.error(
             "Content not found:",
             id
         );
+
 
         return;
 
@@ -1634,44 +1826,37 @@ async function deleteContent(id) {
         );
 
 
-    if (!confirmed) {
+    if(!confirmed){
 
         return;
 
     }
 
 
-    // =================================
-    // SAVE ORIGINAL DATA
-    // =================================
-
     const originalContents =
-        [...account.contents];
+        [
+            ...account.contents
+        ];
 
-
-    // =================================
-    // REMOVE CONTENT
-    // =================================
 
     account.contents =
         contents.filter(
             item =>
-                String(item.id) !==
-                String(id)
+                String(
+                    item.id
+                ) !==
+                String(
+                    id
+                )
         );
 
-
-    // =================================
-    // SAVE FIRESTORE
-    // =================================
 
     const success =
         await saveDatabase();
 
 
-    if (!success) {
+    if(!success){
 
-        // Restore if Firebase failed
         account.contents =
             originalContents;
 
@@ -1679,6 +1864,7 @@ async function deleteContent(id) {
         alert(
             "Failed to delete content from Firestore."
         );
+
 
         return;
 
@@ -1697,12 +1883,12 @@ async function deleteContent(id) {
 
 
 // =====================================
-// CLOSE CONTENT MODAL
+// CLOSE CONTENT FORM
 // =====================================
 
-function closeContentForm() {
+function closeContentForm(){
 
-    if (contentModal) {
+    if(contentModal){
 
         contentModal.style.display =
             "none";
@@ -1717,10 +1903,10 @@ function closeContentForm() {
 
 
 // =====================================
-// ADD CONTENT BUTTON
+// EVENT LISTENERS
 // =====================================
 
-if (addContent) {
+if(addContent){
 
     addContent.addEventListener(
         "click",
@@ -1730,11 +1916,7 @@ if (addContent) {
 }
 
 
-// =====================================
-// SAVE CONTENT BUTTON
-// =====================================
-
-if (saveContent) {
+if(saveContent){
 
     saveContent.addEventListener(
         "click",
@@ -1744,11 +1926,7 @@ if (saveContent) {
 }
 
 
-// =====================================
-// CLOSE BUTTON
-// =====================================
-
-if (closeContentModal) {
+if(closeContentModal){
 
     closeContentModal.addEventListener(
         "click",
@@ -1758,15 +1936,41 @@ if (closeContentModal) {
 }
 
 
-// =====================================
-// CANCEL BUTTON
-// =====================================
-
-if (cancelContent) {
+if(cancelContent){
 
     cancelContent.addEventListener(
         "click",
         closeContentForm
+    );
+
+}
+
+
+if(searchContent){
+
+    searchContent.addEventListener(
+        "input",
+        showContents
+    );
+
+}
+
+
+if(statusFilter){
+
+    statusFilter.addEventListener(
+        "change",
+        showContents
+    );
+
+}
+
+
+if(platformFilter){
+
+    platformFilter.addEventListener(
+        "change",
+        showContents
     );
 
 }
@@ -1778,13 +1982,13 @@ if (cancelContent) {
 
 window.addEventListener(
     "click",
-    function (event) {
+    function(event){
 
-        if (
+        if(
             contentModal &&
             event.target ===
             contentModal
-        ) {
+        ){
 
             closeContentForm();
 
@@ -1792,48 +1996,6 @@ window.addEventListener(
 
     }
 );
-
-
-// =====================================
-// SEARCH
-// =====================================
-
-if (searchContent) {
-
-    searchContent.addEventListener(
-        "input",
-        showContents
-    );
-
-}
-
-
-// =====================================
-// STATUS FILTER
-// =====================================
-
-if (statusFilter) {
-
-    statusFilter.addEventListener(
-        "change",
-        showContents
-    );
-
-}
-
-
-// =====================================
-// PLATFORM FILTER
-// =====================================
-
-if (platformFilter) {
-
-    platformFilter.addEventListener(
-        "change",
-        showContents
-    );
-
-}
 
 
 // =====================================
