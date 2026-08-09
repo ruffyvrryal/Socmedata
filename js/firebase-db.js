@@ -9,8 +9,6 @@ import {
     getDocs,
     getDoc,
     setDoc,
-    addDoc,
-    updateDoc,
     deleteDoc
 } from
     "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -26,11 +24,9 @@ import {
 
 
 // =====================================
-// PROFILE FUNCTIONS
+// GET ALL PROFILES
 // =====================================
 
-
-// GET ALL PROFILES
 export async function getProfiles(){
 
     try{
@@ -43,7 +39,9 @@ export async function getProfiles(){
                 )
             );
 
+
         const profiles = [];
+
 
         snapshot.forEach(
             document => {
@@ -60,9 +58,11 @@ export async function getProfiles(){
             }
         );
 
+
         return profiles;
 
     }
+
     catch(error){
 
         console.error(
@@ -70,12 +70,12 @@ export async function getProfiles(){
             error
         );
 
+
         return [];
 
     }
 
 }
-
 
 
 // =====================================
@@ -92,7 +92,9 @@ export async function getProfile(
             doc(
                 db,
                 "profiles",
-                String(profileId)
+                String(
+                    profileId
+                )
             );
 
 
@@ -102,7 +104,9 @@ export async function getProfile(
             );
 
 
-        if(!snapshot.exists()){
+        if(
+            !snapshot.exists()
+        ){
 
             return null;
 
@@ -119,6 +123,7 @@ export async function getProfile(
         };
 
     }
+
     catch(error){
 
         console.error(
@@ -126,12 +131,12 @@ export async function getProfile(
             error
         );
 
+
         return null;
 
     }
 
 }
-
 
 
 // =====================================
@@ -144,11 +149,29 @@ export async function saveProfile(
 
     try{
 
+        if(
+            !profile ||
+            profile.id === undefined ||
+            profile.id === null
+        ){
+
+            console.error(
+                "Cannot save profile: invalid profile."
+            );
+
+
+            return false;
+
+        }
+
+
         const profileRef =
             doc(
                 db,
                 "profiles",
-                String(profile.id)
+                String(
+                    profile.id
+                )
             );
 
 
@@ -167,6 +190,7 @@ export async function saveProfile(
         return true;
 
     }
+
     catch(error){
 
         console.error(
@@ -174,12 +198,12 @@ export async function saveProfile(
             error
         );
 
+
         return false;
 
     }
 
 }
-
 
 
 // =====================================
@@ -193,13 +217,13 @@ export async function deleteProfile(
     try{
 
         await deleteDoc(
-
             doc(
                 db,
                 "profiles",
-                String(profileId)
+                String(
+                    profileId
+                )
             )
-
         );
 
 
@@ -212,6 +236,7 @@ export async function deleteProfile(
         return true;
 
     }
+
     catch(error){
 
         console.error(
@@ -219,183 +244,9 @@ export async function deleteProfile(
             error
         );
 
+
         return false;
 
     }
 
 }
-
-
-
-// =====================================
-// TEST HELPER
-// =====================================
-
-export async function testDatabase(){
-
-    const profiles =
-        await getProfiles();
-
-
-    console.log(
-        "Firestore profiles:",
-        profiles
-    );
-
-
-    return profiles;
-
-}
-
-// =====================================
-// MIGRATE LOCALSTORAGE → FIRESTORE
-// =====================================
-
-async function migrateLocalStorageToFirestore(){
-
-    try{
-
-        // Get existing LocalStorage data
-        const storedProfiles =
-            JSON.parse(
-                localStorage.getItem("profiles")
-            ) || [];
-
-
-        if(storedProfiles.length === 0){
-
-            console.log(
-                "No LocalStorage profiles found."
-            );
-
-            return;
-
-        }
-
-
-        console.log(
-            "Starting migration..."
-        );
-
-
-        console.log(
-            "Profiles to migrate:",
-            storedProfiles
-        );
-
-
-        // ---------------------------------
-        // MIGRATE EACH VAULT
-        // ---------------------------------
-
-        for(const profile of storedProfiles){
-
-            await setDoc(
-                doc(
-                    db,
-                    "profiles",
-                    String(profile.id)
-                ),
-                profile
-            );
-
-
-            console.log(
-                "Vault migrated:",
-                profile.name
-            );
-
-        }
-
-
-        console.log(
-            "================================="
-        );
-
-        console.log(
-            "MIGRATION SUCCESSFUL"
-        );
-
-        console.log(
-            "Vaults migrated:",
-            storedProfiles.length
-        );
-
-        console.log(
-            "================================="
-        );
-
-
-    }catch(error){
-
-        console.error(
-            "Migration failed:",
-            error
-        );
-
-    }
-
-}
-
-window.migrateLocalStorageToFirestore =
-    migrateLocalStorageToFirestore;
-
-
-    // =====================================
-// LOAD PROFILES FROM FIRESTORE
-// =====================================
-
-async function loadProfilesFromFirestore(){
-
-    try{
-
-        const snapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "profiles"
-                )
-            );
-
-
-        const firestoreProfiles =
-            snapshot.docs.map(
-                doc => doc.data()
-            );
-
-
-        console.log(
-            "Profiles loaded from Firestore:",
-            firestoreProfiles
-        );
-
-
-        console.log(
-            "Firestore profile count:",
-            firestoreProfiles.length
-        );
-
-
-        return firestoreProfiles;
-
-
-    }catch(error){
-
-        console.error(
-            "Failed to load profiles from Firestore:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-// Make available from Console
-
-window.loadProfilesFromFirestore =
-    loadProfilesFromFirestore;
-    
-testDatabase();

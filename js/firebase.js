@@ -45,7 +45,9 @@ const firebaseConfig = {
 // =====================================
 
 const app =
-    initializeApp(firebaseConfig);
+    initializeApp(
+        firebaseConfig
+    );
 
 
 // =====================================
@@ -53,11 +55,13 @@ const app =
 // =====================================
 
 export const db =
-    getFirestore(app);
+    getFirestore(
+        app
+    );
 
 
 // =====================================
-// TEST
+// INITIALIZATION CONFIRMATION
 // =====================================
 
 console.log(
@@ -68,58 +72,3 @@ console.log(
     "Firestore initialized successfully.",
     db
 );
-
-// =====================================
-// FIRESTORE TEST
-// =====================================
-
-import {
-    collection,
-    addDoc
-} from
-    "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-
-async function testFirestore(){
-
-    try{
-
-        const docRef =
-            await addDoc(
-                collection(db, "test"),
-                {
-
-                    message:
-                        "Socmedata Firebase Test",
-
-                    createdAt:
-                        new Date().toISOString()
-
-                }
-            );
-
-
-        console.log(
-            "Firestore test successful."
-        );
-
-        console.log(
-            "Test document ID:",
-            docRef.id
-        );
-
-
-    }
-    catch(error){
-
-        console.error(
-            "Firestore test failed:",
-            error
-        );
-
-    }
-
-}
-
-
-testFirestore();
