@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Shared Vault - Socmedata</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #f5f7fb;
+            color: #1f2937;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shared-container {
+            width: 90%;
+            max-width: 600px;
+
+            background: white;
+
+            border-radius: 16px;
+
+            padding: 40px;
+
+            text-align: center;
+
+            box-shadow:
+                0 10px 40px
+                rgba(0, 0, 0, 0.08);
+        }
+
+        .vault-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            font-size: 32px;
+        }
+
+        p {
+            line-height: 1.6;
+            color: #6b7280;
+        }
+
+        .status {
+            margin-top: 25px;
+            padding: 15px;
+
+            border-radius: 10px;
+
+            background: #f3f4f6;
+        }
+
+        .login-button {
+            margin-top: 20px;
+
+            padding: 12px 24px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            background: #111827;
+
+            color: white;
+
+            font-size: 15px;
+        }
+
+        .login-button:hover {
+            opacity: 0.9;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="shared-container">
+
+        <div class="vault-icon">
+            🔗
+        </div>
+
+        <h1>
+            Shared Vault
+        </h1>
+
+        <p id="sharedVaultMessage">
+            Loading shared Vault...
+        </p>
+
+        <div
+            id="sharedVaultStatus"
+            class="status"
+        >
+            Please wait...
+        </div>
+
+        <button
+            id="loginButton"
+            class="login-button"
+            style="display: none;"
+        >
+            Login to Continue
+        </button>
+
+    </div>
+
+
+    <script type="module">
+
+        // =====================================
+        // FIREBASE
+        // =====================================
+
+        import {
+            auth,
+            db
+        } from "../js/firebase.js";
+
+
+        import {
+            addVaultCollaborator,
+            getVaultCollaborator
+        } from "../js/firebase-db.js";
+
+
+        import {
+            onAuthStateChanged
+        } from
+        "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+
+        import {
+            doc,
+            getDoc
+        } from
+        "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+        // =====================================
+        // ELEMENTS
+        // =====================================
+
+        const message =
+            document.getElementById(
+                "sharedVaultMessage"
+            );
+
+
+        const status =
+            document.getElementById(
+                "sharedVaultStatus"
+            );
+
+
+        const loginButton =
+            document.getElementById(
+                "loginButton"
+            );
+
+
+        // =====================================
+        // GET SHARE URL PARAMETERS
+        // =====================================
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const vaultId =
+            params.get("vault");
+
+
+        const shareToken =
+            params.get("token");
+
+
+        console.log(
+            "Shared Vault ID:",
+            vaultId
+        );
+
+
+        console.log(
+            "Shared Vault Token:",
+            shareToken
+        );
+
+
+        // =====================================
+        // INVALID URL CHECK
+        // =====================================
+
+        if (
+            !vaultId ||
+            !shareToken
+        ) {
+
+            message.textContent =
+                "This shared Vault link is invalid.";
+
+            status.textContent =
+                "Missing Vault information.";
+
+        }
+
+
+        // =====================================
+        // ENTER VAULT
+        // =====================================
+
+        function enterVault(
+            vault,
+            role
+        ) {
+
+            console.log(
+                "Entering Vault:",
+                vault.id
+            );
+
+
+            console.log(
+                "Vault role:",
+                role
+            );
+
+
+            // =================================
+            // SAVE ACTIVE VAULT
+            // =================================
+
+            localStorage.setItem(
+                "activeProfileId",
+                String(vault.id)
+            );
+
+
+            // =================================
+            // SAVE USER ROLE
+            // =================================
+
+            localStorage.setItem(
+                "activeProfileRole",
+                role
+            );
+
+
+            // =================================
+            // MARK SHARED ACCESS
+            // =================================
+
+            localStorage.setItem(
+                "sharedVaultAccess",
+                "true"
+            );
+
+
+            // =================================
+            // UPDATE MESSAGE
+            // =================================
+
+            message.textContent =
+                `Vault: ${vault.name || "Unnamed Vault"}`;
+
+
+            if (role === "owner") {
+
+                status.textContent =
+                    "Owner access verified. Opening Vault...";
+
+            } else {
+
+                status.textContent =
+                    "Editor access verified. Opening Vault...";
+
+            }
+
+
+            // =================================
+            // OPEN NORMAL DASHBOARD
+            // =================================
+
+            setTimeout(
+                function () {
+
+                    window.location.href =
+                        "dashboard.html";
+
+                },
+                500
+            );
+
+        }
+
+
+        // =====================================
+        // LOAD SHARED VAULT
+        // =====================================
+
+        async function loadSharedVault(
+            user
+        ) {
+
+            try {
+
+                console.log(
+                    "Validating shared Vault..."
+                );
+
+
+                console.log(
+                    "Vault ID:",
+                    vaultId
+                );
+
+
+                console.log(
+                    "Share Token:",
+                    shareToken
+                );
+
+
+                // =================================
+                // FIRESTORE VAULT REFERENCE
+                // =================================
+
+                const vaultRef =
+                    doc(
+                        db,
+                        "profiles",
+                        String(vaultId)
+                    );
+
+
+                // =================================
+                // LOAD VAULT
+                // =================================
+
+                const snapshot =
+                    await getDoc(
+                        vaultRef
+                    );
+
+
+                // =================================
+                // VAULT NOT FOUND
+                // =================================
+
+                if (
+                    !snapshot.exists()
+                ) {
+
+                    console.warn(
+                        "Shared Vault does not exist."
+                    );
+
+
+                    message.textContent =
+                        "Vault not found.";
+
+
+                    status.textContent =
+                        "This Vault may have been deleted.";
+
+
+                    return;
+
+                }
+
+
+                const vault =
+                    snapshot.data();
+
+
+                console.log(
+                    "Shared Vault loaded:",
+                    vault
+                );
+
+
+                // =================================
+                // CHECK SHARING
+                // =================================
+
+                if (
+                    vault.shareEnabled !== true
+                ) {
+
+                    message.textContent =
+                        "This Vault is not currently shared.";
+
+
+                    status.textContent =
+                        "The owner has disabled sharing for this Vault.";
+
+
+                    return;
+
+                }
+
+
+                // =================================
+                // CHECK SHARE TOKEN
+                // =================================
+
+                if (
+                    !vault.shareToken ||
+                    vault.shareToken !== shareToken
+                ) {
+
+                    console.warn(
+                        "Invalid share token."
+                    );
+
+
+                    message.textContent =
+                        "Access denied.";
+
+
+                    status.textContent =
+                        "This shared Vault link is invalid or expired.";
+
+
+                    return;
+
+                }
+
+
+                // =================================
+                // OWNER ACCESS
+                // =================================
+
+                if (
+                    vault.ownerId === user.uid
+                ) {
+
+                    console.log(
+                        "Current user is Vault owner."
+                    );
+
+
+                    enterVault(
+                        {
+                            ...vault,
+                            id: vaultId
+                        },
+                        "owner"
+                    );
+
+
+                    return;
+
+                }
+
+
+                // =================================
+                // CHECK EXISTING COLLABORATOR
+                // =================================
+
+                console.log(
+                    "Checking existing collaborator..."
+                );
+
+
+                const existingCollaborator =
+                    await getVaultCollaborator(
+                        vaultId,
+                        user.uid
+                    );
+
+
+                if (
+                    existingCollaborator
+                ) {
+
+                    console.log(
+                        "Existing collaborator:",
+                        existingCollaborator
+                    );
+
+
+                    const role =
+                        existingCollaborator.role ||
+                        "editor";
+
+
+                    enterVault(
+                        {
+                            ...vault,
+                            id: vaultId
+                        },
+                        role
+                    );
+
+
+                    return;
+
+                }
+
+
+                // =================================
+                // REGISTER NEW EDITOR
+                // =================================
+
+                console.log(
+                    "Registering user as Vault editor..."
+                );
+
+
+                const added =
+                    await addVaultCollaborator(
+                        vaultId,
+                        user.uid,
+                        shareToken,
+                        "editor"
+                    );
+
+
+                if (
+                    !added
+                ) {
+
+                    console.warn(
+                        "Collaborator registration failed."
+                    );
+
+
+                    message.textContent =
+                        "Access denied.";
+
+
+                    status.textContent =
+                        "You do not have permission to access this Vault.";
+
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "User successfully added as editor."
+                );
+
+
+                // =================================
+                // ENTER AS EDITOR
+                // =================================
+
+                enterVault(
+                    {
+                        ...vault,
+                        id: vaultId
+                    },
+                    "editor"
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Shared Vault error:",
+                    error
+                );
+
+
+                message.textContent =
+                    "Unable to access this Vault.";
+
+
+                status.textContent =
+                    "Something went wrong while checking your access.";
+
+            }
+
+        }
+
+
+        // =====================================
+        // AUTHENTICATION
+        // =====================================
+
+        onAuthStateChanged(
+            auth,
+            async function (user) {
+
+                console.log(
+                    "Shared Vault authentication:",
+                    user
+                );
+
+
+                // =================================
+                // INVALID SHARE URL
+                // =================================
+
+                if (
+                    !vaultId ||
+                    !shareToken
+                ) {
+
+                    return;
+
+                }
+
+
+                // =================================
+                // USER NOT LOGGED IN
+                // =================================
+
+                if (!user) {
+
+                    message.textContent =
+                        "You have been invited to a shared Vault.";
+
+
+                    status.textContent =
+                        "Please log in to continue.";
+
+
+                    loginButton.style.display =
+                        "inline-block";
+
+
+                    return;
+
+                }
+
+
+                // =================================
+                // USER LOGGED IN
+                // =================================
+
+                message.textContent =
+                    "You are signed in.";
+
+
+                status.textContent =
+                    "Checking your access to this Vault...";
+
+
+                console.log(
+                    "Authenticated user:",
+                    user.uid
+                );
+
+
+                try {
+
+                    // =================================
+                    // CHECK COLLABORATOR
+                    // =================================
+
+                    const existingCollaborator =
+                        await getVaultCollaborator(
+                            vaultId,
+                            user.uid
+                        );
+
+
+                    if (
+                        existingCollaborator
+                    ) {
+
+                        console.log(
+                            "Existing collaborator:",
+                            existingCollaborator
+                        );
+
+
+                        status.textContent =
+                            "Access granted. Loading Vault...";
+
+
+                        await loadSharedVault(
+                            user
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // =================================
+                    // REGISTER NEW EDITOR
+                    // =================================
+
+                    console.log(
+                        "Registering user as Vault editor..."
+                    );
+
+
+                    const added =
+                        await addVaultCollaborator(
+                            vaultId,
+                            user.uid,
+                            shareToken,
+                            "editor"
+                        );
+
+
+                    if (
+                        !added
+                    ) {
+
+                        message.textContent =
+                            "Access denied.";
+
+
+                        status.textContent =
+                            "You do not have permission to access this Vault.";
+
+
+                        return;
+
+                    }
+
+
+                    console.log(
+                        "User successfully added as editor."
+                    );
+
+
+                    status.textContent =
+                        "Access granted. Loading Vault...";
+
+
+                    // =================================
+                    // LOAD VAULT
+                    // =================================
+
+                    await loadSharedVault(
+                        user
+                    );
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        "Shared Vault authentication error:",
+                        error
+                    );
+
+
+                    message.textContent =
+                        "Unable to access this Vault.";
+
+
+                    status.textContent =
+                        "Something went wrong while checking your access.";
+
+                }
+
+            }
+        );
+
+
+        // =====================================
+        // LOGIN BUTTON
+        // =====================================
+
+        loginButton.onclick =
+            function () {
+
+                sessionStorage.setItem(
+                    "pendingSharedVaultURL",
+                    window.location.href
+                );
+
+
+                window.location.href =
+                    "../login.html";
+
+            };
+
+
+    </script>
+
+</body>
+
+</html>

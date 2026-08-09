@@ -1,16 +1,27 @@
 // =============================
 // SOCMEDATA DASHBOARD
 // FIRESTORE VERSION
+// OWNER + COLLABORATOR SUPPORT
 // =============================
 
 import {
     getProfiles,
-    saveProfile
+    saveProfile,
+    getVaultCollaborator,
+    getVaultCollaborators,
+    removeVaultCollaborator
 } from "./firebase-db.js";
 
 import {
-    auth
+    auth,
+    db
 } from "./firebase.js";
+
+import {
+    doc,
+    getDoc
+} from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
 // =============================
@@ -20,6 +31,8 @@ import {
 let profiles = [];
 
 let profile = null;
+
+let currentVaultRole = null;
 
 const activeProfileId =
     localStorage.getItem("activeProfileId");
@@ -47,7 +60,54 @@ const addAccount =
 const accountList =
     document.getElementById("accountList");
 
+// =============================
+// SHARE VAULT MODAL
+// =============================
 
+const shareVaultModal =
+    document.getElementById("shareVaultModal");
+
+const closeShareVault =
+    document.getElementById("closeShareVault");
+
+const cancelShareVault =
+    document.getElementById("cancelShareVault");
+
+const collaboratorList =
+    document.getElementById("collaboratorList");
+
+const generateShareVault =
+    document.getElementById("generateShareVault");
+
+const shareVaultStatus =
+    document.getElementById("shareVaultStatus");
+
+    const shareVaultCollaborators =
+    document.getElementById(
+        "shareVaultCollaborators"
+    );
+
+const collaboratorList =
+    document.getElementById(
+        "collaboratorList"
+    );
+
+const shareVaultLinkContainer =
+    document.getElementById(
+        "shareVaultLinkContainer"
+    );
+
+const shareVaultLink =
+    document.getElementById("shareVaultLink");
+
+const copyShareVaultLink =
+    document.getElementById("copyShareVaultLink");
+
+const collaboratorList =
+    document.getElementById("collaboratorList");
+
+const removeCollaborator =
+    document.getElementById("removeCollaborator");
 // =============================
 // ADD ACCOUNT MODAL
 // =============================
@@ -158,6 +218,308 @@ let selectedDeleteAccount = null;
 
 
 // =============================
+// CHECK EDITOR PERMISSION
+// =============================
+
+function canEditVault() {
+
+    return (
+        currentVaultRole === "owner" ||
+        currentVaultRole === "editor"
+    );
+
+}
+
+
+// =============================
+// CHECK OWNER
+// =============================
+
+function isVaultOwner(vault) {
+
+    const user =
+        auth.currentUser;
+
+    if (!user) {
+
+        return false;
+
+    }
+
+    return (
+        vault.ownerId ===
+        user.uid
+    );
+
+}
+
+
+// =============================
+// CHECK COLLABORATOR
+// =============================
+
+async function isVaultCollaborator(
+    vaultId,
+    userId
+) {
+
+    try {
+
+        const collaborator =
+            await getVaultCollaborator(
+                vaultId,
+                userId
+            );
+
+        if (!collaborator) {
+
+            return false;
+
+        }
+
+        return (
+            collaborator.role === "editor" ||
+            collaborator.role === "owner"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Collaborator check failed:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+// =============================
+// LOAD VAULT COLLABORATORS
+// =============================
+
+async function loadVaultCollaborators() {
+
+    if (!profile) {
+
+        return;
+
+    }
+
+
+    if (!isVaultOwner(profile)) {
+
+        return;
+
+    }
+
+
+    if (!collaboratorList) {
+
+        return;
+
+    }
+
+
+    try {
+
+        collaboratorList.innerHTML =
+            "Loading collaborators...";
+
+
+        const collaborators =
+            await getVaultCollaborators(
+                profile.id
+            );
+
+
+        collaboratorList.innerHTML =
+            "";
+
+
+        if (
+            !collaborators ||
+            collaborators.length === 0
+        ) {
+
+            collaboratorList.innerHTML =
+                "<p>No collaborators yet.</p>";
+
+            if (shareVaultCollaborators) {
+
+                shareVaultCollaborators.style.display =
+                    "block";
+
+            }
+
+            return;
+
+        }
+
+
+        collaborators.forEach(
+            collaborator => {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                item.className =
+                    "collaborator-item";
+
+
+                const name =
+                    collaborator.displayName ||
+                    collaborator.name ||
+                    collaborator.email ||
+                    collaborator.uid ||
+                    "Unknown user";
+
+
+                const role =
+                    collaborator.role ||
+                    "editor";
+
+
+                item.innerHTML = `
+
+                    <div class="collaborator-info">
+
+                        <strong>
+                            ${name}
+                        </strong>
+
+                        <span>
+                            ${role}
+                        </span>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="remove-collaborator"
+                    >
+                        Remove
+                    </button>
+
+                `;
+
+
+                const removeButton =
+                    item.querySelector(
+                        ".remove-collaborator"
+                    );
+
+
+                if (removeButton) {
+
+                    removeButton.onclick =
+                        async function () {
+
+                            const confirmed =
+                                confirm(
+                                    "Remove " +
+                                    name +
+                                    " from this Vault?"
+                                );
+
+
+                            if (!confirmed) {
+
+                                return;
+
+                            }
+
+
+                            removeButton.disabled =
+                                true;
+
+
+                            removeButton.textContent =
+                                "Removing...";
+
+
+                            const success =
+                                await removeVaultCollaborator(
+                                    profile.id,
+                                    collaborator.uid
+                                );
+
+
+                            if (!success) {
+
+                                alert(
+                                    "Failed to remove collaborator."
+                                );
+
+
+                                removeButton.disabled =
+                                    false;
+
+
+                                removeButton.textContent =
+                                    "Remove";
+
+                                return;
+
+                            }
+
+
+                            await loadVaultCollaborators();
+
+                        };
+
+                }
+
+
+                collaboratorList.appendChild(
+                    item
+                );
+
+            }
+        );
+
+
+        if (shareVaultCollaborators) {
+
+            shareVaultCollaborators.style.display =
+                "block";
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Failed to load collaborators:",
+            error
+        );
+
+
+        collaboratorList.innerHTML =
+            "<p>Unable to load collaborators.</p>";
+
+
+        if (shareVaultCollaborators) {
+
+            shareVaultCollaborators.style.display =
+                "block";
+
+        }
+
+    }
+
+}
+
+
+// =============================
 // LOAD ACTIVE VAULT
 // =============================
 
@@ -174,12 +536,13 @@ async function loadActiveVault() {
 
 
     // =================================
-    // NO ACTIVE VAULT
+    // CHECK ACTIVE VAULT
     // =================================
 
     if (
         activeProfileId === null ||
-        activeProfileId === undefined
+        activeProfileId === undefined ||
+        activeProfileId === ""
     ) {
 
         console.error(
@@ -200,36 +563,45 @@ async function loadActiveVault() {
 
     try {
 
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            console.error(
+                "No authenticated user."
+            );
+
+            return false;
+
+        }
+
+
         // =================================
-        // LOAD FROM FIRESTORE
+        // LOAD VAULT DIRECTLY
         // =================================
 
-        profiles =
-            await getProfiles();
-
-
-        console.log(
-            "Vaults loaded:",
-            profiles
-        );
-
-
-        // =================================
-        // FIND ACTIVE VAULT
-        // =================================
-
-        profile =
-            profiles.find(
-                p =>
-                    String(p.id) ===
-                    String(activeProfileId)
+        const vaultRef =
+            doc(
+                db,
+                "profiles",
+                String(activeProfileId)
             );
 
 
-        if (!profile) {
+        const vaultSnapshot =
+            await getDoc(
+                vaultRef
+            );
+
+
+        if (
+            !vaultSnapshot.exists()
+        ) {
 
             console.error(
-                "Active vault not found:",
+                "Vault does not exist:",
                 activeProfileId
             );
 
@@ -245,8 +617,86 @@ async function loadActiveVault() {
         }
 
 
+        const data =
+            vaultSnapshot.data();
+
+
         // =================================
-        // MAKE SURE DATA ARRAYS EXIST
+        // DETERMINE ACCESS ROLE
+        // =================================
+
+        if (
+            data.ownerId ===
+            user.uid
+        ) {
+
+            currentVaultRole =
+                "owner";
+
+        }
+
+        else {
+
+            const collaborator =
+                await getVaultCollaborator(
+                    activeProfileId,
+                    user.uid
+                );
+
+
+            if (
+                collaborator &&
+                collaborator.role === "editor"
+            ) {
+
+                currentVaultRole =
+                    "editor";
+
+            }
+
+            else {
+
+                console.error(
+                    "User does not have access to this Vault."
+                );
+
+                alert(
+                    "You do not have access to this Vault."
+                );
+
+                window.location.href =
+                    "../index.html";
+
+                return false;
+
+            }
+
+        }
+
+
+        // =================================
+        // BUILD PROFILE OBJECT
+        // =================================
+
+        profile = {
+
+            ...data,
+
+            id:
+                data.id ??
+                vaultSnapshot.id,
+
+            firestoreId:
+                vaultSnapshot.id,
+
+            accessRole:
+                currentVaultRole
+
+        };
+
+
+        // =================================
+        // MAKE SURE ARRAYS EXIST
         // =================================
 
         if (
@@ -294,8 +744,14 @@ async function loadActiveVault() {
 
 
         console.log(
-            "Active vault:",
+            "Active vault loaded:",
             profile
+        );
+
+
+        console.log(
+            "Vault access role:",
+            currentVaultRole
         );
 
 
@@ -306,16 +762,35 @@ async function loadActiveVault() {
     catch (error) {
 
         console.error(
-            "Failed to load vault:",
+            "Failed to load active vault:",
             error
         );
 
-        alert(
-            "Unable to load vault."
-        );
 
-        window.location.href =
-            "../index.html";
+        // =================================
+        // FIRESTORE OFFLINE
+        // =================================
+
+        if (
+            error &&
+            error.code ===
+            "unavailable"
+        ) {
+
+            alert(
+                "Firestore is currently offline. Please check your internet connection and try again."
+            );
+
+        }
+
+        else {
+
+            alert(
+                "Unable to load vault."
+            );
+
+        }
+
 
         return false;
 
@@ -340,6 +815,42 @@ if (backToVaults) {
 
 }
 
+// =============================
+// OPEN SHARE VAULT MODAL
+// =============================
+
+const shareVaultButton =
+    document.getElementById("shareVault");
+
+if (shareVaultButton) {
+
+    shareVaultButton.onclick =
+        async function () {
+
+            if (!isVaultOwner(profile)) {
+
+                alert(
+                    "Only the Vault owner can manage collaborators."
+                );
+
+                return;
+
+            }
+
+
+            if (shareVaultModal) {
+
+                shareVaultModal.style.display =
+                    "flex";
+
+            }
+
+
+            await loadVaultCollaborators();
+
+        };
+
+}
 
 // =============================
 // OPEN ADD ACCOUNT MODAL
@@ -350,11 +861,23 @@ if (addAccount) {
     addAccount.onclick =
         function () {
 
+            if (!canEditVault()) {
+
+                alert(
+                    "You do not have permission to edit this Vault."
+                );
+
+                return;
+
+            }
+
+
             if (iconPreview) {
 
                 iconPreview.src = "";
 
             }
+
 
             if (iconPreviewBox) {
 
@@ -362,6 +885,7 @@ if (addAccount) {
                     "none";
 
             }
+
 
             accountName.value = "";
 
@@ -523,8 +1047,6 @@ if (editAccountIconURL) {
         function () {
 
             if (
-                editIconPreview &&
-                editIconPreviewBox &&
                 editAccountIconURL.value
             ) {
 
@@ -621,6 +1143,17 @@ if (saveAccount) {
     saveAccount.onclick =
         async function () {
 
+            if (!canEditVault()) {
+
+                alert(
+                    "You do not have permission to edit this Vault."
+                );
+
+                return;
+
+            }
+
+
             if (
                 accountName.value
                     .trim() === ""
@@ -634,10 +1167,6 @@ if (saveAccount) {
 
             }
 
-
-            // =================================
-            // HANDLE IMAGE UPLOAD
-            // =================================
 
             if (
                 accountIconUpload.files[0]
@@ -678,14 +1207,25 @@ if (saveAccount) {
 
 // =============================
 // CREATE ACCOUNT
-// FIRESTORE
 // =============================
 
 async function createAccount(icon) {
 
+    if (!canEditVault()) {
+
+        alert(
+            "You do not have permission to edit this Vault."
+        );
+
+        return;
+
+    }
+
+
     const newAccount = {
 
-        id: Date.now(),
+        id:
+            Date.now(),
 
         name:
             accountName.value.trim(),
@@ -696,16 +1236,14 @@ async function createAccount(icon) {
         icon:
             icon || "",
 
-        platforms: [],
+        platforms:
+            [],
 
-        contents: []
+        contents:
+            []
 
     };
 
-
-    // =================================
-    // ADD LOCALLY
-    // =================================
 
     profile.accounts.push(
         newAccount
@@ -720,17 +1258,14 @@ async function createAccount(icon) {
         );
 
 
-        // =================================
-        // SAVE ENTIRE VAULT
-        // =================================
-
         const success =
-            await saveProfile(profile);
+            await saveProfile(
+                profile
+            );
 
 
         if (!success) {
 
-            // Roll back
             profile.accounts =
                 profile.accounts.filter(
                     account =>
@@ -748,10 +1283,6 @@ async function createAccount(icon) {
         }
 
 
-        // =================================
-        // CLEAR FORM
-        // =================================
-
         accountName.value = "";
 
         accountDescription.value = "";
@@ -766,17 +1297,9 @@ async function createAccount(icon) {
             "none";
 
 
-        // =================================
-        // CLOSE MODAL
-        // =================================
-
         accountModal.style.display =
             "none";
 
-
-        // =================================
-        // REFRESH
-        // =================================
 
         showAccounts();
 
@@ -795,7 +1318,6 @@ async function createAccount(icon) {
         );
 
 
-        // Roll back
         profile.accounts =
             profile.accounts.filter(
                 account =>
@@ -824,12 +1346,27 @@ function showAccounts() {
     );
 
 
+    if (!accountList) {
+
+        return;
+
+    }
+
+
     accountList.innerHTML = "";
 
 
-    // =================================
-    // NO ACCOUNTS
-    // =================================
+    if (
+        !profile ||
+        !Array.isArray(
+            profile.accounts
+        )
+    ) {
+
+        return;
+
+    }
+
 
     if (
         profile.accounts.length === 0
@@ -1016,42 +1553,38 @@ function showAccounts() {
                 );
 
 
-            openButton.onclick =
-                function (event) {
+            if (openButton) {
 
-                    event.stopPropagation();
+                openButton.onclick =
+                    function (event) {
 
-
-                    console.log(
-                        "Opening account:",
-                        account
-                    );
+                        event.stopPropagation();
 
 
-                    // =================================
-                    // SAVE ACTIVE ACCOUNT ID
-                    // =================================
-
-                    localStorage.setItem(
-                        "activeAccountId",
-                        String(account.id)
-                    );
+                        console.log(
+                            "Opening account:",
+                            account
+                        );
 
 
-                    // =================================
-                    // SAVE ACTIVE VAULT ID AGAIN
-                    // =================================
-
-                    localStorage.setItem(
-                        "activeProfileId",
-                        String(profile.id)
-                    );
+                        localStorage.setItem(
+                            "activeAccountId",
+                            String(account.id)
+                        );
 
 
-                    window.location.href =
-                        "account.html";
+                        localStorage.setItem(
+                            "activeProfileId",
+                            String(profile.id)
+                        );
 
-                };
+
+                        window.location.href =
+                            "account.html";
+
+                    };
+
+            }
 
 
             // =================================
@@ -1070,54 +1603,61 @@ function showAccounts() {
                 );
 
 
-            menuButton.onclick =
-                function (event) {
+            if (
+                menuButton &&
+                dropdown
+            ) {
 
-                    event.stopPropagation();
+                menuButton.onclick =
+                    function (event) {
+
+                        event.stopPropagation();
 
 
-                    document
-                        .querySelectorAll(
-                            ".account-dropdown"
-                        )
-                        .forEach(
-                            menu => {
+                        document
+                            .querySelectorAll(
+                                ".account-dropdown"
+                            )
+                            .forEach(
+                                menu => {
 
-                                if (
-                                    menu !==
-                                    dropdown
-                                ) {
+                                    if (
+                                        menu !==
+                                        dropdown
+                                    ) {
 
-                                    menu.style.display =
-                                        "none";
+                                        menu.style.display =
+                                            "none";
+
+                                    }
 
                                 }
-
-                            }
-                        );
+                            );
 
 
-                    dropdown.style.display =
-                        dropdown.style.display ===
-                        "flex"
+                        dropdown.style.display =
+                            dropdown.style.display ===
+                            "flex"
 
-                        ?
+                            ?
 
-                        "none"
+                            "none"
 
-                        :
+                            :
 
-                        "flex";
+                            "flex";
 
-                };
+                    };
 
 
-            dropdown.onclick =
-                function (event) {
+                dropdown.onclick =
+                    function (event) {
 
-                    event.stopPropagation();
+                        event.stopPropagation();
 
-                };
+                    };
+
+            }
 
 
             // =================================
@@ -1130,57 +1670,72 @@ function showAccounts() {
                 );
 
 
-            editButton.onclick =
-                function (event) {
+            if (editButton) {
 
-                    event.stopPropagation();
+                editButton.onclick =
+                    function (event) {
 
-
-                    selectedEditAccount =
-                        account;
+                        event.stopPropagation();
 
 
-                    editAccountName.value =
-                        account.name || "";
+                        if (!canEditVault()) {
+
+                            alert(
+                                "You do not have permission to edit this Vault."
+                            );
+
+                            return;
+
+                        }
 
 
-                    editAccountDescription.value =
-                        account.description || "";
+                        selectedEditAccount =
+                            account;
 
 
-                    editAccountIconURL.value =
-                        account.icon || "";
+                        editAccountName.value =
+                            account.name || "";
 
 
-                    editAccountIconUpload.value =
-                        "";
+                        editAccountDescription.value =
+                            account.description || "";
 
 
-                    if (account.icon) {
+                        editAccountIconURL.value =
+                            account.icon || "";
 
-                        editIconPreview.src =
-                            account.icon;
 
-                        editIconPreviewBox.style.display =
-                            "flex";
-
-                    }
-
-                    else {
-
-                        editIconPreview.src =
+                        editAccountIconUpload.value =
                             "";
 
-                        editIconPreviewBox.style.display =
-                            "none";
 
-                    }
+                        if (account.icon) {
+
+                            editIconPreview.src =
+                                account.icon;
+
+                            editIconPreviewBox.style.display =
+                                "flex";
+
+                        }
+
+                        else {
+
+                            editIconPreview.src =
+                                "";
+
+                            editIconPreviewBox.style.display =
+                                "none";
+
+                        }
 
 
-                    editAccountModal.style.display =
-                        "flex";
+                        editAccountModal.style.display =
+                            "flex";
 
-                };
+                    };
+
+            }
 
 
             // =================================
@@ -1193,32 +1748,47 @@ function showAccounts() {
                 );
 
 
-            deleteButton.onclick =
-                function (event) {
+            if (deleteButton) {
 
-                    event.stopPropagation();
+                deleteButton.onclick =
+                    function (event) {
 
-
-                    selectedDeleteAccount =
-                        account;
+                        event.stopPropagation();
 
 
-                    if (deleteAccountText) {
+                        if (!canEditVault()) {
 
-                        deleteAccountText.textContent =
-                            "Are you sure you want to delete "
-                            +
-                            account.name
-                            +
-                            "?";
+                            alert(
+                                "You do not have permission to edit this Vault."
+                            );
 
-                    }
+                            return;
+
+                        }
 
 
-                    deleteAccountModal.style.display =
-                        "flex";
+                        selectedDeleteAccount =
+                            account;
 
-                };
+
+                        if (deleteAccountText) {
+
+                            deleteAccountText.textContent =
+                                "Are you sure you want to delete "
+                                +
+                                account.name
+                                +
+                                "?";
+
+                        }
+
+
+                        deleteAccountModal.style.display =
+                            "flex";
+
+                    };
+
+            }
 
 
             accountList.appendChild(
@@ -1254,6 +1824,17 @@ if (saveEditAccount) {
     saveEditAccount.onclick =
         async function () {
 
+            if (!canEditVault()) {
+
+                alert(
+                    "You do not have permission to edit this Vault."
+                );
+
+                return;
+
+            }
+
+
             if (!selectedEditAccount) {
 
                 return;
@@ -1274,10 +1855,6 @@ if (saveEditAccount) {
 
             }
 
-
-            // =================================
-            // HANDLE NEW IMAGE
-            // =================================
 
             if (
                 editAccountIconUpload.files[0]
@@ -1318,10 +1895,20 @@ if (saveEditAccount) {
 
 // =============================
 // UPDATE ACCOUNT
-// FIRESTORE
 // =============================
 
 async function updateAccount(icon) {
+
+    if (!canEditVault()) {
+
+        alert(
+            "You do not have permission to edit this Vault."
+        );
+
+        return;
+
+    }
+
 
     if (!selectedEditAccount) {
 
@@ -1330,11 +1917,8 @@ async function updateAccount(icon) {
     }
 
 
-    // =================================
-    // SAVE ORIGINAL VALUES
-    // =================================
-
     const oldAccount = {
+
         name:
             selectedEditAccount.name,
 
@@ -1343,12 +1927,9 @@ async function updateAccount(icon) {
 
         icon:
             selectedEditAccount.icon
+
     };
 
-
-    // =================================
-    // UPDATE ACCOUNT
-    // =================================
 
     selectedEditAccount.name =
         editAccountName.value.trim();
@@ -1370,17 +1951,14 @@ async function updateAccount(icon) {
         );
 
 
-        // =================================
-        // SAVE VAULT
-        // =================================
-
         const success =
-            await saveProfile(profile);
+            await saveProfile(
+                profile
+            );
 
 
         if (!success) {
 
-            // Roll back
             selectedEditAccount.name =
                 oldAccount.name;
 
@@ -1400,16 +1978,7 @@ async function updateAccount(icon) {
         }
 
 
-        // =================================
-        // CLOSE MODAL
-        // =================================
-
         closeEditAccount();
-
-
-        // =================================
-        // REFRESH
-        // =================================
 
         showAccounts();
 
@@ -1428,7 +1997,6 @@ async function updateAccount(icon) {
         );
 
 
-        // Roll back
         selectedEditAccount.name =
             oldAccount.name;
 
@@ -1450,13 +2018,23 @@ async function updateAccount(icon) {
 
 // =============================
 // DELETE ACCOUNT
-// FIRESTORE
 // =============================
 
 if (confirmDeleteAccount) {
 
     confirmDeleteAccount.onclick =
         async function () {
+
+            if (!canEditVault()) {
+
+                alert(
+                    "You do not have permission to edit this Vault."
+                );
+
+                return;
+
+            }
+
 
             if (!selectedDeleteAccount) {
 
@@ -1473,17 +2051,9 @@ if (confirmDeleteAccount) {
                 deletedAccount.id;
 
 
-            // =================================
-            // SAVE ORIGINAL ARRAY
-            // =================================
-
             const originalAccounts =
                 [...profile.accounts];
 
-
-            // =================================
-            // REMOVE LOCALLY
-            // =================================
 
             profile.accounts =
                 profile.accounts.filter(
@@ -1501,10 +2071,6 @@ if (confirmDeleteAccount) {
                 );
 
 
-                // =================================
-                // SAVE UPDATED VAULT
-                // =================================
-
                 const success =
                     await saveProfile(
                         profile
@@ -1513,7 +2079,6 @@ if (confirmDeleteAccount) {
 
                 if (!success) {
 
-                    // Restore
                     profile.accounts =
                         originalAccounts;
 
@@ -1527,10 +2092,6 @@ if (confirmDeleteAccount) {
                 }
 
 
-                // =================================
-                // CLOSE MODAL
-                // =================================
-
                 deleteAccountModal.style.display =
                     "none";
 
@@ -1538,10 +2099,6 @@ if (confirmDeleteAccount) {
                 selectedDeleteAccount =
                     null;
 
-
-                // =================================
-                // REFRESH
-                // =================================
 
                 showAccounts();
 
@@ -1560,7 +2117,6 @@ if (confirmDeleteAccount) {
                 );
 
 
-                // Restore
                 profile.accounts =
                     originalAccounts;
 
@@ -1611,9 +2167,387 @@ if (cancelDeleteAccount) {
 
 }
 
+// =============================
+// SHARE VAULT MODAL CLOSE
+// =============================
+
+if (closeShareVault) {
+
+    closeShareVault.onclick =
+        function () {
+
+            shareVaultModal.style.display =
+                "none";
+
+        };
+
+}
+
+
+if (cancelShareVault) {
+
+    cancelShareVault.onclick =
+        function () {
+
+            shareVaultModal.style.display =
+                "none";
+
+        };
+
+}
+
+<div
+    id="shareVaultCollaborators"
+    class="share-vault-collaborators"
+    style="display:none;"
+>
+
+    <label>
+        Collaborators
+    </label>
+
+    <div id="collaboratorList">
+    </div>
+
+</div>
 
 // =============================
-// CLOSE MODALS WHEN CLICKING OUTSIDE
+// GENERATE SHARE VAULT LINK
+// =============================
+
+if (generateShareVault) {
+
+    generateShareVault.onclick =
+        async function () {
+
+            if (!isVaultOwner(profile)) {
+
+                alert(
+                    "Only the Vault owner can create a share link."
+                );
+
+                return;
+
+            }
+
+
+            if (!profile) {
+
+                alert(
+                    "Vault data is not loaded."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                const shareToken =
+                    `${profile.id}-${Date.now()}-${Math.random()
+                        .toString(36)
+                        .substring(2, 10)}`;
+
+
+                profile.shareToken =
+                    shareToken;
+
+
+                const success =
+                    await saveProfile(
+                        profile
+                    );
+
+
+                if (!success) {
+
+                    alert(
+                        "Failed to create share link."
+                    );
+
+                    return;
+
+                }
+
+
+                const shareLink =
+                    `${window.location.origin}/share-vault.html?token=${encodeURIComponent(
+                        shareToken
+                    )}`;
+
+
+                if (shareVaultLink) {
+
+                    shareVaultLink.value =
+                        shareLink;
+
+                }
+
+
+                if (shareVaultLinkContainer) {
+
+                    shareVaultLinkContainer.style.display =
+                        "block";
+
+                }
+
+
+                if (shareVaultStatus) {
+
+                    shareVaultStatus.textContent =
+                        "Sharing is enabled.";
+
+                }
+
+
+                generateShareVault.textContent =
+                    "🔄 Regenerate Share Link";
+
+
+                console.log(
+                    "Share Vault link created:",
+                    shareLink
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Generate Share Vault link error:",
+                    error
+                );
+
+
+                alert(
+                    "Failed to create share link."
+                );
+
+            }
+
+        };
+
+}
+
+// =============================
+// COPY SHARE VAULT LINK
+// =============================
+
+if (copyShareVaultLink) {
+
+    copyShareVaultLink.onclick =
+        async function () {
+
+            if (
+                !shareVaultLink ||
+                !shareVaultLink.value
+            ) {
+
+                alert(
+                    "There is no share link to copy."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                await navigator.clipboard.writeText(
+                    shareVaultLink.value
+                );
+
+
+                const originalText =
+                    copyShareVaultLink.textContent;
+
+
+                copyShareVaultLink.textContent =
+                    "✅ Link Copied!";
+
+
+                setTimeout(
+                    function () {
+
+                        copyShareVaultLink.textContent =
+                            originalText;
+
+                    },
+                    2000
+                );
+
+
+                console.log(
+                    "Share Vault link copied."
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Copy share link error:",
+                    error
+                );
+
+
+                // Fallback for browsers
+                shareVaultLink.select();
+
+                shareVaultLink.setSelectionRange(
+                    0,
+                    99999
+                );
+
+
+                alert(
+                    "Please press Ctrl+C to copy the link."
+                );
+
+            }
+
+        };
+
+}
+
+async function loadCollaborators() {
+
+    if (!profile) {
+
+        return;
+
+    }
+
+    if (!isVaultOwner(profile)) {
+
+        return;
+
+    }
+
+    if (!collaboratorList) {
+
+        return;
+
+    }
+
+    try {
+
+        const vaultRef =
+            doc(
+                db,
+                "profiles",
+                String(profile.id)
+            );
+
+        const vaultSnapshot =
+            await getDoc(
+                vaultRef
+            );
+
+        if (!vaultSnapshot.exists()) {
+
+            return;
+
+        }
+
+        const vaultData =
+            vaultSnapshot.data();
+
+        const collaborators =
+            vaultData.collaborators || {};
+
+        collaboratorList.innerHTML = "";
+
+        const collaboratorEntries =
+            Object.entries(
+                collaborators
+            );
+
+        if (
+            collaboratorEntries.length === 0
+        ) {
+
+            collaboratorList.innerHTML = `
+                <p>
+                    No collaborators yet.
+                </p>
+            `;
+
+            return;
+
+        }
+
+        collaboratorEntries.forEach(
+            ([userId, collaborator]) => {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+                item.className =
+                    "collaborator-item";
+
+                item.innerHTML = `
+
+                    <div class="collaborator-info">
+
+                        <strong>
+                            ${
+                                collaborator.email ||
+                                userId
+                            }
+                        </strong>
+
+                        <span>
+                            ${
+                                collaborator.role ||
+                                "editor"
+                            }
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="remove-collaborator"
+                        data-user-id="${userId}"
+                    >
+                        Remove
+                    </button>
+
+                `;
+
+                collaboratorList.appendChild(
+                    item
+                );
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Failed to load collaborators:",
+            error
+        );
+
+        collaboratorList.innerHTML = `
+            <p>
+                Failed to load collaborators.
+            </p>
+        `;
+
+    }
+
+}
+
+// =============================
+// CLOSE MODALS OUTSIDE
 // =============================
 
 window.onclick =
@@ -1687,6 +2621,11 @@ document.addEventListener(
 
 async function initializeDashboard() {
 
+    console.log(
+        "Initializing dashboard..."
+    );
+
+
     const loaded =
         await loadActiveVault();
 
@@ -1699,13 +2638,14 @@ async function initializeDashboard() {
 
 
     // =================================
-    // VAULT INFORMATION
+    // VAULT TITLE
     // =================================
 
     if (vaultTitle) {
 
         vaultTitle.textContent =
-            profile.name;
+            profile.name ||
+            "Unnamed Vault";
 
     }
 
@@ -1713,9 +2653,20 @@ async function initializeDashboard() {
     if (currentVault) {
 
         currentVault.textContent =
-            profile.name;
+            profile.name ||
+            "Unnamed Vault";
 
     }
+
+
+    // =================================
+    // SHOW ROLE
+    // =================================
+
+    console.log(
+        "Current Vault role:",
+        currentVaultRole
+    );
 
 
     // =================================
@@ -1727,24 +2678,30 @@ async function initializeDashboard() {
 }
 
 
+// =============================
+// AUTHENTICATION
+// =============================
+
 auth.onAuthStateChanged(
-    (user) => {
+    async (user) => {
 
-        if (user) {
-
-            console.log(
-                "Dashboard: Authentication ready."
-            );
-
-            initializeDashboard();
-
-        } else {
+        if (!user) {
 
             console.log(
                 "Dashboard: No authenticated user."
             );
 
+            return;
+
         }
+
+
+        console.log(
+            "Dashboard: Authentication ready."
+        );
+
+
+        await initializeDashboard();
 
     }
 );

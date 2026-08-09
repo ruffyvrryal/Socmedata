@@ -257,6 +257,7 @@
 </div>
 
 
+
 <!-- Create Vault Modal -->
 
 <div id="createVaultModal" class="modal">
@@ -345,6 +346,123 @@
 <script type="module" src="js/firebase-db.js"></script>
 <script type="module" src="js/app.js"></script>
 
+<!-- ===================================== -->
+<!-- SHARE VAULT MODAL -->
+<!-- ===================================== -->
+
+<div
+    id="shareVaultModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>
+                Share Vault
+            </h2>
+
+            <span
+                id="closeShareVault"
+                class="close"
+            >
+                &times;
+            </span>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <p id="shareVaultDescription">
+                Create a shareable link for this Vault.
+            </p>
+
+
+            <div
+                id="shareVaultStatus"
+                class="share-vault-status"
+            >
+                Sharing is currently disabled.
+            </div>
+
+
+            <div
+                id="shareVaultLinkContainer"
+                style="display:block;"
+            >
+
+                <label>
+                    Shareable Link
+                </label>
+
+
+                <input
+                    type="text"
+                    id="shareVaultLink"
+                    readonly
+                >
+
+
+                <button
+                    id="copyShareVaultLink"
+                    type="button"
+                >
+                    📋 Copy Link
+                </button>
+
+                    </div>
+
+
+        <!-- ============================= -->
+        <!-- COLLABORATORS -->
+        <!-- ============================= -->
+
+        <div
+            id="shareVaultCollaborators"
+            class="share-vault-collaborators"
+            style="display:none;"
+        >
+
+            <h3>
+                Collaborators
+            </h3>
+
+
+            <div
+                id="collaboratorList"
+                class="collaborator-list"
+            >
+            </div>
+
+        </div>
+
+
+        <div class="modal-buttons">
+
+                <button
+                    id="cancelShareVault"
+                    type="button"
+                >
+                    Cancel
+                </button>
+
+
+                <button
+                    id="generateShareVault"
+                    type="button"
+                >
+                    🔗 Create Share Link
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 </body>
 
