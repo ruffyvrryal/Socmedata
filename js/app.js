@@ -528,6 +528,11 @@ async function loadVaultCollaborators(vaultId){
                 vaultId
             );
 
+            console.log(
+    "COLLABORATOR DATA:",
+    JSON.stringify(collaborators, null, 2)
+);
+
 
         // =================================
         // NO COLLABORATORS
@@ -572,8 +577,8 @@ async function loadVaultCollaborators(vaultId){
 
                         <strong>
     ${
-        collaborator.email ||
         collaborator.displayName ||
+        collaborator.email ||
         "Unknown collaborator"
     }
 </strong>

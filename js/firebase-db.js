@@ -8,12 +8,15 @@
 
 import {
     collection,
+    collectionGroup,
     doc,
     getDocs,
     getDoc,
     setDoc,
     updateDoc,
-    deleteDoc
+    deleteDoc,
+    query,
+    where
 } from
 "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
@@ -62,105 +65,166 @@ export async function getProfiles(){
         }
 
 
-        // =================================
-        // LOAD ALL VAULT DOCUMENTS
-        // =================================
-
-        const profilesSnapshot =
-            await getDocs(
-                collection(
-                    db,
-                    "profiles"
-                )
-            );
-
-
         const profiles = [];
 
 
         // =================================
-        // CHECK EACH VAULT
+        // LOAD VAULTS OWNED BY USER
         // =================================
 
+        const ownerQuery =
+            query(
+                collection(
+                    db,
+                    "profiles"
+                ),
+                where(
+                    "ownerId",
+                    "==",
+                    user.uid
+                )
+            );
+
+
+        const ownerSnapshot =
+            await getDocs(
+                ownerQuery
+            );
+
+
+        // =================================
+        // ADD OWNER VAULTS
+        // =================================
+
+        ownerSnapshot.forEach(
+            profileSnapshot => {
+
+                const data =
+                    profileSnapshot.data();
+
+
+                const vaultId =
+                    profileSnapshot.id;
+
+
+                profiles.push({
+
+                    ...data,
+
+                    id:
+                        data.id ??
+                        vaultId,
+
+                    firestoreId:
+                        vaultId,
+
+                    accessRole:
+                        "owner"
+
+                });
+
+            }
+        );
+
+
+        // =================================
+        // LOAD COLLABORATOR VAULTS
+        // =================================
+
+        const collaboratorQuery =
+            query(
+                collectionGroup(
+                    db,
+                    "collaborators"
+                ),
+                where(
+                    "uid",
+                    "==",
+                    user.uid
+                )
+            );
+
+
+        const collaboratorSnapshot =
+            await getDocs(
+                collaboratorQuery
+            );
+
+
+        // =================================
+        // BUILD COLLABORATOR VAULT LIST
+        // =================================
+
+        const collaboratorProfiles = [];
+
+
         for(
-            const profileSnapshot
-            of profilesSnapshot.docs
+            const collaboratorDocument
+            of collaboratorSnapshot.docs
         ){
 
-            const data =
-                profileSnapshot.data();
+            const collaboratorData =
+                collaboratorDocument.data();
+
+
+            const collaboratorPath =
+                collaboratorDocument.ref.path;
+
+
+            const pathParts =
+                collaboratorPath.split("/");
 
 
             const vaultId =
-                profileSnapshot.id;
+                pathParts[1];
 
 
-            // =================================
-            // OWNER CHECK
-            // =================================
+            if(!vaultId){
 
-            const isOwner =
-                String(data.ownerId || "") ===
-                String(user.uid);
-
-
-            // =================================
-            // COLLABORATOR CHECK
-            // =================================
-
-            let collaborator =
-                null;
-
-
-            if(!isOwner){
-
-                try{
-
-                    const collaboratorRef =
-                        doc(
-                            db,
-                            "profiles",
-                            String(vaultId),
-                            "collaborators",
-                            String(user.uid)
-                        );
-
-
-                    const collaboratorSnapshot =
-                        await getDoc(
-                            collaboratorRef
-                        );
-
-
-                    if(
-                        collaboratorSnapshot.exists()
-                    ){
-
-                        collaborator =
-                            collaboratorSnapshot.data();
-
-                    }
-
-                }
-                catch(collaboratorError){
-
-                    console.warn(
-                        "Could not check collaborator:",
-                        collaboratorError
-                    );
-
-                }
+                continue;
 
             }
 
 
-            // =================================
-            // DETERMINE ACCESS
-            // =================================
+            collaboratorProfiles.push({
+
+                vaultId:
+                    vaultId,
+
+                role:
+                    collaboratorData.role ||
+                    "editor"
+
+            });
+
+        }
+
+
+        // =================================
+        // LOAD COLLABORATOR VAULT DOCUMENTS
+        // =================================
+
+        for(
+            const collaborator
+            of collaboratorProfiles
+        ){
+
+            const profileRef =
+                doc(
+                    db,
+                    "profiles",
+                    String(collaborator.vaultId)
+                );
+
+
+            const profileSnapshot =
+                await getDoc(
+                    profileRef
+                );
+
 
             if(
-                !isOwner &&
-                !collaborator
+                !profileSnapshot.exists()
             ){
 
                 continue;
@@ -168,8 +232,31 @@ export async function getProfiles(){
             }
 
 
+            const data =
+                profileSnapshot.data();
+
+
             // =================================
-            // ADD VAULT
+            // AVOID DUPLICATES
+            // =================================
+
+            const alreadyLoaded =
+                profiles.some(
+                    profile =>
+                        String(profile.firestoreId) ===
+                        String(profileSnapshot.id)
+                );
+
+
+            if(alreadyLoaded){
+
+                continue;
+
+            }
+
+
+            // =================================
+            // ADD COLLABORATOR VAULT
             // =================================
 
             profiles.push({
@@ -178,20 +265,14 @@ export async function getProfiles(){
 
                 id:
                     data.id ??
-                    vaultId,
+                    profileSnapshot.id,
 
                 firestoreId:
-                    vaultId,
+                    profileSnapshot.id,
 
                 accessRole:
-                    isOwner
-                    ?
-                    "owner"
-                    :
-                    (
-                        collaborator?.role ||
-                        "editor"
-                    )
+                    collaborator.role ||
+                    "editor"
 
             });
 

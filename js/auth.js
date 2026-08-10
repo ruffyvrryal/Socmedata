@@ -5,7 +5,8 @@ import {
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    onAuthStateChanged
+    onAuthStateChanged,
+    updateProfile
 } from
     "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
@@ -41,6 +42,11 @@ const loginMessage =
 const registerForm =
     document.getElementById(
         "registerForm"
+    );
+
+const registerName =
+    document.getElementById(
+        "registerName"
     );
 
 const registerEmail =
@@ -132,11 +138,19 @@ if(registerForm){
             try{
 
                 const userCredential =
-                    await createUserWithEmailAndPassword(
-                        auth,
-                        registerEmail.value.trim(),
-                        registerPassword.value
-                    );
+    await createUserWithEmailAndPassword(
+        auth,
+        registerEmail.value.trim(),
+        registerPassword.value
+    );
+
+await updateProfile(
+    userCredential.user,
+    {
+        displayName:
+            registerName.value.trim()
+    }
+);
 
                 console.log(
                     "Registration successful:",

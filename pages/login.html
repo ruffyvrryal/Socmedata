@@ -17,98 +17,242 @@
     >
 </head>
 
-<body>
+<body class="auth-page">
 
-    <main>
+    <main class="auth-container">
 
-        <h1>Socmedata</h1>
+        <!-- =====================================
+             BRAND
+        ====================================== -->
 
-        <p>Your Social Media Content Vault</p>
+        <header class="auth-brand">
 
-        <section>
+            <h1>Socmedata</h1>
 
-            <h2>Login</h2>
+            <p>Your Social Media Content Vault</p>
 
-            <form id="loginForm">
+        </header>
 
-                <div>
-                    <label for="loginEmail">
-                        Email
-                    </label>
 
-                    <input
-                        type="email"
-                        id="loginEmail"
-                        required
-                    >
+        <!-- =====================================
+             AUTH CARD
+        ====================================== -->
+
+        <section class="auth-card">
+
+
+            <!-- =================================
+                 LOGIN
+            ================================== -->
+
+            <div class="auth-panel">
+
+                <div class="auth-heading">
+
+                    <span class="auth-eyebrow">
+                        WELCOME BACK
+                    </span>
+
+                    <h2>
+                        Sign in to your vault
+                    </h2>
+
+                    <p>
+                        Manage your social media content
+                        from one place.
+                    </p>
+
                 </div>
 
-                <div>
-                    <label for="loginPassword">
-                        Password
-                    </label>
 
-                    <input
-                        type="password"
-                        id="loginPassword"
-                        required
+                <form id="loginForm">
+
+                    <div class="auth-field">
+
+                        <label for="loginEmail">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="loginEmail"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="auth-field">
+
+                        <label for="loginPassword">
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            id="loginPassword"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        id="loginButton"
+                        class="auth-button"
                     >
+                        Login
+                    </button>
+
+                </form>
+
+
+                <p
+                    id="loginMessage"
+                    class="auth-message"
+                ></p>
+
+
+                <div class="auth-divider">
+
+                    <span>New to Socmedata?</span>
+
                 </div>
+
 
                 <button
-                    type="submit"
-                    id="loginButton"
+                    type="button"
+                    class="auth-switch-button"
+                    onclick="document.getElementById('registerSection').scrollIntoView({ behavior: 'smooth' })"
                 >
-                    Login
+                    Create an account
                 </button>
 
-            </form>
+            </div>
 
-            <p id="loginMessage"></p>
 
-            <hr>
+            <!-- =================================
+                 CREATE ACCOUNT
+            ================================== -->
 
-            <h2>Create Account</h2>
+            <div
+                class="auth-panel auth-register-panel"
+                id="registerSection"
+            >
 
-            <form id="registerForm">
+                <div class="auth-heading">
 
-                <div>
-                    <label for="registerEmail">
-                        Email
-                    </label>
+                    <span class="auth-eyebrow">
+                        GET STARTED
+                    </span>
 
-                    <input
-                        type="email"
-                        id="registerEmail"
-                        required
-                    >
+                    <h2>
+                        Create your account
+                    </h2>
+
+                    <p>
+                        Start building your social media
+                        content vault.
+                    </p>
+
                 </div>
 
-                <div>
-                    <label for="registerPassword">
-                        Password
-                    </label>
 
-                    <input
-                        type="password"
-                        id="registerPassword"
-                        minlength="6"
-                        required
+                <form id="registerForm">
+
+                    <div class="auth-field">
+
+                        <label for="registerName">
+                            Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="registerName"
+                            placeholder="Enter your name"
+                            autocomplete="name"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="auth-field">
+
+                        <label for="registerEmail">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="registerEmail"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="auth-field">
+
+                        <label for="registerPassword">
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            id="registerPassword"
+                            placeholder="Create a password"
+                            autocomplete="new-password"
+                            minlength="6"
+                            required
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        id="registerButton"
+                        class="auth-button"
                     >
-                </div>
+                        Create Account
+                    </button>
 
-                <button
-                    type="submit"
-                    id="registerButton"
-                >
-                    Create Account
-                </button>
+                </form>
 
-            </form>
 
-            <p id="registerMessage"></p>
+                <p
+                    id="registerMessage"
+                    class="auth-message"
+                ></p>
+
+            </div>
 
         </section>
+
+
+        <!-- =====================================
+             FOOTER
+        ====================================== -->
+
+        <footer class="auth-footer">
+
+            <span>
+                Socmedata
+            </span>
+
+            <span>
+                Your Social Media Content Vault
+            </span>
+
+        </footer>
 
     </main>
 

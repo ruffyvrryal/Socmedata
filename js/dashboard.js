@@ -87,11 +87,6 @@ const shareVaultStatus =
         "shareVaultCollaborators"
     );
 
-const collaboratorList =
-    document.getElementById(
-        "collaboratorList"
-    );
-
 const shareVaultLinkContainer =
     document.getElementById(
         "shareVaultLinkContainer"
@@ -102,9 +97,6 @@ const shareVaultLink =
 
 const copyShareVaultLink =
     document.getElementById("copyShareVaultLink");
-
-const collaboratorList =
-    document.getElementById("collaboratorList");
 
 const removeCollaborator =
     document.getElementById("removeCollaborator");
@@ -2195,21 +2187,6 @@ if (cancelShareVault) {
         };
 
 }
-
-<div
-    id="shareVaultCollaborators"
-    class="share-vault-collaborators"
-    style="display:none;"
->
-
-    <label>
-        Collaborators
-    </label>
-
-    <div id="collaboratorList">
-    </div>
-
-</div>
 
 // =============================
 // GENERATE SHARE VAULT LINK
