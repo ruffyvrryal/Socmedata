@@ -952,6 +952,34 @@
 
                     </div>
 
+                    <div class="subject-panel-controls">
+
+                        <label>
+                            Sort by
+                            <select id="subjectSortField">
+                                <option value="subject">Subject</option>
+                                <option value="posts">Posts</option>
+                                <option value="impressions">Impressions</option>
+                                <option value="reach">Reach</option>
+                                <option value="likes">Likes</option>
+                                <option value="comments">Comments</option>
+                                <option value="shares">Shares</option>
+                                <option value="saves">Saves</option>
+                                <option value="engagement">Engagement</option>
+                                <option value="rate">Rate</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Order
+                            <select id="subjectSortDirection">
+                                <option value="desc">Descending</option>
+                                <option value="asc">Ascending</option>
+                            </select>
+                        </label>
+
+                    </div>
+
                 </div>
 
 
@@ -1431,6 +1459,25 @@
             </div>
 
 
+            <div class="monthly-panel">
+
+                <h3>
+                    Weekly Impressions Trend
+                </h3>
+
+                <div class="weekly-trend-chart">
+
+                    <svg
+                        id="weeklyImpressionsTrendChart"
+                        viewBox="0 0 600 260"
+                        preserveAspectRatio="none"
+                    ></svg>
+
+                </div>
+
+            </div>
+
+
         </div>
 
     </section>
@@ -1606,22 +1653,6 @@
 
 
                 <label>
-                    Thumbnail Image
-                </label>
-
-                <input
-                    type="file"
-                    id="contentThumbnail"
-                    accept="image/*">
-
-
-                <img
-                    id="thumbnailPreview"
-                    class="thumbnail-preview"
-                    style="display:none;">
-
-
-                <label>
                     Caption
                 </label>
 
@@ -1708,6 +1739,15 @@
 
 
                 <label>
+                    Saved
+                </label>
+
+                <input
+                    type="number"
+                    id="contentSaved">
+
+
+                <label>
                     Platform
                 </label>
 
@@ -1763,15 +1803,6 @@
                     </option>
 
                 </select>
-
-
-                <label>
-                    Saved
-                </label>
-
-                <input
-                    type="number"
-                    id="contentSaved">
 
 
                 <div class="modal-buttons">

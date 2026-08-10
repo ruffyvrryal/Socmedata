@@ -53,6 +53,9 @@ let editingContentId = null;
 
 let selectedPlatformValue = "all";
 
+let subjectPerformanceSortField = "engagement";
+let subjectPerformanceSortDirection = "desc";
+
 
 // =====================================
 // FIRESTORE SAVE QUEUE
@@ -209,6 +212,58 @@ function normalizeSubjectName(
         /\s+/g,
         " "
     );
+
+}
+
+function parseSubjectList(
+    subject
+){
+
+    return String(
+        subject || ""
+    )
+    .split(",")
+    .map(
+        normalizeSubjectName
+    )
+    .filter(
+        Boolean
+    )
+    .reduce(
+        (list, item) => {
+
+            const lower =
+                item.toLowerCase();
+
+            if(
+                !list.some(
+                    subject =>
+                        subject.toLowerCase() ===
+                        lower
+                )
+            ){
+
+                list.push(item);
+
+            }
+
+            return list;
+
+        },
+        []
+    );
+
+}
+
+function formatSubjectList(
+    subjects
+){
+
+    return (
+        Array.isArray(subjects)
+            ? subjects
+            : []
+    ).join(", ");
 
 }
 
@@ -740,91 +795,98 @@ function renderSubjectTable(){
     contents.forEach(
         content => {
 
-            const subject =
-                normalizeSubjectName(
+            const subjectNames =
+                parseSubjectList(
                     content.subject
                 );
 
 
-            if(!subject){
+            subjectNames.forEach(
+                subject => {
 
-                return;
-            }
+                    if(!subject){
 
+                        return;
 
-            if(!subjects[subject]){
-
-                subjects[subject] = {
-
-                    posts: 0,
-
-                    impressions: 0,
-
-                    reach: 0,
-
-                    likes: 0,
-
-                    comments: 0,
-
-                    shares: 0,
-
-                    saves: 0,
-
-                    engagement: 0
-
-                };
-
-            }
+                    }
 
 
-            const data =
-                subjects[subject];
+                    if(!subjects[subject]){
+
+                        subjects[subject] = {
+
+                            posts: 0,
+
+                            impressions: 0,
+
+                            reach: 0,
+
+                            likes: 0,
+
+                            comments: 0,
+
+                            shares: 0,
+
+                            saves: 0,
+
+                            engagement: 0
+
+                        };
+
+                    }
 
 
-            data.posts++;
+                    const data =
+                        subjects[subject];
 
 
-            data.impressions +=
-                Number(
-                    content.impressions
-                ) || 0;
+                    data.posts++;
 
 
-            data.reach +=
-                Number(
-                    content.reach
-                ) || 0;
+                    data.impressions +=
+                        Number(
+                            content.impressions
+                        ) || 0;
 
 
-            data.likes +=
-                Number(
-                    content.likes
-                ) || 0;
+                    data.reach +=
+                        Number(
+                            content.reach
+                        ) || 0;
 
 
-            data.comments +=
-                Number(
-                    content.comments
-                ) || 0;
+                    data.likes +=
+                        Number(
+                            content.likes
+                        ) || 0;
 
 
-            data.shares +=
-                Number(
-                    content.shares
-                ) || 0;
+                    data.comments +=
+                        Number(
+                            content.comments
+                        ) || 0;
 
 
-            data.saves +=
-                Number(
-                    content.saved
-                ) || 0;
+                    data.shares +=
+                        Number(
+                            content.shares
+                        ) || 0;
 
 
-            data.engagement =
-                data.likes +
-                data.comments +
-                data.shares +
-                data.saves;
+                    data.saves +=
+                        Number(
+                            content.saved
+                        ) || 0;
+
+
+                    data.engagement =
+                        data.likes +
+                        data.comments +
+                        data.shares +
+                        data.saves;
+
+                }
+            );
 
         }
     );
@@ -839,9 +901,80 @@ function renderSubjectTable(){
             subjects
         )
         .sort(
-            (a,b) =>
-                b[1].engagement -
-                a[1].engagement
+            (a,b) => {
+
+                if(
+                    subjectPerformanceSortField ===
+                    "subject"
+                ){
+
+                    return (
+                        a[0].localeCompare(
+                            b[0]
+                        )
+                    ) *
+                    (
+                        subjectPerformanceSortDirection ===
+                        "asc"
+                            ? 1
+                            : -1
+                    );
+
+                }
+
+                const valueA =
+                    subjectPerformanceSortField ===
+                    "rate"
+                        ?
+                        (
+                            a[1].impressions > 0
+                                ? a[1].engagement /
+                                  a[1].impressions
+                                : 0
+                        )
+                        :
+                        Number(
+                            a[1][
+                                subjectPerformanceSortField
+                            ]
+                        ) || 0;
+
+                const valueB =
+                    subjectPerformanceSortField ===
+                    "rate"
+                        ?
+                        (
+                            b[1].impressions > 0
+                                ? b[1].engagement /
+                                  b[1].impressions
+                                : 0
+                        )
+                        :
+                        Number(
+                            b[1][
+                                subjectPerformanceSortField
+                            ]
+                        ) || 0;
+
+                if(valueA === valueB){
+
+                    return a[0].localeCompare(
+                        b[0]
+                    );
+
+                }
+
+                return (
+                    valueA - valueB
+                ) *
+                (
+                    subjectPerformanceSortDirection ===
+                    "asc"
+                        ? 1
+                        : -1
+                );
+
+            }
         );
 
 
@@ -1159,8 +1292,10 @@ function renderSubjectContentTable(){
 
 
                 const subject =
-                    normalizeSubjectName(
-                        content.subject
+                    formatSubjectList(
+                        parseSubjectList(
+                            content.subject
+                        )
                     );
 
 
@@ -2935,6 +3070,11 @@ if(saveContent){
                 // BUILD CONTENT
                 // =========================
 
+                const subjectNames =
+                    parseSubjectList(
+                        subject.value
+                    );
+
                 const content = {
 
                     id:
@@ -2958,7 +3098,9 @@ if(saveContent){
                         contentType.value,
 
                     subject:
-                        subject.value.trim(),
+                        formatSubjectList(
+                            subjectNames
+                        ),
 
                     impressions:
                         Number(
@@ -5499,39 +5641,60 @@ function loadEngagement(){
 
         topResult.innerHTML = `
 
-            <div class="top-content-item">
+            <div class="top-content-item engagement-top-content-item">
 
-                <p
-                    class="top-content-caption"
-                >
-                    ${escapeHtml(
-                        topContent.caption ||
-                        "Untitled"
-                    )}
-                </p>
+                <div class="top-content-item-header">
 
-                <p>
-                    Platform:
-                    ${escapeHtml(
-                        topContent.platform ||
-                        "-"
-                    )}
-                </p>
+                    <div>
 
-                <p>
-                    👁 Impressions:
-                    ${formatNumber(
-                        topContent.impressions ||
-                        0
-                    )}
-                </p>
+                        <span class="top-content-item-badge">
+                            Top Post
+                        </span>
 
-                <p>
-                    🔥 Engagement:
-                    ${formatNumber(
-                        topEngagement
-                    )}
-                </p>
+                        <p class="top-content-caption">
+                            ${escapeHtml(
+                                topContent.caption ||
+                                "Untitled"
+                            )}
+                        </p>
+
+                    </div>
+
+                    <span class="platform-pill">
+                        ${escapeHtml(
+                            topContent.platform ||
+                            "-"
+                        )}
+                    </span>
+
+                </div>
+
+                <div class="top-content-summary">
+
+                    <div class="top-content-stat">
+                        <span>Impressions</span>
+                        <strong>${formatNumber(
+                            topContent.impressions ||
+                            0
+                        )}</strong>
+                    </div>
+
+                    <div class="top-content-stat">
+                        <span>Reach</span>
+                        <strong>${formatNumber(
+                            topContent.reach ||
+                            0
+                        )}</strong>
+                    </div>
+
+                    <div class="top-content-stat">
+                        <span>Engagement</span>
+                        <strong>${formatNumber(
+                            topEngagement
+                        )}</strong>
+                    </div>
+
+                </div>
 
             </div>
 
@@ -5567,6 +5730,18 @@ function loadEngagement(){
 
         else{
 
+            const totalTypeCount =
+                typeEntries
+                .reduce(
+                    (
+                        sum,
+                        [, count]
+                    ) =>
+                        sum +
+                        (Number(count) || 0),
+                    0
+                );
+
             typeResult.innerHTML =
 
                 typeEntries
@@ -5574,21 +5749,42 @@ function loadEngagement(){
                     ([type, count]) => `
 
                         <div
-                            class="content-type-item"
+                            class="content-type-item engagement-content-type-item"
                         >
 
-                            <span>
-                                ${escapeHtml(
-                                    type
-                                )}
-                            </span>
+                            <div class="content-type-meta">
 
-                            <strong>
-                                ${formatNumber(
-                                    count
-                                )}
-                                posts
-                            </strong>
+                                <span>
+                                    ${escapeHtml(
+                                        type
+                                    )}
+                                </span>
+
+                                <strong>
+                                    ${formatNumber(
+                                        count
+                                    )}
+                                    posts
+                                </strong>
+
+                            </div>
+
+                            <div class="content-type-progress">
+                                <span style="width:${
+                                    totalTypeCount > 0
+                                        ?
+                                        Math.max(
+                                            8,
+                                            Math.round(
+                                                (Number(count) || 0) /
+                                                totalTypeCount *
+                                                100
+                                            )
+                                        )
+                                        :
+                                        0
+                                }%"></span>
+                            </div>
 
                         </div>
 
@@ -6906,11 +7102,316 @@ function renderWeeklyReport(){
         weeklyContents
     );
 
+
+    renderWeeklyImpressionsTrend(
+        selectedYear,
+        selectedMonth
+    );
+
 }
 
 
-// =====================================
-// WEEKLY PLATFORM REPORT
+function renderWeeklyImpressionsTrend(
+    selectedYear,
+    selectedMonth
+){
+
+    const chart =
+        document.getElementById(
+            "weeklyImpressionsTrendChart"
+        );
+
+
+    if(!chart){
+
+        return;
+
+    }
+
+
+    const impressionsByWeek =
+        [0, 0, 0, 0, 0];
+
+
+    if(Array.isArray(account?.contents)){
+
+        account.contents.forEach(
+            content => {
+
+                if(!content?.date){
+
+                    return;
+
+                }
+
+
+                const contentDate =
+                    new Date(
+                        content.date +
+                        "T00:00:00"
+                    );
+
+
+                if(
+                    contentDate.getFullYear() !==
+                    selectedYear ||
+                    contentDate.getMonth() !==
+                    selectedMonth
+                ){
+
+                    return;
+
+                }
+
+
+                const day =
+                    contentDate.getDate();
+
+                const weekIndex =
+                    Math.min(
+                        4,
+                        Math.floor(
+                            (day - 1) / 7
+                        )
+                    );
+
+
+                impressionsByWeek[
+                    weekIndex
+                ] +=
+                    Number(
+                        content.impressions
+                    ) || 0;
+
+            }
+        );
+
+    }
+
+
+    const maxValue =
+        Math.max(
+            ...impressionsByWeek,
+            1
+        );
+
+
+    const width = 600;
+    const height = 260;
+    const padding = 40;
+    const plotWidth = width - padding * 2;
+    const plotHeight = height - padding * 2;
+    const xStep =
+        plotWidth /
+        (impressionsByWeek.length - 1);
+
+
+    const points =
+        impressionsByWeek.map(
+            (value, index) => {
+
+                const x =
+                    padding +
+                    xStep * index;
+
+                const y =
+                    height -
+                    padding -
+                    (value / maxValue) *
+                    plotHeight;
+
+
+                return `${x},${y}`;
+
+            }
+        );
+
+
+    const line =
+        `<polyline
+            fill="none"
+            stroke="#60a5fa"
+            stroke-width="3"
+            points="${points.join(
+                " "
+            )}"
+        />`;
+
+
+    const area =
+        `<polygon
+            fill="rgba(96,165,250,.15)"
+            points="${[
+                `${padding},${height - padding}`,
+                ...points,
+                `${padding + plotWidth},${height - padding}`
+            ].join(" ")}" 
+        />`;
+
+
+    const gridLines =
+        Array.from({
+            length: 4
+        }, (_, index) => {
+
+            const y =
+                padding +
+                (plotHeight / 4) * index;
+
+            return `
+                <line
+                    x1="${padding}"
+                    y1="${y}"
+                    x2="${width - padding}"
+                    y2="${y}"
+                    stroke="rgba(255,255,255,.08)"
+                    stroke-width="1"
+                />
+            `;
+
+        }).join("");
+
+
+    const yLabels =
+        Array.from({ length: 5 }, (_, index) => {
+
+            const value =
+                Math.round(
+                    maxValue *
+                    (1 - index / 4)
+                );
+
+            const y =
+                padding +
+                (plotHeight / 4) * index +
+                4;
+
+            return `
+                <text
+                    x="${padding - 10}"
+                    y="${y}"
+                    text-anchor="end"
+                    fill="rgba(255,255,255,.65)"
+                    font-size="11"
+                >
+                    ${formatNumber(value)}
+                </text>
+            `;
+
+        }).join("");
+
+
+    const xLabels =
+        impressionsByWeek.map(
+            (_, index) => {
+
+                const x =
+                    padding +
+                    xStep * index;
+
+                return `
+                    <text
+                        x="${x}"
+                        y="${height - 12}"
+                        text-anchor="middle"
+                        fill="rgba(255,255,255,.7)"
+                        font-size="12"
+                    >
+                        W${index + 1}
+                    </text>
+                `;
+
+            }
+        ).join("");
+
+
+    const dots =
+        impressionsByWeek.map(
+            (value, index) => {
+
+                const x =
+                    padding +
+                    xStep * index;
+
+                const y =
+                    height -
+                    padding -
+                    (value / maxValue) *
+                    plotHeight;
+
+                return `
+                    <circle
+                        cx="${x}"
+                        cy="${y}"
+                        r="5"
+                        fill="#0ea5e9"
+                        stroke="#fff"
+                        stroke-width="2"
+                    />
+                `;
+
+            }
+        ).join("");
+
+
+    const axis = `
+        <line
+            x1="${padding}"
+            y1="${padding}"
+            x2="${padding}"
+            y2="${height - padding}"
+            stroke="rgba(255,255,255,.2)"
+            stroke-width="2"
+        />
+
+        <line
+            x1="${padding}"
+            y1="${height - padding}"
+            x2="${width - padding}"
+            y2="${height - padding}"
+            stroke="rgba(255,255,255,.2)"
+            stroke-width="2"
+        />
+    `;
+
+
+    chart.setAttribute(
+        "viewBox",
+        `0 0 ${width} ${height}`
+    );
+
+    chart.setAttribute(
+        "preserveAspectRatio",
+        "xMidYMid meet"
+    );
+
+    chart.innerHTML = `
+
+        <rect
+            x="0"
+            y="0"
+            width="${width}"
+            height="${height}"
+            fill="transparent"
+        />
+
+        ${gridLines}
+
+        ${axis}
+
+        ${area}
+
+        ${line}
+
+        ${dots}
+
+        ${yLabels}
+
+        ${xLabels}
+
+    `;
+
+}
 // =====================================
 
 function renderWeeklyPlatformReport(
@@ -7680,47 +8181,67 @@ function renderWeeklyTopContent(
 
     box.innerHTML = `
 
-        <div
-            class="top-monthly-item"
-        >
+        <div class="top-content-card">
 
-            <h3>
+            <div class="top-content-card-header">
+
+                <div>
+
+                    <span class="top-content-badge">
+                        Top Performing
+                    </span>
+
+                    <h3>
+                        ${escapeHtml(
+                            top.caption ||
+                            "Untitled Content"
+                        )}
+                    </h3>
+
+                </div>
+
+                <span class="platform-pill">
+                    ${escapeHtml(
+                        top.platform ||
+                        "Unknown"
+                    )}
+                </span>
+
+            </div>
+
+            <p class="top-content-description">
                 ${escapeHtml(
-                    top.caption ||
-                    "Untitled Content"
-                )}
-            </h3>
-
-            <p>
-                Platform:
-                ${escapeHtml(
-                    top.platform ||
-                    "-"
+                    top.hashtag ||
+                    "No hashtag available"
                 )}
             </p>
 
-            <p>
-                👁 ${formatNumber(
-                    top.impressions ||
-                    0
-                )}
-                impressions
-            </p>
+            <div class="top-content-stats">
 
-            <p>
-                👥 ${formatNumber(
-                    top.reach ||
-                    0
-                )}
-                reach
-            </p>
+                <div class="top-content-stat">
+                    <span>Impressions</span>
+                    <strong>${formatNumber(
+                        top.impressions ||
+                        0
+                    )}</strong>
+                </div>
 
-            <p>
-                🔥 ${formatNumber(
-                    engagement
-                )}
-                engagement
-            </p>
+                <div class="top-content-stat">
+                    <span>Reach</span>
+                    <strong>${formatNumber(
+                        top.reach ||
+                        0
+                    )}</strong>
+                </div>
+
+                <div class="top-content-stat">
+                    <span>Engagement</span>
+                    <strong>${formatNumber(
+                        engagement
+                    )}</strong>
+                </div>
+
+            </div>
 
         </div>
 
@@ -7978,47 +8499,67 @@ function renderMonthlyTopContent(
 
     box.innerHTML = `
 
-        <div
-            class="top-monthly-item"
-        >
+        <div class="top-content-card">
 
-            <h3>
+            <div class="top-content-card-header">
+
+                <div>
+
+                    <span class="top-content-badge">
+                        Top Performing
+                    </span>
+
+                    <h3>
+                        ${escapeHtml(
+                            top.caption ||
+                            "Untitled Content"
+                        )}
+                    </h3>
+
+                </div>
+
+                <span class="platform-pill">
+                    ${escapeHtml(
+                        top.platform ||
+                        "Unknown"
+                    )}
+                </span>
+
+            </div>
+
+            <p class="top-content-description">
                 ${escapeHtml(
-                    top.caption ||
-                    "Untitled Content"
-                )}
-            </h3>
-
-            <p>
-                Platform:
-                ${escapeHtml(
-                    top.platform ||
-                    "-"
+                    top.hashtag ||
+                    "No hashtag available"
                 )}
             </p>
 
-            <p>
-                👁 ${formatNumber(
-                    top.impressions ||
-                    0
-                )}
-                impressions
-            </p>
+            <div class="top-content-stats">
 
-            <p>
-                👥 ${formatNumber(
-                    top.reach ||
-                    0
-                )}
-                reach
-            </p>
+                <div class="top-content-stat">
+                    <span>Impressions</span>
+                    <strong>${formatNumber(
+                        top.impressions ||
+                        0
+                    )}</strong>
+                </div>
 
-            <p>
-                🔥 ${formatNumber(
-                    engagement
-                )}
-                engagement
-            </p>
+                <div class="top-content-stat">
+                    <span>Reach</span>
+                    <strong>${formatNumber(
+                        top.reach ||
+                        0
+                    )}</strong>
+                </div>
+
+                <div class="top-content-stat">
+                    <span>Engagement</span>
+                    <strong>${formatNumber(
+                        engagement
+                    )}</strong>
+                </div>
+
+            </div>
 
         </div>
 
@@ -8890,6 +9431,59 @@ if(
 ){
 
     renderWeeklyReport();
+
+}
+
+initializePlatformFilter();
+
+
+const subjectSortFieldElement =
+    document.getElementById(
+        "subjectSortField"
+    );
+
+const subjectSortDirectionElement =
+    document.getElementById(
+        "subjectSortDirection"
+    );
+
+if(subjectSortFieldElement){
+
+    subjectSortFieldElement.value =
+        subjectPerformanceSortField;
+
+    subjectSortFieldElement.addEventListener(
+        "change",
+        function(){
+
+            subjectPerformanceSortField =
+                this.value ||
+                "engagement";
+
+            renderSubjectTable();
+
+        }
+    );
+
+}
+
+if(subjectSortDirectionElement){
+
+    subjectSortDirectionElement.value =
+        subjectPerformanceSortDirection;
+
+    subjectSortDirectionElement.addEventListener(
+        "change",
+        function(){
+
+            subjectPerformanceSortDirection =
+                this.value ||
+                "desc";
+
+            renderSubjectTable();
+
+        }
+    );
 
 }
 
