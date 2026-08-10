@@ -1871,11 +1871,14 @@ auth.onAuthStateChanged(
 
         }else{
 
-            console.log(
-                "No authenticated user."
-            );
+    console.log(
+        "No authenticated user. Redirecting to Login..."
+    );
 
-        }
+    window.location.href =
+        "pages/login.html";
+
+}
 
     }
 );
