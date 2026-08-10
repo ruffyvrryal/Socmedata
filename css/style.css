@@ -12943,3 +12943,242 @@ width:100%;
     }
 
 }
+
+/* =====================================
+   USER ACCOUNT BAR
+===================================== */
+
+.user-account-bar{
+
+    position:fixed;
+
+    top:24px;
+    right:28px;
+
+    z-index:1000;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:9px 10px 9px 12px;
+
+    border-radius:16px;
+
+    background:
+        rgba(255,255,255,.055);
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+
+    box-shadow:
+        0 12px 35px
+        rgba(0,0,0,.20);
+}
+
+
+/* =====================================
+   USER INFO
+===================================== */
+
+.user-account-info{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+
+/* =====================================
+   AVATAR
+===================================== */
+
+.user-account-avatar{
+
+    width:38px;
+    height:38px;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(59,130,246,.25),
+            rgba(139,92,246,.20)
+        );
+
+    border:
+        1px solid
+        rgba(255,255,255,.12);
+
+    font-size:16px;
+
+}
+
+
+/* =====================================
+   USER DETAILS
+===================================== */
+
+.user-account-details{
+
+    display:flex;
+
+    flex-direction:column;
+
+    min-width:0;
+
+}
+
+
+.user-account-details strong{
+
+    max-width:150px;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    color:#fff;
+
+    font-size:12px;
+
+    font-weight:800;
+
+}
+
+
+.user-account-details span{
+
+    max-width:170px;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+
+    margin-top:2px;
+
+    color:
+        rgba(255,255,255,.42);
+
+    font-size:10px;
+
+}
+
+
+/* =====================================
+   LOGOUT BUTTON
+===================================== */
+
+.logout-button{
+
+    padding:9px 13px;
+
+    border-radius:11px;
+
+    border:
+        1px solid
+        rgba(255,255,255,.10);
+
+    background:
+        rgba(255,255,255,.055);
+
+    color:
+        rgba(255,255,255,.78);
+
+    font-family:
+        "Manrope",
+        sans-serif;
+
+    font-size:11px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        transform .2s ease;
+
+}
+
+
+.logout-button:hover{
+
+    background:
+        rgba(255,255,255,.10);
+
+    border-color:
+        rgba(255,255,255,.18);
+
+    transform:
+        translateY(-1px);
+
+}
+
+
+.logout-button:active{
+
+    transform:
+        translateY(0);
+
+}
+
+
+/* =====================================
+   MOBILE
+===================================== */
+
+@media(max-width:600px){
+
+    .user-account-bar{
+
+        top:14px;
+
+        right:14px;
+
+        left:14px;
+
+        justify-content:space-between;
+
+    }
+
+
+    .user-account-details strong{
+
+        max-width:110px;
+
+    }
+
+
+    .user-account-details span{
+
+        max-width:130px;
+
+    }
+
+}

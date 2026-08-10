@@ -1863,13 +1863,41 @@ auth.onAuthStateChanged(
 
         if(user){
 
-            console.log(
-                "Authentication ready. Loading Vaults..."
-            );
+    console.log(
+        "Authentication ready. Loading Vaults..."
+    );
 
-            loadProfiles();
+    const userName =
+        user.displayName ||
+        user.email?.split("@")[0] ||
+        "User";
 
-        }else{
+    const userNameElement =
+        document.getElementById("currentUserName");
+
+    const userEmailElement =
+        document.getElementById("currentUserEmail");
+
+
+    if(userNameElement){
+
+        userNameElement.textContent =
+            userName;
+
+    }
+
+
+    if(userEmailElement){
+
+        userEmailElement.textContent =
+            user.email || "";
+
+    }
+
+
+    loadProfiles();
+
+}else{
 
     console.log(
         "No authenticated user. Redirecting to Login..."
@@ -1882,3 +1910,46 @@ auth.onAuthStateChanged(
 
     }
 );
+
+// =====================================
+// LOGOUT
+// =====================================
+
+const logoutButton =
+    document.getElementById("logoutButton");
+
+
+if(logoutButton){
+
+    logoutButton.addEventListener(
+        "click",
+        async () => {
+
+            try{
+
+                await auth.signOut();
+
+                console.log(
+                    "User logged out successfully."
+                );
+
+                window.location.href =
+                    "pages/login.html";
+
+            }catch(error){
+
+                console.error(
+                    "Logout failed:",
+                    error
+                );
+
+                alert(
+                    "Unable to logout. Please try again."
+                );
+
+            }
+
+        }
+    );
+
+}
