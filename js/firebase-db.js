@@ -537,25 +537,12 @@ export async function saveProfile(
 
 
         // =================================
-        // CHECK ACCESS
+        // NOTE
+        // Do not require loading an existing Vault before saving.
+        // New Vault creation may otherwise fail when Firestore rules
+        // deny read access to a non-existent document path.
+        // Firestore security rules remain the final authority.
         // =================================
-
-        const existingVault =
-            await getProfile(
-                profile.id
-            );
-
-
-        if(!existingVault){
-
-            console.error(
-                "Cannot save Vault: user does not have access."
-            );
-
-            return false;
-
-        }
-
 
         // =================================
         // VAULT REFERENCE
